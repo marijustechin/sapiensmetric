@@ -5,21 +5,27 @@ A serious cognitive-ability and knowledge-assessment platform.
 - Product: **Sapiens Metric**
 - Domain: **sapiensmetric.eu**
 - Languages: Lithuanian and English
-- Status: **Foundation scaffold in place (T-003).** A buildable pnpm monorepo
-  with a static web baseline, a minimal NestJS/Fastify API, and shared
-  contracts exists. No assessment items, scoring, database, or authentication
+- Status: **Foundation + local MySQL + credentials auth core.** A buildable
+  pnpm monorepo with a static web baseline, a NestJS/Fastify API (health +
+  `/auth/*`), shared Zod contracts, and a local MySQL 8.0.46 environment.
+  No assessment items, scoring, email verification, or production deployment
   yet.
 
 The documentation and discovery baseline (T-001), the initial-instrument and
 item-provenance decision proposal (T-002), the application foundation scaffold
-(T-003), and the local MySQL development environment (T-004) are complete and
-archived in `tasks/done/`. No task is currently active.
+(T-003), the local MySQL development environment (T-004), and the credentials
+authentication core (T-005) are complete and archived in `tasks/done/`. No task
+is currently active.
+
+T-005 uses a single environment-file strategy: the Nest API loads only the
+root local `.env` (see below); no second API-specific env file is created.
 
 ## Repository layout
 
 - `apps/web` (`@sapiensmetric/web`) — Next.js App Router, static export,
   Tailwind baseline.
-- `apps/api` (`@sapiensmetric/api`) — NestJS + Fastify, `GET /health`.
+- `apps/api` (`@sapiensmetric/api`) — NestJS + Fastify, `GET /health` plus
+  `/auth/*` credentials auth core (see `docs/authentication.md`).
 - `packages/contracts` (`@sapiensmetric/contracts`) — shared Zod contracts.
 - `packages/assessment` (`@sapiensmetric/assessment`) — pure TypeScript
   placeholder (no items, scoring, or claims yet).
@@ -55,8 +61,12 @@ docker compose ps      # confirm "healthy"
 bash scripts/verify.sh   # dependency-free harness invariants
 pnpm lint                # ESLint
 pnpm typecheck           # TypeScript type checking
-pnpm test                # unit tests (health contract + API health endpoint)
+pnpm test                # unit tests (Docker-free, .env-free)
 pnpm build               # production builds (web static export, API build)
+
+# migrations + real-MySQL integration (see docs/authentication.md)
+pnpm --filter @sapiensmetric/api migration:run
+pnpm --filter @sapiensmetric/api test:integration
 ```
 
 The web build emits static-export output to `apps/web/out`.

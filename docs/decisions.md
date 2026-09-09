@@ -98,6 +98,28 @@ where noted. Update this file when a decision is made or changed.
   `apps/*` and `packages/*` matches `docs/architecture.md`.
 - Status: decided.
 
+### D-013 — Credentials auth token strategy
+- Credentials auth uses a short-lived JWT access token returned in the response
+  body plus an opaque, rotating refresh token stored only in an HttpOnly
+  cookie.
+- Date: 2026-09-09.
+- Status: decided. Authorises the explicitly scoped T-005 auth work only.
+
+### D-014 — Refresh session semantics
+- One active refresh session per user. A successful login revokes all prior
+  active sessions for that user; refresh rotates the token; logout revokes the
+  current session.
+- Date: 2026-09-09.
+- Status: decided. Authorises the explicitly scoped T-005 auth work only.
+
+### D-015 — Deferred verification/delivery/social-login
+- Email verification, password-reset delivery, and Google OAuth are
+  deliberately deferred; T-005 must not claim production-ready account
+  verification.
+- Date: 2026-09-09.
+- Status: decided. T-006 (email verification + password-reset delivery) and
+  T-007 (Google OAuth) are later tasks.
+
 ## Open decisions
 
 > T-001 note (2026-09-09): the discovery baseline (`docs/measurement-model.md`,

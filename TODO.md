@@ -6,15 +6,16 @@ authorises work, and only one task is active at a time.
 
 ## Now
 
-- No task is currently active. T-004 (Local MySQL 8.0.46 development
-  environment with Docker Compose) is complete and archived.
+- No task is currently active. T-005 (TypeORM persistence and credentials
+  authentication core) is complete and archived.
 
 ## Next (not yet created)
 
-- **T-005** — TypeORM persistence plus authentication vertical slice.
+- **T-006** — Privacy review plus email verification/password-reset delivery.
 
 ## After that (not yet created)
 
+- **T-007** — Google OAuth.
 - vHosts Node-to-MySQL feasibility (later, separate infrastructure task).
 
 ## Blocked

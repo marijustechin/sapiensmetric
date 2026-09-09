@@ -5,14 +5,14 @@ import {
   NestFastifyApplication,
 } from '@nestjs/platform-fastify';
 import { healthResponseSchema } from '@sapiensmetric/contracts';
-import { AppModule } from './app.module';
+import { HealthController } from './health.controller.js';
 
 describe('GET /health (HTTP)', () => {
   let app: NestFastifyApplication;
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
-      imports: [AppModule],
+      controllers: [HealthController],
     }).compile();
 
     app = moduleRef.createNestApplication<NestFastifyApplication>(

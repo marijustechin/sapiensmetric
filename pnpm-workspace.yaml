@@ -5,6 +5,7 @@ packages:
 allowBuilds:
   '@nestjs/core': true
   esbuild: true
+  argon2: true
 
 minimumReleaseAgeExclude:
   - '@types/react-dom@19.3.0'
