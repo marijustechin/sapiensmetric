@@ -11,9 +11,9 @@ A serious cognitive-ability and knowledge-assessment platform.
   yet.
 
 The documentation and discovery baseline (T-001), the initial-instrument and
-item-provenance decision proposal (T-002), and the application foundation
-scaffold (T-003) are complete and archived in `tasks/done/`. No task is
-currently active.
+item-provenance decision proposal (T-002), the application foundation scaffold
+(T-003), and the local MySQL development environment (T-004) are complete and
+archived in `tasks/done/`. No task is currently active.
 
 ## Repository layout
 
@@ -37,6 +37,16 @@ Requirements:
 
 ```bash
 pnpm install
+```
+
+### Local database (MySQL 8.0.46 via Docker Compose)
+
+See `docs/local-development.md` for full instructions. Quick start:
+
+```bash
+cp .env.example .env   # then edit values; never commit .env
+docker compose up -d   # starts local MySQL on 127.0.0.1:3307
+docker compose ps      # confirm "healthy"
 ```
 
 ## Verification commands

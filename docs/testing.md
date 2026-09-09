@@ -23,8 +23,11 @@ documentation-harness invariants only:
 
 - core docs (including `TODO.md`, the planning index that never authorises
   work), the T-001 discovery documents, and the T-002 documents exist;
-- the T-001, T-002, and T-003 task archives exist under `tasks/done/`;
+- the T-001, T-002, T-003, and T-004 task archives exist under `tasks/done/`;
 - `tasks/current.md` states that no task is currently active;
+- the T-004 outputs (`compose.yaml`, `.env.example`,
+  `docs/local-development.md`) exist and `.gitignore` contains an exact `.env`
+  ignore rule;
 - the T-003 implementation source outputs and `pnpm-lock.yaml` exist;
 - local markdown references do not point to missing files (where reasonably
   checkable).

@@ -6,16 +6,16 @@ authorises work, and only one task is active at a time.
 
 ## Now
 
-- Archive T-003, then commit and push the approved foundation.
+- No task is currently active. T-004 (Local MySQL 8.0.46 development
+  environment with Docker Compose) is complete and archived.
 
 ## Next (not yet created)
 
-- **T-004** — MySQL/TypeORM persistence foundation and vHosts Node-to-MySQL
-  feasibility.
+- **T-005** — TypeORM persistence plus authentication vertical slice.
 
 ## After that (not yet created)
 
-- **T-005** — authentication vertical slice.
+- vHosts Node-to-MySQL feasibility (later, separate infrastructure task).
 
 ## Blocked
 

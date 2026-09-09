@@ -9,10 +9,13 @@
 # Invariants checked:
 #   1. Core docs, the six T-001 discovery documents, and the four T-002
 #      documents exist.
-#   2. The T-001, T-002, and T-003 task archives exist under tasks/done/.
+#   2. The T-001, T-002, T-003, and T-004 task archives exist.
 #   3. tasks/current.md states that no task is currently active.
-#   4. The T-003 implementation source outputs and pnpm-lock.yaml exist.
-#   5. Local markdown references (./paths and relative paths) do not point to
+#   4. The T-004 outputs (compose.yaml, .env.example, docs/local-development.md)
+#      exist.
+#   5. .gitignore contains an exact .env ignore rule.
+#   6. The T-003 implementation source outputs and pnpm-lock.yaml exist.
+#   7. Local markdown references (./paths and relative paths) do not point to
 #      missing files, where reasonably checkable.
 #
 # Exit code 0 = all invariants hold; non-zero = at least one failed.
@@ -71,6 +74,7 @@ archives=(
   tasks/done/2026-09-09-product-and-psychometric-discovery-baseline.md
   tasks/done/2026-09-09-initial-instrument-scope-and-item-provenance-decision-proposal.md
   tasks/done/2026-09-09-application-foundation-scaffold.md
+  tasks/done/2026-09-09-local-mysql-development-environment.md
 )
 
 for a in "${archives[@]}"; do
@@ -89,7 +93,31 @@ else
   note_fail "tasks/current.md does not state that no task is currently active"
 fi
 
-# --- Invariant 4: T-003 implementation source outputs exist --------------
+# --- Invariant 4: T-004 outputs exist -----------------------------------
+
+t004_outputs=(
+  compose.yaml
+  .env.example
+  docs/local-development.md
+)
+
+for out in "${t004_outputs[@]}"; do
+  if [ -e "$out" ]; then
+    note_pass
+  else
+    note_fail "T-004 output missing: $out"
+  fi
+done
+
+# --- Invariant 5: .gitignore has an exact .env ignore rule --------------
+
+if grep -qxF '.env' .gitignore; then
+  note_pass
+else
+  note_fail ".gitignore does not contain an exact '.env' ignore rule"
+fi
+
+# --- Invariant 6: T-003 implementation source outputs exist --------------
 
 t003_outputs=(
   pnpm-workspace.yaml
@@ -118,7 +146,7 @@ for out in "${t003_outputs[@]}"; do
   fi
 done
 
-# --- Invariant 5: local markdown references resolve ---------------------
+# --- Invariant 7: local markdown references resolve ---------------------
 
 # Collect every bare path-like token that looks like a local reference to a
 # file inside the repo (relative "path/file.ext" or "./path/file.ext"), then
