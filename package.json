@@ -1,0 +1,23 @@
+{
+  "name": "sapiensmetric",
+  "version": "0.0.0",
+  "private": true,
+  "packageManager": "pnpm@11.26.0",
+  "engines": {
+    "node": ">=20.9.0",
+    "pnpm": "11.26.0"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "pnpm --filter @sapiensmetric/contracts build && pnpm --filter @sapiensmetric/assessment build && pnpm -r --if-present run typecheck",
+    "test": "pnpm --filter @sapiensmetric/contracts build && pnpm --filter @sapiensmetric/contracts test && pnpm --filter @sapiensmetric/api test",
+    "build": "pnpm --filter @sapiensmetric/contracts build && pnpm --filter @sapiensmetric/assessment build && pnpm --filter @sapiensmetric/api build && pnpm --filter @sapiensmetric/web build",
+    "verify": "pnpm lint && pnpm typecheck && pnpm test && pnpm build && bash scripts/verify.sh"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.13.0",
+    "eslint": "9.13.0",
+    "globals": "15.11.0",
+    "typescript-eslint": "8.12.2"
+  }
+}

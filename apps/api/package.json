@@ -1,0 +1,25 @@
+{
+  "name": "@sapiensmetric/api",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run",
+    "start": "node dist/main.js"
+  },
+  "dependencies": {
+    "@nestjs/common": "10.4.6",
+    "@nestjs/core": "10.4.6",
+    "@nestjs/platform-fastify": "10.4.6",
+    "@sapiensmetric/contracts": "workspace:*",
+    "fastify": "4.28.1",
+    "reflect-metadata": "0.2.2",
+    "rxjs": "7.8.1"
+  },
+  "devDependencies": {
+    "@nestjs/testing": "10.4.6",
+    "typescript": "5.6.3",
+    "vitest": "2.1.4"
+  }
+}
