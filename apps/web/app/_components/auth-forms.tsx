@@ -10,6 +10,7 @@ import {
   type RegisterFeedback,
 } from '../../lib/register-feedback';
 import { useAuth } from './auth-provider';
+import { GoogleSignInButton } from './google-sign-in-button';
 import type { Locale } from '../../lib/auth-types';
 
 const COPY = {
@@ -33,6 +34,7 @@ const COPY = {
     missingToken: 'Šiai nuorodai trūksta žymens.',
     invalidCredentials: 'Neteisingi prisijungimo duomenys.',
     invalidInput: 'Patikrinkite įvestus duomenis (slaptažodis 12–128 simbolių).',
+    googleError: 'Prisijungimas su Google nepavyko. Bandykite dar kartą.',
     error: 'Nepavyko. Bandykite dar kartą.',
   },
   en: {
@@ -55,6 +57,7 @@ const COPY = {
     missingToken: 'This link is missing its token.',
     invalidCredentials: 'Invalid sign-in details.',
     invalidInput: 'Check the entered details (password must be 12–128 characters).',
+    googleError: 'Google sign-in did not complete. Please try again.',
     error: 'Something went wrong. Please try again.',
   },
 } as const;
@@ -100,6 +103,9 @@ export function LoginForm({ locale }: { locale: Locale }) {
         `/${locale}/account`,
       ),
     );
+    if (params.get('googleError')) {
+      setMessage(c.googleError);
+    }
   }, [locale]);
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -155,6 +161,7 @@ export function LoginForm({ locale }: { locale: Locale }) {
         <Link href={`/${locale}/auth/register`}>{c.registerLink}</Link>
         <Link href={`/${locale}/auth/forgot-password`}>{c.forgotLink}</Link>
       </p>
+      <GoogleSignInButton locale={locale} returnTo={returnTo} />
     </form>
   );
 }
@@ -228,6 +235,7 @@ export function RegisterForm({ locale }: { locale: Locale }) {
           <Link href={`/${locale}/auth/login`}>{c.loginLink}</Link>
         </p>
       ) : null}
+      <GoogleSignInButton locale={locale} />
     </form>
   );
 }

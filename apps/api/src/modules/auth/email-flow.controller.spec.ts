@@ -67,6 +67,12 @@ function testConfig(): AppConfig {
     },
     tokens: { verificationTtlSeconds: 86400, passwordResetTtlSeconds: 1800 },
     publicAppUrl: ORIGIN,
+    google: {
+      clientId: null,
+      clientSecret: null,
+      redirectUri: null,
+      enabled: false,
+    },
   };
 }
 

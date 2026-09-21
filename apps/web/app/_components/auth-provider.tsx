@@ -11,6 +11,7 @@ import {
   type ReactNode,
 } from 'react';
 import * as authApi from '../../lib/auth-api';
+import { createSingleFlight } from '../../lib/single-flight';
 import type { AuthUser, Locale } from '../../lib/auth-types';
 
 export type AuthStatus =
@@ -54,7 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // written to the URL, logged, or rendered.
   const accessTokenRef = useRef<string | null>(null);
 
-  const bootstrap = useCallback(async () => {
+  const runBootstrap = useCallback(async (): Promise<void> => {
     setStatus('loading');
     setUser(null);
 
@@ -82,6 +83,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     setStatus(who.kind === 'unauthorized' ? 'unauthenticated' : 'error');
   }, []);
+
+  // Single-flight bootstrap: a double-invoked mount effect (React dev
+  // StrictMode after the full-page Google callback redirect) must not fire two
+  // concurrent refreshes. Two refreshes race on the rotating refresh cookie,
+  // one returns 401, and the account gate would then bounce an authenticated
+  // user to the login form. Coalescing keeps the route correct.
+  const singleFlightRef = useRef<
+    ((run: () => Promise<void>) => Promise<void>) | null
+  >(null);
+  if (singleFlightRef.current === null) {
+    singleFlightRef.current = createSingleFlight<void>();
+  }
+  const bootstrap = useCallback(
+    () => singleFlightRef.current?.(runBootstrap) ?? runBootstrap(),
+    [runBootstrap],
+  );
 
   useEffect(() => {
     void bootstrap();

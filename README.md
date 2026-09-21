@@ -15,8 +15,9 @@ The documentation and discovery baseline (T-001), the initial-instrument and
 item-provenance decision proposal (T-002), the application foundation scaffold
 (T-003), the local MySQL development environment (T-004), the credentials
 authentication core (T-005), email verification/password-reset delivery through
-generic SMTP (T-006), and the classical LT/EN authentication frontend (T-008)
-are complete, approved, and archived in `tasks/done/`.
+generic SMTP (T-006), Google OpenID Connect sign-in (T-007), and the classical
+LT/EN authentication frontend (T-008) are complete, approved, and archived in
+`tasks/done/`.
 
 T-006 (email verification and password-reset delivery through generic SMTP) is
 implemented, approved, and archived. See
@@ -41,6 +42,11 @@ and a protected account page over the existing auth API. Registration is
 conventional (D-017): a new address sends one verification email, and an existing
 address returns an explicit `EMAIL_ALREADY_REGISTERED` conflict.
 
+Google OpenID Connect sign-in (T-007, D-018) is approved and archived. It is
+optional: it stays disabled and the Google button is unavailable unless
+`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and `GOOGLE_REDIRECT_URI` are
+configured; password authentication is unaffected.
+
 T-005 uses a single environment-file strategy: the Nest API loads only the
 root local `.env` (see below); no second API-specific env file is created.
 
@@ -58,8 +64,8 @@ root local `.env` (see below); no second API-specific env file is created.
 - `tasks/` — current task and archived tasks.
 - `TODO.md` — planning index (never authorises work).
 - `scripts/verify.sh` — dependency-free documentation-harness checks
-  (including the archived task records, the T-008 frontend outputs, and the
-  completed T-003/T-004/T-005/T-006 outputs).
+  (including the archived task records, the T-008 frontend outputs, the T-007
+  Google sign-in outputs, and the completed T-003/T-004/T-005/T-006 outputs).
 
 ## Local setup
 

@@ -246,6 +246,40 @@ where noted. Update this file when a decision is made or changed.
 - Status: decided. Authorises only the explicitly scoped T-008 registration
   amendment.
 
+### D-018 — Google OpenID Connect sign-in
+- Add Google sign-in using the OAuth 2.0 authorization-code flow with **PKCE
+  (S256)**, on the static-export web frontend and the NestJS/Fastify API.
+- A Google identity is identified **solely by the immutable OIDC `sub`**,
+  persisted in a new `user_identities` table (`provider`, `subject`, unique
+  `(provider, subject)`, FK to `users`). Email is never the identity key; it is
+  used only for the automatic-linking rules below.
+- Account rules (exact):
+  - existing `sub` → sign in to its already-linked user;
+  - new identity + verified Google email + no local match → create one verified
+    local user and link;
+  - new identity + verified Google email matching a **verified** credentials
+    user → automatically link and sign in to that user;
+  - Google email missing or not verified → reject; create/link nothing;
+  - Google email matches an **unverified** local user → reject; do not link;
+  - a `sub` already linked to another user → reject; never reassign it.
+- Transaction cookie `sm_oauth_tx`: short-lived (10 min), `HttpOnly`,
+  `SameSite=Lax`, path `/auth/google`, `Secure` in production, integrity
+  protected with **HMAC-SHA256 over an HKDF-SHA256-derived key**. Tampered or
+  expired cookies are rejected and the cookie is cleared after the callback.
+- The ID token is validated properly (RS256 signature via Google JWKS selected
+  by `kid`, `iss`, `aud`/client ID, `exp`, and the `nonce` binding); a decoded
+  but unverified payload is never trusted.
+- After successful Google authentication the existing refresh-session/HttpOnly
+  cookie lifecycle is reused; tokens are never placed in URLs.
+- Google is **optional**: without credentials `GET /auth/google/status` reports
+  `{ available: false }`, `GET /auth/google/start` returns `503
+  GOOGLE_OAUTH_UNAVAILABLE`, and password authentication is unaffected.
+- No Google account link/unlink management UI in this scope.
+- The unverified email/password login gate is unchanged; one account may use
+  both password and Google sign-in.
+- Date: 2026-09-21.
+- Status: decided. Authorises only the explicitly scoped T-007 work.
+
 ## Open decisions
 
 > T-001 note (2026-09-09): the discovery baseline (`docs/measurement-model.md`,

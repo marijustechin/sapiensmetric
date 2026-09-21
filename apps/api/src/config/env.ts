@@ -101,6 +101,13 @@ const envSchema = z.object({
     .positive()
     .default(1800),
 
+  // T-007 — optional Google OAuth/OpenID Connect. All three values must be
+  // present for Google sign-in to be available; otherwise it stays disabled and
+  // password authentication is unaffected.
+  GOOGLE_CLIENT_ID: z.string().min(1).optional(),
+  GOOGLE_CLIENT_SECRET: z.string().min(1).optional(),
+  GOOGLE_REDIRECT_URI: z.string().url().optional(),
+
   // Public web configuration. Only NEXT_PUBLIC_API_BASE_URL is exposed to the
   // browser (by the web build); no secret may use the NEXT_PUBLIC_ prefix.
   PUBLIC_APP_URL: canonicalOriginSchema,
@@ -143,6 +150,12 @@ export interface AppConfig {
     passwordResetTtlSeconds: number;
   };
   publicAppUrl: string;
+  google: {
+    clientId: string | null;
+    clientSecret: string | null;
+    redirectUri: string | null;
+    enabled: boolean;
+  };
 }
 
 function findRootEnv(): string | undefined {
@@ -217,6 +230,16 @@ export function loadAppConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
       passwordResetTtlSeconds: parsed.PASSWORD_RESET_TOKEN_TTL_SECONDS,
     },
     publicAppUrl: parsed.PUBLIC_APP_URL,
+    google: {
+      clientId: parsed.GOOGLE_CLIENT_ID ?? null,
+      clientSecret: parsed.GOOGLE_CLIENT_SECRET ?? null,
+      redirectUri: parsed.GOOGLE_REDIRECT_URI ?? null,
+      enabled: Boolean(
+        parsed.GOOGLE_CLIENT_ID &&
+          parsed.GOOGLE_CLIENT_SECRET &&
+          parsed.GOOGLE_REDIRECT_URI,
+      ),
+    },
   };
 }
 

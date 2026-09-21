@@ -115,9 +115,25 @@ test runner).
 - Routes: `/{lt,en}` home, `/{lt,en}/auth/{login,register,verify-email,forgot-password,reset-password}`,
   and the protected `/{lt,en}/account`.
 
+## T-007 Google OpenID Connect sign-in (implemented, in review)
+
+T-007 adds optional Google OIDC sign-in (authorization-code flow with PKCE)
+over the existing auth API, per D-018.
+
+- `apps/api/src/modules/auth/identities/` — `user_identities` entity/store
+  (`provider`, `subject`, unique `(provider, subject)`, FK to `users`).
+- `apps/api/src/modules/auth/google/` — transaction/PKCE service (HMAC-SHA256
+  over an HKDF-derived key), JWKS + ID-token verification, token exchange,
+  account resolution, and the `/auth/google/*` controller.
+- Migration `1781440000002-CreateUserIdentities`.
+- Reuses the existing refresh-session/cookie lifecycle; no token in URLs.
+- The web login/register pages show a Google button when
+  `/auth/google/status` reports it is available; Google stays optional and
+  password authentication is unaffected.
+
 ## Explicitly deferred beyond T-003
 
-- Google OAuth is T-007.
+- Google OAuth is T-007 (implemented, in review).
 - Product UI features and public marketing/site content beyond the minimal
   development page.
 - shadcn component installation (unless a real UI need arises).

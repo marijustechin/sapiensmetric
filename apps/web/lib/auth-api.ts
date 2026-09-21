@@ -72,6 +72,14 @@ async function request<T>(
   return { kind: 'success', status: response.status, data };
 }
 
+export function apiBaseUrl(): string {
+  return API_BASE_URL;
+}
+
+export function googleStatus(): Promise<FetchOutcome<{ available: boolean }>> {
+  return request('/auth/google/status', { method: 'GET' });
+}
+
 export interface AcceptedResponse {
   status: 'accepted';
 }

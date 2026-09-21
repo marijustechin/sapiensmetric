@@ -11,13 +11,13 @@
 #   1. Core docs (including docs/email-verification.md), the six T-001
 #      discovery documents, and the four T-002 documents exist.
 #   2. The T-001, T-002, T-003, T-004, T-005, and T-006 task archives exist.
-#   3. The archived T-006 and T-008 records contain their exact titles and final
-#      approved statuses, and the archived T-006 record contains the required
-#      definition sections, the six exact browser routes, and the access-gate
-#      markers; tasks/current.md declares that no task is active.
+#   3. The archived T-006, T-007, and T-008 records contain their exact titles
+#      and final approved statuses; the archived T-006 record contains the
+#      required definition sections, the six exact browser routes, and the
+#      access-gate markers; tasks/current.md declares that no task is active.
 #   4. docs/decisions.md contains D-016 (heading, and section-scoped date /
-#      O-006 note / verification access gate / review-correction markers) and
-#      D-017 (conventional registration heading and markers).
+#      O-006 note / verification access gate / review-correction markers),
+#      D-017 (conventional registration), and D-018 (Google OIDC).
 #   5. The completed T-006 outputs exist (mailer module, action-token service,
 #      CreateEmailActionTokens migration, six LT/EN pages, privacy document).
 #   6. The completed T-005 outputs exist.
@@ -28,6 +28,7 @@
 #  10. Local markdown references (./paths and relative paths) do not point to
 #      missing files, where reasonably checkable.
 #  11. The T-008 authentication frontend outputs exist.
+#  12. The T-007 Google sign-in outputs exist.
 #
 # Exit code 0 = all invariants hold; non-zero = at least one failed.
 
@@ -100,7 +101,7 @@ for a in "${archives[@]}"; do
   fi
 done
 
-# --- Invariant 3: T-006 and T-008 archived; no active task ---------------
+# --- Invariant 3: T-006, T-007, T-008 archived; no active task -----------
 # The archived records' exact headings and final statuses are asserted
 # literally, and tasks/current.md must declare that no task is active.
 
@@ -136,6 +137,22 @@ else
   note_fail "T-008 archive does not contain the final approved status"
 fi
 
+t007_archive='tasks/done/2026-09-21-google-oauth-sign-in.md'
+t007_heading='# T-007 — Google OAuth 2.0 / OpenID Connect sign-in (archived)'
+t007_status='- **Final status:** Approved (human review granted)'
+
+if grep -qxF -- "$t007_heading" "$t007_archive"; then
+  note_pass
+else
+  note_fail "T-007 archive does not contain the exact archived heading"
+fi
+
+if grep -qxF -- "$t007_status" "$t007_archive"; then
+  note_pass
+else
+  note_fail "T-007 archive does not contain the final approved status"
+fi
+
 if grep -qxF -- '# No active task' tasks/current.md; then
   note_pass
 else
@@ -147,6 +164,24 @@ if grep -qF 'No task is currently active' tasks/current.md; then
 else
   note_fail "tasks/current.md does not state that no task is currently active"
 fi
+
+t007_sections=(
+  '## Objective'
+  '## Route / API matrix'
+  '## Database change'
+  '## Required account behaviour'
+  '## Security requirements'
+  '## Acceptance criteria'
+  '## Reading order'
+)
+
+for section in "${t007_sections[@]}"; do
+  if grep -qF "$section" "$t007_archive"; then
+    note_pass
+  else
+    note_fail "T-007 task definition missing section: $section"
+  fi
+done
 
 t008_sections=(
   '## Objective'
@@ -332,6 +367,31 @@ for marker in "${d017_markers[@]}"; do
     note_pass
   else
     note_fail "docs/decisions.md D-017 missing marker: $marker"
+  fi
+done
+
+# --- Invariant 4c: D-018 (Google OIDC) is recorded ------------------------
+
+d018_heading='### D-018 — Google OpenID Connect sign-in'
+
+if grep -qxF -- "$d018_heading" docs/decisions.md; then
+  note_pass
+else
+  note_fail "docs/decisions.md does not contain the exact D-018 heading"
+fi
+
+d018_markers=(
+  'PKCE'
+  'immutable OIDC `sub`'
+  'HKDF-SHA256-derived key'
+  'GOOGLE_OAUTH_UNAVAILABLE'
+)
+
+for marker in "${d018_markers[@]}"; do
+  if grep -qF "$marker" docs/decisions.md; then
+    note_pass
+  else
+    note_fail "docs/decisions.md D-018 missing marker: $marker"
   fi
 done
 
@@ -521,6 +581,38 @@ for out in "${t008_outputs[@]}"; do
     note_pass
   else
     note_fail "T-008 output missing: $out"
+  fi
+done
+
+# --- Invariant 12: T-007 Google sign-in outputs exist --------------------
+
+t007_outputs=(
+  apps/api/src/modules/auth/identities/user-identity.entity.ts
+  apps/api/src/modules/auth/identities/identity-store.ts
+  apps/api/src/modules/auth/identities/identities.module.ts
+  apps/api/src/modules/auth/google/oauth-transaction.service.ts
+  apps/api/src/modules/auth/google/return-to.ts
+  apps/api/src/modules/auth/google/google-jwks.client.ts
+  apps/api/src/modules/auth/google/google-id-token.service.ts
+  apps/api/src/modules/auth/google/google-token.client.ts
+  apps/api/src/modules/auth/google/google-auth.service.ts
+  apps/api/src/modules/auth/google/google-auth.controller.ts
+  apps/api/src/modules/auth/google/oauth-transaction.service.spec.ts
+  apps/api/src/modules/auth/google/google-auth.controller.spec.ts
+  apps/api/src/modules/auth/google/google-id-token.service.spec.ts
+  apps/api/src/database/migrations/1781440000002-CreateUserIdentities.ts
+  apps/web/lib/google-auth.ts
+  apps/web/lib/google-auth.test.ts
+  apps/web/lib/single-flight.ts
+  apps/web/lib/single-flight.test.ts
+  apps/web/app/_components/google-sign-in-button.tsx
+)
+
+for out in "${t007_outputs[@]}"; do
+  if [ -e "$out" ]; then
+    note_pass
+  else
+    note_fail "T-007 output missing: $out"
   fi
 done
 

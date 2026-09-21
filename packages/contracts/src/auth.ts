@@ -117,3 +117,21 @@ export const passwordResetResponseSchema = z.object({
 });
 
 export type PasswordResetResponse = z.infer<typeof passwordResetResponseSchema>;
+
+// --- T-007: Google OpenID Connect -----------------------------------------
+
+export const googleStatusResponseSchema = z.object({
+  available: z.boolean(),
+});
+
+export type GoogleStatusResponse = z.infer<typeof googleStatusResponseSchema>;
+
+export const googleUnavailableResponseSchema = z.object({
+  statusCode: z.literal(503),
+  code: z.literal('GOOGLE_OAUTH_UNAVAILABLE'),
+  message: z.string(),
+});
+
+export type GoogleUnavailableResponse = z.infer<
+  typeof googleUnavailableResponseSchema
+>;

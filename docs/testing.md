@@ -27,9 +27,11 @@ documentation-harness invariants only:
   work), the T-001 discovery documents, and the T-002 documents exist;
 - the T-001, T-002, T-003, T-004, T-005, and T-006 task archives exist under
   `tasks/done/`;
-- the archived T-006 and T-008 records exist with their final approved statuses
-  and the required definition sections, and `tasks/current.md` declares that no
-  task is active;
+- the archived T-006, T-007, and T-008 records exist with their final approved
+  statuses, and `tasks/current.md` declares that no task is active;
+- the T-007 Google sign-in outputs exist (identity entity/store/module, OAuth
+  transaction service, JWKS/ID-token verification, token client, account
+  resolution, controller, migration, and the web Google button);
 - the T-008 authentication frontend outputs exist (typed API client, safe
   `returnTo` helper and its unit test, auth provider/nav/forms/account
   components, and the LT/EN login, register, and account routes);
@@ -168,6 +170,37 @@ tests**; no SMTP connection is opened and no `.env` value is read.
   and exactly one verification token.
 - `apps/web/lib/register-feedback.test.ts` — the LT/EN register feedback mapping
   for every outcome (message and which navigation links are shown).
+
+## T-007 Google sign-in testing boundary (D-018)
+
+All Google tests use fakes only: a fake ID-token verifier and a fake token
+client replace the network edges, and no real Google request, JWKS fetch, token
+exchange, or credential is used.
+
+- `oauth-transaction.service.spec.ts` — PKCE S256 challenge, state/nonce
+  generation, HKDF/HMAC transaction-cookie round-trip, tampered/expired/rejected
+  cases, cookie options, authorization-URL contents, availability, and the
+  `returnTo` allowlist.
+- `google-auth.controller.spec.ts` — status/start (enabled `302` + signed cookie;
+  disabled `503`), every D-018 account-behaviour row (existing `sub`; new verified
+  identity; auto-link to a verified credentials user; missing/unverified email;
+  unverified local match; `sub` linked elsewhere), concurrent first sign-in
+  (one user/identity), invalid transaction, state mismatch, failed ID-token
+  validation, password-auth regression while Google is disabled, and the full
+  `returnTo` propagation boundary: login-query `returnTo` → start request →
+  transaction → callback redirect, default LT/EN targets, and external/malformed
+  `returnTo` rejection to the safe default.
+- `apps/web/lib/google-auth.test.ts` — the Google start URL (locale, login-query
+  `returnTo` propagation, default LT/EN targets, external/malformed rejection,
+  trailing-slash normalisation) and the LT/EN button/unavailable copy.
+- `apps/web/lib/single-flight.test.ts` — the bootstrap single-flight guard
+  (concurrent runs coalesce, a fresh run starts after completion, a retry runs
+  after rejection). This prevents a double-invoked mount effect after the
+  full-page Google callback redirect from firing two concurrent refreshes that
+  race on the rotating cookie and bounce the authenticated user to login.
+
+The real-MySQL integration suite (`auth.integration.spec.ts`) runs with the mail
+transport faked; it does not exercise Google.
 
 ## Workflow expectations
 

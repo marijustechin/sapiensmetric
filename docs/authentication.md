@@ -1,9 +1,10 @@
-# Authentication (T-005 + T-006 + T-008) — local-development core
+# Authentication (T-005 + T-006 + T-008 + T-007) — local-development core
 
 Local-development credentials authentication core (T-005), email verification
-and password-reset delivery through generic SMTP (T-006), and the classical
-LT/EN authentication frontend (T-008) for Sapiens Metric. Scoped to
-D-013/D-014/D-015/D-016 in `docs/decisions.md`. It is
+and password-reset delivery through generic SMTP (T-006), the classical LT/EN
+authentication frontend (T-008), and optional Google OpenID Connect sign-in
+(T-007) for Sapiens Metric. Scoped to D-013/D-014/D-015/D-016/D-017/D-018 in
+`docs/decisions.md`. It is
 **not production-ready**, makes no legal or compliance claim, and must not be
 used for real user data before the O-006 privacy review. See
 `docs/email-verification.md`.
@@ -11,7 +12,9 @@ used for real user data before the O-006 privacy review. See
 ## Scope and limitations
 
 - Local MySQL only (`127.0.0.1:3307`, the non-root T-004 application user).
-- No Google OAuth, no deployment.
+- Google OpenID Connect sign-in is implemented but **optional**: it is available
+  only when the Google environment values are configured, and its absence never
+  affects password authentication. No deployment.
 - Registration is conventional (D-017): a new address creates an unverified
   account and immediately sends one verification email; an already-registered
   address returns an explicit `409 EMAIL_ALREADY_REGISTERED` conflict. This
@@ -65,6 +68,8 @@ second API-specific env file exists. Variables:
   `revokedReason`.
 - `email_action_tokens` — UUID id, `userId` FK, `purpose` (`verify` | `reset`),
   SHA-256 `tokenHash`, `createdAt`, `expiresAt`, `consumedAt`.
+- `user_identities` — UUID id, `userId` FK, `provider` (e.g. `google`),
+  `subject` (immutable OIDC `sub`), `createdAt`; unique `(provider, subject)`.
 
 Schema changes are migrations only; TypeORM `synchronize` is disabled in every
 environment.
@@ -84,6 +89,10 @@ environment.
   store.
 - `apps/api/src/modules/mailer/` — provider-agnostic mailer boundary and the
   generic nodemailer SMTP transport.
+- `apps/api/src/modules/auth/identities/` — durable provider identities
+  (`user_identities`).
+- `apps/api/src/modules/auth/google/` — OAuth transaction/PKCE, JWKS + ID-token
+  verification, token exchange, account resolution, controller.
 - `apps/api/src/smtp-smoke.ts` — opt-in live-SMTP smoke command.
 
 ## Endpoints
@@ -103,6 +112,12 @@ environment.
 - `POST /auth/email-verification/confirm` → `200 { status: 'verified' }`
 - `POST /auth/password-reset/request` → `202 { status: 'accepted' }`
 - `POST /auth/password-reset/confirm` → `200 { status: 'reset' }`
+- `GET /auth/google/status` → `200 { available: boolean }`
+- `GET /auth/google/start` → `302` to Google (sets the signed transaction
+  cookie); `503 { code: 'GOOGLE_OAUTH_UNAVAILABLE' }` when unconfigured
+- `GET /auth/google/callback` → validates the transaction and ID token, sets the
+  refresh cookie, and `302` back to a safe same-origin web path; on any failure
+  `302` to the web login page with a `googleError` marker
 
 Request bodies use shared Zod contracts. Request endpoints take a `locale`
 restricted to `lt` or `en`. Reset confirmation enforces the 12–128 character
@@ -184,6 +199,41 @@ static-export client components; the only configured API base is
   token.
 
 T-008 introduces no new auth capability and no new endpoint.
+
+## Google sign-in (T-007, D-018)
+
+Optional Google OpenID Connect sign-in using the OAuth 2.0 authorization-code
+flow with PKCE (S256). Identity is keyed solely by the immutable OIDC `sub`;
+email only drives the automatic-linking rules (D-018). The transaction cookie
+`sm_oauth_tx` is short-lived (10 minutes), `HttpOnly`, `SameSite=Lax`, path
+`/auth/google`, `Secure` in production, and integrity-protected with HMAC-SHA256
+over an HKDF-SHA256-derived key; it is rejected when tampered/expired and cleared
+after the callback. The ID token is verified against Google JWKS (RS256 selected
+by `kid`), plus `iss`, `aud`/client ID, `exp`, and the `nonce` binding; a decoded
+but unverified payload is never trusted.
+
+Flow: the web button navigates to `GET /auth/google/start`, Google redirects to
+`GET /auth/google/callback`, and a successful callback establishes the same
+refresh session as password login, then redirects to a safe same-origin
+`returnTo` (default `/{locale}/account`). No token is placed in a URL. On any
+failure the callback redirects to the web login page with a `googleError` marker.
+
+### Local Google setup
+
+1. In the Google Cloud Console create an OAuth 2.0 Client ID (Web application).
+2. **Authorized redirect URI is required and must exactly equal**
+   `GOOGLE_REDIRECT_URI`, e.g. `http://localhost:3334/auth/google/callback`
+   (scheme, host, port, and path must match exactly).
+3. **Authorized JavaScript origins are not required** for this server-side
+   authorization-code flow. They would only be needed if a browser SDK such as
+   Google Identity Services were added later; do not configure them for this
+   task.
+4. Configure only the ignored root `.env` (never committed): `GOOGLE_CLIENT_ID`,
+   `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`.
+5. Leave them absent to keep Google disabled; `/auth/google/status` then reports
+   unavailable and password authentication is unaffected.
+
+No account link/unlink management UI exists; linking is automatic per D-018.
 
 ## Commands
 

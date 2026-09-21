@@ -17,7 +17,15 @@ export const USER_STORE = Symbol('USER_STORE');
 export interface UserStore {
   findByEmail(email: string): Promise<UserRecord | null>;
   findById(id: string): Promise<UserRecord | null>;
-  create(data: { email: string; passwordHash: string }): Promise<UserRecord>;
+  create(data: {
+    email: string;
+    passwordHash: string;
+    /**
+     * Optional: Google-created accounts are verified at creation (D-018);
+     * credentials registrations leave this unset (null).
+     */
+    emailVerifiedAt?: Date | null;
+  }): Promise<UserRecord>;
 }
 
 /**
@@ -53,7 +61,11 @@ export class TypeOrmUserStore implements UserStore {
     return this.repo.findOne({ where: { id } });
   }
 
-  async create(data: { email: string; passwordHash: string }): Promise<UserRecord> {
+  async create(data: {
+    email: string;
+    passwordHash: string;
+    emailVerifiedAt?: Date | null;
+  }): Promise<UserRecord> {
     return this.repo.save(this.repo.create(data));
   }
 }
