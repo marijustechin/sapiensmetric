@@ -11,12 +11,13 @@
 #   1. Core docs (including docs/email-verification.md), the six T-001
 #      discovery documents, and the four T-002 documents exist.
 #   2. The T-001, T-002, T-003, T-004, T-005, and T-006 task archives exist.
-#   3. tasks/current.md declares that no task is active, and the archived T-006
-#      record contains the exact title, the final approved status, the required
+#   3. The archived T-006 and T-008 records contain their exact titles and final
+#      approved statuses, and the archived T-006 record contains the required
 #      definition sections, the six exact browser routes, and the access-gate
-#      markers.
+#      markers; tasks/current.md declares that no task is active.
 #   4. docs/decisions.md contains D-016 (heading, and section-scoped date /
-#      O-006 note / verification access gate / review-correction markers).
+#      O-006 note / verification access gate / review-correction markers) and
+#      D-017 (conventional registration heading and markers).
 #   5. The completed T-006 outputs exist (mailer module, action-token service,
 #      CreateEmailActionTokens migration, six LT/EN pages, privacy document).
 #   6. The completed T-005 outputs exist.
@@ -26,6 +27,7 @@
 #   9. The T-003 implementation source outputs and pnpm-lock.yaml exist.
 #  10. Local markdown references (./paths and relative paths) do not point to
 #      missing files, where reasonably checkable.
+#  11. The T-008 authentication frontend outputs exist.
 #
 # Exit code 0 = all invariants hold; non-zero = at least one failed.
 
@@ -98,9 +100,9 @@ for a in "${archives[@]}"; do
   fi
 done
 
-# --- Invariant 3: T-006 is approved and archived; no active task ---------
-# The archived record's exact heading and final status are asserted literally,
-# and tasks/current.md must declare that no task is active.
+# --- Invariant 3: T-006 and T-008 archived; no active task ---------------
+# The archived records' exact headings and final statuses are asserted
+# literally, and tasks/current.md must declare that no task is active.
 
 t006_archive='tasks/done/2026-09-21-email-verification-and-password-reset-delivery.md'
 t006_heading='# T-006 — Email verification and password-reset delivery through generic SMTP (archived)'
@@ -118,6 +120,22 @@ else
   note_fail "T-006 archive does not contain the final approved status"
 fi
 
+t008_archive='tasks/done/2026-09-21-classical-authentication-frontend.md'
+t008_heading='# T-008 — Classical authentication frontend (LT/EN browser journey) (archived)'
+t008_status='- **Final status:** Approved (human review granted)'
+
+if grep -qxF -- "$t008_heading" "$t008_archive"; then
+  note_pass
+else
+  note_fail "T-008 archive does not contain the exact archived heading"
+fi
+
+if grep -qxF -- "$t008_status" "$t008_archive"; then
+  note_pass
+else
+  note_fail "T-008 archive does not contain the final approved status"
+fi
+
 if grep -qxF -- '# No active task' tasks/current.md; then
   note_pass
 else
@@ -129,6 +147,26 @@ if grep -qF 'No task is currently active' tasks/current.md; then
 else
   note_fail "tasks/current.md does not state that no task is currently active"
 fi
+
+t008_sections=(
+  '## Objective'
+  '## Binding context and constraints'
+  '## Exact route matrix'
+  '## Bootstrap rules'
+  '## Registration flow decision (D-017)'
+  '## Required outputs'
+  '## Non-goals'
+  '## Acceptance criteria'
+  '## Reading order'
+)
+
+for section in "${t008_sections[@]}"; do
+  if grep -qF "$section" "$t008_archive"; then
+    note_pass
+  else
+    note_fail "T-008 task definition missing section: $section"
+  fi
+done
 
 t006_sections=(
   '## Objective'
@@ -270,6 +308,30 @@ for marker in "${d016_review_markers[@]}"; do
     note_pass
   else
     note_fail "D-016 section missing review marker: $marker"
+  fi
+done
+
+# --- Invariant 4b: D-017 (conventional registration) is recorded ----------
+
+d017_heading='### D-017 — Conventional registration UX (verification on registration, explicit duplicate)'
+
+if grep -qxF -- "$d017_heading" docs/decisions.md; then
+  note_pass
+else
+  note_fail "docs/decisions.md does not contain the exact D-017 heading"
+fi
+
+d017_markers=(
+  'EMAIL_ALREADY_REGISTERED'
+  'VERIFICATION_EMAIL_DELIVERY_FAILED'
+  'account-enumeration resistance for conventional UX'
+)
+
+for marker in "${d017_markers[@]}"; do
+  if grep -qF "$marker" docs/decisions.md; then
+    note_pass
+  else
+    note_fail "docs/decisions.md D-017 missing marker: $marker"
   fi
 done
 
@@ -425,6 +487,42 @@ if [ -n "$candidates" ]; then
 $candidates
 EOF
 fi
+
+# --- Invariant 11: T-008 authentication frontend outputs exist ----------
+
+t008_outputs=(
+  apps/api/src/modules/auth/registration.controller.spec.ts
+  apps/web/lib/auth-types.ts
+  apps/web/lib/auth-api.ts
+  apps/web/lib/auth-navigation.ts
+  apps/web/lib/auth-navigation.test.ts
+  apps/web/lib/register-feedback.ts
+  apps/web/lib/register-feedback.test.ts
+  apps/web/app/_components/auth-provider.tsx
+  apps/web/app/_components/auth-nav.tsx
+  apps/web/app/_components/auth-forms.tsx
+  apps/web/app/_components/account-view.tsx
+  apps/web/app/layout.tsx
+  apps/web/app/page.tsx
+  apps/web/app/lt/layout.tsx
+  apps/web/app/en/layout.tsx
+  apps/web/app/lt/page.tsx
+  apps/web/app/en/page.tsx
+  apps/web/app/lt/auth/login/page.tsx
+  apps/web/app/en/auth/login/page.tsx
+  apps/web/app/lt/auth/register/page.tsx
+  apps/web/app/en/auth/register/page.tsx
+  apps/web/app/lt/account/page.tsx
+  apps/web/app/en/account/page.tsx
+)
+
+for out in "${t008_outputs[@]}"; do
+  if [ -e "$out" ]; then
+    note_pass
+  else
+    note_fail "T-008 output missing: $out"
+  fi
+done
 
 # --- Summary -----------------------------------------------------------
 

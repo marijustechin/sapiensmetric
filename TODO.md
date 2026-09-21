@@ -6,8 +6,10 @@ authorises work, and only one task is active at a time.
 
 ## Now
 
-- No task is currently active. T-006 (email verification and password-reset
-  delivery through generic SMTP) is approved and archived in `tasks/done/`.
+- No task is currently active. T-008 (classical authentication frontend, LT/EN
+  browser journey) is approved and archived in `tasks/done/`.
+- T-006 (email verification and password-reset delivery through generic SMTP)
+  is approved and archived in `tasks/done/`.
 - T-005 (TypeORM persistence and credentials authentication core) is complete
   and archived.
 

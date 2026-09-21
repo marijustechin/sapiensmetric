@@ -2,9 +2,15 @@ import { z } from 'zod';
 
 const emailSchema = z.string().email().max(320);
 
+export const localeSchema = z.enum(['lt', 'en']);
+
+export type Locale = z.infer<typeof localeSchema>;
+
 export const registerRequestSchema = z.object({
   email: emailSchema,
   password: z.string().min(12).max(128),
+  // Optional for backward compatibility; the API defaults to English.
+  locale: localeSchema.optional(),
 });
 
 export type RegisterRequest = z.infer<typeof registerRequestSchema>;
@@ -22,6 +28,30 @@ export const registerResponseSchema = z.object({
 
 export type RegisterResponse = z.infer<typeof registerResponseSchema>;
 
+// T-008: conventional registration outcomes. On an already-registered address
+// the API returns an explicit conflict (intentional trade of enumeration
+// resistance for clear UX, D-017); if the verification email cannot be
+// delivered after account creation, it returns a recoverable failure.
+export const registerConflictResponseSchema = z.object({
+  statusCode: z.literal(409),
+  code: z.literal('EMAIL_ALREADY_REGISTERED'),
+  message: z.string(),
+});
+
+export type RegisterConflictResponse = z.infer<
+  typeof registerConflictResponseSchema
+>;
+
+export const registerDeliveryFailureResponseSchema = z.object({
+  statusCode: z.literal(502),
+  code: z.literal('VERIFICATION_EMAIL_DELIVERY_FAILED'),
+  message: z.string(),
+});
+
+export type RegisterDeliveryFailureResponse = z.infer<
+  typeof registerDeliveryFailureResponseSchema
+>;
+
 export const loginResponseSchema = z.object({
   accessToken: z.string().min(1),
 });
@@ -36,10 +66,6 @@ export const meResponseSchema = z.object({
 export type MeResponse = z.infer<typeof meResponseSchema>;
 
 // --- T-006: email verification and password reset -------------------------
-
-export const localeSchema = z.enum(['lt', 'en']);
-
-export type Locale = z.infer<typeof localeSchema>;
 
 export const emailVerificationRequestSchema = z.object({
   email: emailSchema,

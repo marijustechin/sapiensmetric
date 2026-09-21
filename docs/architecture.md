@@ -99,6 +99,22 @@ API source layout additions:
 - `apps/api/src/database/cleanup-action-tokens.ts` — explicit retention cleanup.
 - `apps/api/src/smtp-smoke.ts` — opt-in live-SMTP smoke command.
 
+## T-008 authentication frontend (static export)
+
+T-008 adds the classical LT/EN browser journey over the existing auth API. It is
+a static-export Next.js frontend; no server route, API change, database change,
+or new dependency is introduced (the focused unit test uses the built-in Node
+test runner).
+
+- Frontend logic: `apps/web/lib/auth-api.ts` (typed fetch client using
+  `NEXT_PUBLIC_API_BASE_URL` with `credentials: 'include'`),
+  `apps/web/lib/auth-types.ts`, and `apps/web/lib/auth-navigation.ts`
+  (same-origin `returnTo` validation).
+- React state: `apps/web/app/_components/auth-provider.tsx` holds the access
+  token in memory only and performs the refresh + `/auth/me` bootstrap.
+- Routes: `/{lt,en}` home, `/{lt,en}/auth/{login,register,verify-email,forgot-password,reset-password}`,
+  and the protected `/{lt,en}/account`.
+
 ## Explicitly deferred beyond T-003
 
 - Google OAuth is T-007.

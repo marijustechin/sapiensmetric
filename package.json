@@ -10,7 +10,7 @@
   "scripts": {
     "lint": "eslint .",
     "typecheck": "pnpm --filter @sapiensmetric/contracts build && pnpm --filter @sapiensmetric/assessment build && pnpm -r --if-present run typecheck",
-    "test": "pnpm --filter @sapiensmetric/contracts build && pnpm --filter @sapiensmetric/contracts test && pnpm --filter @sapiensmetric/api test",
+    "test": "pnpm --filter @sapiensmetric/contracts build && pnpm --filter @sapiensmetric/contracts test && pnpm --filter @sapiensmetric/api test && pnpm --filter @sapiensmetric/web test",
     "build": "pnpm --filter @sapiensmetric/contracts build && pnpm --filter @sapiensmetric/assessment build && pnpm --filter @sapiensmetric/api build && pnpm --filter @sapiensmetric/web build",
     "verify": "pnpm lint && pnpm typecheck && pnpm test && pnpm build && bash scripts/verify.sh"
   },

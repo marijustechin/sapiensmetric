@@ -5,17 +5,18 @@ A serious cognitive-ability and knowledge-assessment platform.
 - Product: **Sapiens Metric**
 - Domain: **sapiensmetric.eu**
 - Languages: Lithuanian and English
-- Status: **Foundation + local MySQL + credentials auth + email flows.** A
-  buildable pnpm monorepo with a static web baseline, a NestJS/Fastify API
-  (health + `/auth/*`), shared Zod contracts, and a local MySQL 8.0.46
-  environment. No assessment items, scoring, or production deployment yet.
+- Status: **Foundation + local MySQL + credentials auth + email flows + auth
+  frontend.** A buildable pnpm monorepo with a static web app (Next.js App
+  Router, static export), a NestJS/Fastify API (health + `/auth/*`), shared Zod
+  contracts, and a local MySQL 8.0.46 environment. No assessment items,
+  scoring, or production deployment yet.
 
 The documentation and discovery baseline (T-001), the initial-instrument and
 item-provenance decision proposal (T-002), the application foundation scaffold
 (T-003), the local MySQL development environment (T-004), the credentials
-authentication core (T-005), and email verification/password-reset delivery
-through generic SMTP (T-006) are complete, approved, and archived in
-`tasks/done/`.
+authentication core (T-005), email verification/password-reset delivery through
+generic SMTP (T-006), and the classical LT/EN authentication frontend (T-008)
+are complete, approved, and archived in `tasks/done/`.
 
 T-006 (email verification and password-reset delivery through generic SMTP) is
 implemented, approved, and archived. See
@@ -34,13 +35,20 @@ the running API listener. The static web build fails closed if
 `NEXT_PUBLIC_API_BASE_URL` is missing or invalid. It is not production-ready and
 no real user data is used (O-006 remains open).
 
+The classical LT/EN authentication frontend (T-008) is approved and archived:
+registration, login, verification, password reset, session bootstrap, logout,
+and a protected account page over the existing auth API. Registration is
+conventional (D-017): a new address sends one verification email, and an existing
+address returns an explicit `EMAIL_ALREADY_REGISTERED` conflict.
+
 T-005 uses a single environment-file strategy: the Nest API loads only the
 root local `.env` (see below); no second API-specific env file is created.
 
 ## Repository layout
 
 - `apps/web` (`@sapiensmetric/web`) — Next.js App Router, static export,
-  Tailwind baseline.
+  Tailwind baseline, plus the LT/EN authentication frontend (login,
+  registration, email verification, password reset, account).
 - `apps/api` (`@sapiensmetric/api`) — NestJS + Fastify, `GET /health` plus
   `/auth/*` credentials auth core (see `docs/authentication.md`).
 - `packages/contracts` (`@sapiensmetric/contracts`) — shared Zod contracts.
@@ -50,7 +58,7 @@ root local `.env` (see below); no second API-specific env file is created.
 - `tasks/` — current task and archived tasks.
 - `TODO.md` — planning index (never authorises work).
 - `scripts/verify.sh` — dependency-free documentation-harness checks
-  (including the archived task records, the no-active-task state, and the
+  (including the archived task records, the T-008 frontend outputs, and the
   completed T-003/T-004/T-005/T-006 outputs).
 
 ## Local setup

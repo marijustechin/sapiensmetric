@@ -218,6 +218,34 @@ where noted. Update this file when a decision is made or changed.
 - This does not resolve O-006 and does not authorise real product use or a
   compliance claim.
 
+### D-017 — Conventional registration UX (verification on registration, explicit duplicate)
+- Registration is **conventional and clear** rather than non-enumerating. This
+  intentionally supersedes the earlier generic-`202` registration behaviour
+  (which returned the same response for new and existing addresses).
+- A **new** email address creates an unverified account and immediately issues
+  and sends exactly **one** verification email, reusing the existing
+  action-token issuance, cooldown, hashing, TTL, mailer, and transport-rejection
+  handling. The verification email locale follows the request `locale`
+  (`lt` | `en`; default `en` when omitted).
+- An **already-registered** email address returns an explicit
+  `409 { code: 'EMAIL_ALREADY_REGISTERED' }` conflict. This deliberately trades
+  registration account-enumeration resistance for conventional UX.
+- If verification delivery fails after account creation, the API returns a
+  recoverable `502 { code: 'VERIFICATION_EMAIL_DELIVERY_FAILED' }`, keeps the
+  account unverified, and removes the unusable token; the user then uses the
+  resend-verification flow. Registration never reports false success and never
+  retries delivery automatically.
+- Concurrency: at most one user record is created per address and at most one
+  verification email is issued; a concurrent loser receives the duplicate
+  conflict and sends nothing.
+- The unverified-user login/refresh/session access gate is unchanged.
+- Scope: implements only the conventional registration flow within the T-008
+  frontend/registration amendment. No Google OAuth, no assessment changes, and
+  no database-schema change.
+- Date: 2026-09-21.
+- Status: decided. Authorises only the explicitly scoped T-008 registration
+  amendment.
+
 ## Open decisions
 
 > T-001 note (2026-09-09): the discovery baseline (`docs/measurement-model.md`,

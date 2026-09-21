@@ -321,14 +321,18 @@ describe('AuthController (Docker-free HTTP)', () => {
     expect(res.json()).toEqual({ status: 'accepted' });
   });
 
-  it('returns the same generic 202 for a duplicate registration', async () => {
+  it('returns an explicit conflict for a duplicate registration', async () => {
     const res = await instance().inject({
       method: 'POST',
       url: '/auth/register',
       payload: { email, password },
     });
-    expect(res.statusCode).toBe(202);
-    expect(res.json()).toEqual({ status: 'accepted' });
+    expect(res.statusCode).toBe(409);
+    expect(res.json()).toEqual({
+      statusCode: 409,
+      code: 'EMAIL_ALREADY_REGISTERED',
+      message: expect.any(String),
+    });
   });
 
   it('handles concurrent registration without duplicates or leaks', async () => {
@@ -345,8 +349,8 @@ describe('AuthController (Docker-free HTTP)', () => {
         payload: { email: raceEmail, password },
       }),
     ]);
-    expect(a.statusCode).toBe(202);
-    expect(b.statusCode).toBe(202);
+    const statuses = [a.statusCode, b.statusCode].sort();
+    expect(statuses).toEqual([202, 409]);
     expect(userStore.countByEmail(raceEmail)).toBe(1);
   });
 

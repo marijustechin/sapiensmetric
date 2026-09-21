@@ -10,12 +10,23 @@ import { AppModule } from '../../app.module.js';
 import { loadAppConfig, AppConfig } from '../../config/env.js';
 import { createDataSource } from '../../database/data-source.js';
 import { ActionTokenService } from './action-token.service.js';
+import { MAIL_TRANSPORT, MailMessage, MailTransport } from '../mailer/transport.js';
+
+/** Records messages without opening a connection; real SMTP is never used. */
+class FakeTransport implements MailTransport {
+  messages: MailMessage[] = [];
+  send(message: MailMessage): Promise<void> {
+    this.messages.push(message);
+    return Promise.resolve();
+  }
+}
 
 describe('Auth (real-MySQL integration)', () => {
   let app: NestFastifyApplication;
   let dataSource: DataSource;
   let config: AppConfig;
   let actionTokens: ActionTokenService;
+  let transport: FakeTransport;
 
   const email = `integration-${Date.now()}@example.test`;
   const password = 'integration-password-123';
@@ -26,9 +37,15 @@ describe('Auth (real-MySQL integration)', () => {
     await dataSource.initialize();
     await dataSource.runMigrations();
 
+    // T-008: registration now issues a verification email, so the integration
+    // suite must override the transport to avoid any real SMTP connection.
+    transport = new FakeTransport();
     const moduleRef = await Test.createTestingModule({
       imports: [AppModule],
-    }).compile();
+    })
+      .overrideProvider(MAIL_TRANSPORT)
+      .useValue(transport)
+      .compile();
 
     app = moduleRef.createNestApplication<NestFastifyApplication>(
       new FastifyAdapter(),
@@ -319,5 +336,76 @@ describe('Auth (real-MySQL integration)', () => {
       payload: { email, password: newPassword },
     });
     expect(newLogin.statusCode).toBe(200);
+  });
+
+  it('returns an explicit conflict for a duplicate registration (real MySQL)', async () => {
+    const dupeEmail = `dupe-${Date.now()}@example.test`;
+    const first = await instance().inject({
+      method: 'POST',
+      url: '/auth/register',
+      payload: { email: dupeEmail, password },
+    });
+    expect(first.statusCode).toBe(202);
+
+    const second = await instance().inject({
+      method: 'POST',
+      url: '/auth/register',
+      payload: { email: dupeEmail, password },
+    });
+    expect(second.statusCode).toBe(409);
+    expect(second.json()).toEqual({
+      statusCode: 409,
+      code: 'EMAIL_ALREADY_REGISTERED',
+      message: expect.any(String),
+    });
+
+    const rows = (await dataSource.query(
+      'SELECT id FROM users WHERE email = ?',
+      [dupeEmail],
+    )) as { id: string }[];
+    expect(rows.length).toBe(1);
+
+    await dataSource.query(
+      'DELETE FROM email_action_tokens WHERE userId IN (SELECT id FROM users WHERE email = ?)',
+      [dupeEmail],
+    );
+    await dataSource.query('DELETE FROM users WHERE email = ?', [dupeEmail]);
+  });
+
+  it('creates one user and one verification email under concurrent registration (real MySQL)', async () => {
+    const raceEmail = `reg-race-${Date.now()}@example.test`;
+    const messagesBefore = transport.messages.length;
+
+    const [a, b] = await Promise.all([
+      instance().inject({
+        method: 'POST',
+        url: '/auth/register',
+        payload: { email: raceEmail, password },
+      }),
+      instance().inject({
+        method: 'POST',
+        url: '/auth/register',
+        payload: { email: raceEmail, password },
+      }),
+    ]);
+    expect([a.statusCode, b.statusCode].sort()).toEqual([202, 409]);
+
+    const rows = (await dataSource.query(
+      'SELECT id FROM users WHERE email = ?',
+      [raceEmail],
+    )) as { id: string }[];
+    expect(rows.length).toBe(1);
+
+    const tokens = (await dataSource.query(
+      "SELECT id FROM email_action_tokens WHERE userId = ? AND purpose = 'verify' AND consumedAt IS NULL",
+      [rows[0].id],
+    )) as { id: string }[];
+    expect(tokens.length).toBe(1);
+    expect(transport.messages.length - messagesBefore).toBe(1);
+
+    await dataSource.query('DELETE FROM email_action_tokens WHERE userId = ?', [
+      rows[0].id,
+    ]);
+    await dataSource.query('DELETE FROM users WHERE id = ?', [rows[0].id]);
   });
 });

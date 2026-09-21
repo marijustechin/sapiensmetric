@@ -1,9 +1,11 @@
 import {
   BadRequestException,
   Body,
+  ConflictException,
   Controller,
   Get,
   HttpCode,
+  HttpException,
   HttpStatus,
   Inject,
   Post,
@@ -22,6 +24,8 @@ import {
   passwordResetConfirmRequestSchema,
   passwordResetRequestSchema,
   passwordResetResponseSchema,
+  registerConflictResponseSchema,
+  registerDeliveryFailureResponseSchema,
   registerRequestSchema,
   registerResponseSchema,
   verificationConfirmRequestSchema,
@@ -74,7 +78,35 @@ export class AuthController {
     if (!parsed.success) {
       throw new BadRequestException();
     }
-    await this.auth.register(parsed.data.email, parsed.data.password);
+    const outcome = await this.auth.register(
+      parsed.data.email,
+      parsed.data.password,
+      parsed.data.locale ?? 'en',
+    );
+    if (outcome.status === 'duplicate') {
+      // Conventional, explicit conflict (D-017): this intentionally reveals
+      // that the address is already registered.
+      throw new ConflictException(
+        registerConflictResponseSchema.parse({
+          statusCode: 409,
+          code: 'EMAIL_ALREADY_REGISTERED',
+          message: 'Email is already registered.',
+        }),
+      );
+    }
+    if (outcome.status === 'delivery-failed') {
+      // The account exists but stays unverified; the user can request a new
+      // verification email through the resend flow.
+      throw new HttpException(
+        registerDeliveryFailureResponseSchema.parse({
+          statusCode: 502,
+          code: 'VERIFICATION_EMAIL_DELIVERY_FAILED',
+          message:
+            'Account created, but the verification email could not be sent. Use resend verification.',
+        }),
+        HttpStatus.BAD_GATEWAY,
+      );
+    }
     return registerResponseSchema.parse({ status: 'accepted' });
   }
 

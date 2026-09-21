@@ -27,9 +27,12 @@ documentation-harness invariants only:
   work), the T-001 discovery documents, and the T-002 documents exist;
 - the T-001, T-002, T-003, T-004, T-005, and T-006 task archives exist under
   `tasks/done/`;
-- `tasks/current.md` declares that no task is active, and the archived T-006
-  record exists with its final approved status and the required T-006 definition
-  sections;
+- the archived T-006 and T-008 records exist with their final approved statuses
+  and the required definition sections, and `tasks/current.md` declares that no
+  task is active;
+- the T-008 authentication frontend outputs exist (typed API client, safe
+  `returnTo` helper and its unit test, auth provider/nav/forms/account
+  components, and the LT/EN login, register, and account routes);
 - `docs/decisions.md` contains the exact D-016 heading, and (scoped to the
   D-016 section itself) its 2026-09-18 date, the O-006 note, and the
   verification access gate;
@@ -58,7 +61,8 @@ harness:
 - `pnpm lint` — linting (ESLint, flat config);
 - `pnpm typecheck` — TypeScript type checking across all packages;
 - `pnpm test` — unit tests (health contract, auth contracts, API health
-  endpoint, auth HTTP routes; Docker-free and `.env`-free);
+  endpoint, auth HTTP routes, the conventional registration flow, and the web
+  frontend unit tests; Docker-free and `.env`-free);
 - `pnpm build` — production builds (web static export, API build, package
   builds).
 
@@ -124,6 +128,46 @@ message only to the configured controlled recipient and is excluded from
 No public/end-user data is collected. No raw token, SMTP credential, password,
 or verification/reset URL appears in logs or test output. O-006 remains open
 (see `docs/email-verification.md`).
+
+## T-008 frontend testing boundary
+
+The authentication frontend is a static-export Next.js app; it has no DOM test
+runner and adds no dependency. Its focused unit test uses the built-in Node test
+runner only:
+
+- `pnpm --filter @sapiensmetric/web test` — `node --test lib/*.test.ts`,
+  asserting that the safe `returnTo` helper accepts same-origin absolute paths
+  and falls back for external, protocol-relative, backslash, control-character,
+  and non-string inputs.
+
+The full route matrix is verified by the static web build (`pnpm build`), and
+`scripts/verify.sh` asserts the frontend outputs exist. Interactive behaviour was
+covered by the manual browser plan recorded in the archived T-008 task definition
+(`tasks/done/2026-09-21-classical-authentication-frontend.md`).
+
+## T-008 conventional registration testing boundary (D-017)
+
+Automated tests exercise the conventional registration flow with a fake /
+in-memory mail transport only. **Real email sending is not part of automated
+tests**; no SMTP connection is opened and no `.env` value is read.
+
+- `registration.controller.spec.ts` (Docker-free) — a new registration creates
+  an unverified account and issues exactly one verification email and one action
+  token; the email locale follows the request (`lt`/`en`, default `en`); a
+  duplicate returns the explicit `409 EMAIL_ALREADY_REGISTERED` with no second
+  email or token; concurrent registration yields one user, one `202`, one `409`,
+  and exactly one email; a transport failure returns the recoverable
+  `502 VERIFICATION_EMAIL_DELIVERY_FAILED`, leaves the account unverified with
+  no usable token, preserves the login gate, and recovers through the
+  resend-verification flow.
+- `auth.controller.spec.ts` — duplicate registration returns the explicit
+  conflict; concurrent registration yields one `202` and one `409` with a single
+  user record.
+- `auth.integration.spec.ts` (real MySQL, transport overridden with a fake) —
+  duplicate conflict and concurrent registration create exactly one user record
+  and exactly one verification token.
+- `apps/web/lib/register-feedback.test.ts` — the LT/EN register feedback mapping
+  for every outcome (message and which navigation links are shown).
 
 ## Workflow expectations
 

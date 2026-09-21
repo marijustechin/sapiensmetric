@@ -6,6 +6,7 @@ import {
 } from '@nestjs/platform-fastify';
 import fastifyCookie from '@fastify/cookie';
 import { randomUUID } from 'node:crypto';
+import type { Locale } from '@sapiensmetric/contracts';
 import { APP_CONFIG, AppConfig } from '../../config/env.js';
 import { AuthController } from './auth.controller.js';
 import { AuthService } from './auth.service.js';
@@ -301,6 +302,11 @@ class InMemoryActionTokenStore implements ActionTokenStore {
       (t) => !t.consumedAt && t.expiresAt.getTime() >= Date.now(),
     ).length;
   }
+
+  /** Test-only: drop all tokens so the surrounding cooldown starts fresh. */
+  reset(): void {
+    this.tokens.clear();
+  }
 }
 
 class CountingPasswordService implements PasswordService {
@@ -378,12 +384,21 @@ function instance(app: HttpApp) {
   return app.getHttpAdapter().getInstance();
 }
 
-async function register(app: HttpApp, email: string): Promise<void> {
-  await instance(app).inject({
+async function register(
+  h: Harness,
+  email: string,
+  locale: Locale = 'en',
+): Promise<void> {
+  await instance(h.app).inject({
     method: 'POST',
     url: '/auth/register',
-    payload: { email, password: PASSWORD },
+    payload: { email, password: PASSWORD, locale },
   });
+  // Registration now issues and sends a verification email (D-017). Tests that
+  // target the explicit request endpoint reset the double so they start from a
+  // clean transport and an unconsumed cooldown.
+  h.transport.messages.length = 0;
+  h.tokens.reset();
 }
 
 function tokenFrom(messages: MailMessage[], kind: string): string {
@@ -419,7 +434,7 @@ describe('T-006 email flow (Docker-free, fake transport)', () => {
   });
 
   it('does not issue a verification token for an already verified account', async () => {
-    await register(h.app, 'verified@example.test');
+    await register(h, 'verified@example.test');
     const user = await h.users.findByEmail('verified@example.test');
     h.users.markVerified(user!.id);
     const res = await instance(h.app).inject({
@@ -432,7 +447,7 @@ describe('T-006 email flow (Docker-free, fake transport)', () => {
   });
 
   it('verifies an eligible account via the fragment link and then allows login', async () => {
-    await register(h.app, 'user@example.test');
+    await register(h, 'user@example.test');
     const request = await instance(h.app).inject({
       method: 'POST',
       url: '/auth/email-verification/request',
@@ -470,7 +485,7 @@ describe('T-006 email flow (Docker-free, fake transport)', () => {
   });
 
   it('enforces the per-user-and-purpose cooldown without a second send', async () => {
-    await register(h.app, 'cooldown@example.test');
+    await register(h, 'cooldown@example.test');
     const body = { email: 'cooldown@example.test', locale: 'en' };
     const first = await instance(h.app).inject({
       method: 'POST',
@@ -498,7 +513,7 @@ describe('T-006 email flow (Docker-free, fake transport)', () => {
         remoteAddress: ip,
       });
     }
-    await register(h.app, 'limited@example.test');
+    await register(h, 'limited@example.test');
     const res = await instance(h.app).inject({
       method: 'POST',
       url: '/auth/email-verification/request',
@@ -511,7 +526,7 @@ describe('T-006 email flow (Docker-free, fake transport)', () => {
   });
 
   it('rolls back a transport rejection: no usable token, no cooldown consumed', async () => {
-    await register(h.app, 'rejected@example.test');
+    await register(h, 'rejected@example.test');
     const body = { email: 'rejected@example.test', locale: 'en' };
 
     h.transport.failNext = true;
@@ -542,7 +557,7 @@ describe('T-006 email flow (Docker-free, fake transport)', () => {
   });
 
   it('never returns a token, URL, or email address in responses', async () => {
-    await register(h.app, 'quiet@example.test');
+    await register(h, 'quiet@example.test');
     const res = await instance(h.app).inject({
       method: 'POST',
       url: '/auth/email-verification/request',
@@ -632,7 +647,7 @@ describe('T-006 email flow (Docker-free, fake transport)', () => {
   });
 
   it('password reset changes the password, consumes the token, and revokes all sessions', async () => {
-    await register(h.app, 'reset@example.test');
+    await register(h, 'reset@example.test');
     const user = await h.users.findByEmail('reset@example.test');
     h.users.markVerified(user!.id);
 
@@ -718,7 +733,7 @@ describe('T-006 email flow (Docker-free, fake transport)', () => {
   });
 
   it('uses a fragment (never a query string) for reset links', async () => {
-    await register(h.app, 'fragment@example.test');
+    await register(h, 'fragment@example.test');
     await instance(h.app).inject({
       method: 'POST',
       url: '/auth/password-reset/request',
@@ -743,7 +758,7 @@ describe('T-006 email flow (Docker-free, fake transport)', () => {
       }),
     ];
     try {
-      await register(h.app, 'logcheck@example.test');
+      await register(h, 'logcheck@example.test');
       h.transport.failNext = true;
       await instance(h.app).inject({
         method: 'POST',

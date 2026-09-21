@@ -11,6 +11,7 @@ import { PASSWORD_SERVICE, PasswordService } from './password.service.js';
 import { SESSION_STORE, SessionStore } from './sessions/session-store.js';
 import {
   USER_STORE,
+  UserRecord,
   UserStore,
   isDuplicateEntryError,
 } from '../users/user-store.js';
@@ -30,6 +31,12 @@ const REQUEST_MAX_PER_IP = 3;
  */
 const RESET_CONFIRM_WINDOW_MS = 60 * 60 * 1000;
 const RESET_CONFIRM_MAX_PER_IP = 5;
+
+/** Result of the conventional registration flow (D-017). */
+export type RegisterOutcome =
+  | { status: 'created' }
+  | { status: 'duplicate' }
+  | { status: 'delivery-failed' };
 
 @Injectable()
 export class AuthService {
@@ -58,23 +65,69 @@ export class AuthService {
     );
   }
 
-  async register(email: string, password: string): Promise<void> {
+  /**
+   * Issue a verification action token and send the verification email. Shared
+   * by the registration flow (D-017) and the resend-verification request
+   * endpoint so the token/cooldown/TTL/mailer/transport-rejection handling has
+   * a single implementation. A transport rejection removes the token so none is
+   * usable and leaves the cooldown unconsumed; only a safe warning is logged.
+   */
+  private async issueAndSendVerification(
+    userId: string,
+    email: string,
+    locale: Locale,
+  ): Promise<'sent' | 'failed'> {
+    const issued = await this.actionTokens.issue(userId, 'verify');
+    if (issued.status === 'cooldown') {
+      // A token was issued recently, so an email is already on its way.
+      return 'sent';
+    }
+    try {
+      await this.mailer.sendVerificationEmail(email, issued.rawToken, locale);
+      return 'sent';
+    } catch {
+      await this.actionTokens.revoke(issued.id);
+      this.logger.warn('Email verification delivery failed.');
+      return 'failed';
+    }
+  }
+
+  /**
+   * Conventional registration (D-017): a new address creates an unverified
+   * account and immediately issues one verification email; an existing address
+   * is reported as a duplicate (explicit conflict) rather than silently
+   * accepted.
+   */
+  async register(
+    email: string,
+    password: string,
+    locale: Locale,
+  ): Promise<RegisterOutcome> {
     const normalized = this.normalizeEmail(email);
     const existing = await this.users.findByEmail(normalized);
     if (existing) {
-      return;
+      return { status: 'duplicate' };
     }
     const passwordHash = await this.passwords.hash(password);
+    let user: UserRecord;
     try {
-      await this.users.create({ email: normalized, passwordHash });
+      user = await this.users.create({ email: normalized, passwordHash });
     } catch (error) {
       // Concurrent registration of the same email: the unique constraint
-      // winning is equivalent to "already exists" and returns the same 202.
+      // winning is the duplicate outcome and must not trigger another email.
       if (isDuplicateEntryError(error)) {
-        return;
+        return { status: 'duplicate' };
       }
       throw error;
     }
+    const delivery = await this.issueAndSendVerification(
+      user.id,
+      user.email,
+      locale,
+    );
+    return delivery === 'sent'
+      ? { status: 'created' }
+      : { status: 'delivery-failed' };
   }
 
   /**
@@ -189,22 +242,7 @@ export class AuthService {
     if (!user || user.emailVerifiedAt) {
       return;
     }
-    const issued = await this.actionTokens.issue(user.id, 'verify');
-    if (issued.status === 'cooldown') {
-      return;
-    }
-    try {
-      await this.mailer.sendVerificationEmail(
-        user.email,
-        issued.rawToken,
-        locale,
-      );
-    } catch {
-      // Transport rejection before SMTP acceptance: remove the token so none is
-      // usable, and leave the cooldown unconsumed. Log only a safe message.
-      await this.actionTokens.revoke(issued.id);
-      this.logger.warn('Email verification delivery failed.');
-    }
+    await this.issueAndSendVerification(user.id, user.email, locale);
   }
 
   async confirmEmailVerification(rawToken: string): Promise<void> {

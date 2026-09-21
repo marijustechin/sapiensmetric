@@ -1,8 +1,9 @@
-# Authentication (T-005 + T-006) — local-development core
+# Authentication (T-005 + T-006 + T-008) — local-development core
 
-Local-development credentials authentication core (T-005) plus email
-verification and password-reset delivery through generic SMTP (T-006) for
-Sapiens Metric. Scoped to D-013/D-014/D-015/D-016 in `docs/decisions.md`. It is
+Local-development credentials authentication core (T-005), email verification
+and password-reset delivery through generic SMTP (T-006), and the classical
+LT/EN authentication frontend (T-008) for Sapiens Metric. Scoped to
+D-013/D-014/D-015/D-016 in `docs/decisions.md`. It is
 **not production-ready**, makes no legal or compliance claim, and must not be
 used for real user data before the O-006 privacy review. See
 `docs/email-verification.md`.
@@ -11,8 +12,10 @@ used for real user data before the O-006 privacy review. See
 
 - Local MySQL only (`127.0.0.1:3307`, the non-root T-004 application user).
 - No Google OAuth, no deployment.
-- Registration returns a generic `202` for both new and existing addresses and
-  does not issue a session (no registration enumeration).
+- Registration is conventional (D-017): a new address creates an unverified
+  account and immediately sends one verification email; an already-registered
+  address returns an explicit `409 EMAIL_ALREADY_REGISTERED` conflict. This
+  intentionally trades registration enumeration resistance for clear UX.
 - Login returns a generic `401` for invalid credentials. An **unverified** user
   receives the same generic `401` (access gate; see below).
 - Email verification and password reset are implemented via standard
@@ -85,7 +88,10 @@ environment.
 
 ## Endpoints
 
-- `POST /auth/register` → `202 { status: 'accepted' }`
+- `POST /auth/register` → `202 { status: 'accepted' }` (account created and one
+  verification email issued/sent); `409 { code: 'EMAIL_ALREADY_REGISTERED' }`
+  for an existing address; `502 { code: 'VERIFICATION_EMAIL_DELIVERY_FAILED' }`
+  when the account was created but the verification email could not be sent
 - `POST /auth/login` → `200 { accessToken }` + HttpOnly refresh cookie (or
   generic 401, including for unverified users)
 - `POST /auth/refresh` → `200 { accessToken }` + rotated refresh cookie (or 401)
@@ -101,6 +107,28 @@ environment.
 Request bodies use shared Zod contracts. Request endpoints take a `locale`
 restricted to `lt` or `en`. Reset confirmation enforces the 12–128 character
 password rules.
+
+## Registration flow (T-008, D-017)
+
+Registration is conventional and clear rather than non-enumerating:
+
+- **New address:** the account is created unverified and exactly one
+  verification email is issued and sent, reusing the existing action-token
+  issuance, 15-minute cooldown, hashing, TTL, mailer, and transport-rejection
+  handling. The optional `locale` (`lt` | `en`, default `en`) selects the mail
+  copy and link route.
+- **Existing address:** `409 { statusCode: 409, code:
+  'EMAIL_ALREADY_REGISTERED', message }`. This deliberately reveals that the
+  address is registered (D-017).
+- **Delivery failure after creation:** `502 { statusCode: 502, code:
+  'VERIFICATION_EMAIL_DELIVERY_FAILED', message }`. The account remains
+  unverified, the unusable token is removed, and the user recovers via the
+  resend-verification flow. Registration never reports false success and never
+  retries delivery automatically.
+- **Concurrency:** at most one user record and at most one verification email
+  per address; a concurrent loser receives the duplicate conflict and sends
+  nothing.
+- The unverified login/refresh/session gate below is unchanged.
 
 ## Verification access gate (D-016)
 
@@ -134,6 +162,28 @@ Six static pages:
 (`#token=...`), never a query string; pages read the fragment client-side,
 remove it from browser history, and call the confirmation endpoints only after
 an explicit user action. `GET`/prefetch never consume a token.
+
+## Browser frontend (T-008, static export)
+
+T-008 adds the classical LT/EN frontend over these endpoints. All pages remain
+static-export client components; the only configured API base is
+`NEXT_PUBLIC_API_BASE_URL` (no host is hardcoded).
+
+- Access token: held **in memory only** (a React ref). It is never written to
+  `localStorage`, `sessionStorage`, the URL, logs, or rendered HTML.
+- Session bootstrap: `POST /auth/refresh` using the HttpOnly cookie
+  (`credentials: 'include'`). A `401` means unauthenticated; a network failure or
+  `5xx` is a recoverable error with an explicit retry (never an automatic
+  redirect to login).
+- On refresh success, `GET /auth/me` (Bearer) supplies the account identity.
+- Protected route: only `/{lt,en}/account` (client-side gate); other auth pages
+  remain public.
+- `returnTo` is same-origin-validated (`apps/web/lib/auth-navigation.ts`): an
+  external, protocol-relative, or malformed value falls back to the account path.
+- Logout calls `POST /auth/logout` (Origin-checked) and clears the in-memory
+  token.
+
+T-008 introduces no new auth capability and no new endpoint.
 
 ## Commands
 
