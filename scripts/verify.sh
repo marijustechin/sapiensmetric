@@ -14,10 +14,11 @@
 #   3. The archived T-006, T-007, and T-008 records contain their exact titles
 #      and final approved statuses; the archived T-006 record contains the
 #      required definition sections, the six exact browser routes, and the
-#      access-gate markers; tasks/current.md declares that no task is active.
+#      access-gate markers; tasks/current.md declares T-009 active.
 #   4. docs/decisions.md contains D-016 (heading, and section-scoped date /
 #      O-006 note / verification access gate / review-correction markers),
-#      D-017 (conventional registration), and D-018 (Google OIDC).
+#      D-017 (conventional registration), D-018 (Google OIDC), and D-019
+#      (next-intl UI internationalisation).
 #   5. The completed T-006 outputs exist (mailer module, action-token service,
 #      CreateEmailActionTokens migration, six LT/EN pages, privacy document).
 #   6. The completed T-005 outputs exist.
@@ -29,6 +30,8 @@
 #      missing files, where reasonably checkable.
 #  11. The T-008 authentication frontend outputs exist.
 #  12. The T-007 Google sign-in outputs exist.
+#  13. The T-009 next-intl i18n outputs exist (config, catalogues, consolidated
+#      locale routes, pure locale helpers and their tests).
 #
 # Exit code 0 = all invariants hold; non-zero = at least one failed.
 
@@ -153,16 +156,16 @@ else
   note_fail "T-007 archive does not contain the final approved status"
 fi
 
-if grep -qxF -- '# No active task' tasks/current.md; then
+if grep -qxF -- '# T-009 — next-intl bilingual frontend refactor (LT/EN UI) (active)' tasks/current.md; then
   note_pass
 else
-  note_fail "tasks/current.md does not declare '# No active task'"
+  note_fail "tasks/current.md does not declare T-009 as the active task"
 fi
 
-if grep -qF 'No task is currently active' tasks/current.md; then
+if grep -qF 'next-intl' tasks/current.md; then
   note_pass
 else
-  note_fail "tasks/current.md does not state that no task is currently active"
+  note_fail "tasks/current.md does not scope the next-intl work"
 fi
 
 t007_sections=(
@@ -395,6 +398,31 @@ for marker in "${d018_markers[@]}"; do
   fi
 done
 
+# --- Invariant 4d: D-019 (next-intl UI i18n) is recorded ------------------
+
+d019_heading='### D-019 — UI internationalisation with next-intl'
+
+if grep -qxF -- "$d019_heading" docs/decisions.md; then
+  note_pass
+else
+  note_fail "docs/decisions.md does not contain the exact D-019 heading"
+fi
+
+d019_markers=(
+  'next-intl'
+  'messages/lt.json'
+  'API/database assessment-item model'
+  'Russian'
+)
+
+for marker in "${d019_markers[@]}"; do
+  if grep -qF "$marker" docs/decisions.md; then
+    note_pass
+  else
+    note_fail "docs/decisions.md D-019 missing marker: $marker"
+  fi
+done
+
 # --- Invariant 5: completed T-006 outputs exist ---------------------------
 
 t006_outputs=(
@@ -411,12 +439,9 @@ t006_outputs=(
   apps/api/src/database/cleanup-action-tokens.ts
   apps/api/src/smtp-smoke.ts
   docs/email-verification.md
-  apps/web/app/lt/auth/verify-email/page.tsx
-  apps/web/app/en/auth/verify-email/page.tsx
-  apps/web/app/lt/auth/forgot-password/page.tsx
-  apps/web/app/en/auth/forgot-password/page.tsx
-  apps/web/app/lt/auth/reset-password/page.tsx
-  apps/web/app/en/auth/reset-password/page.tsx
+  "apps/web/app/[locale]/auth/verify-email/page.tsx"
+  "apps/web/app/[locale]/auth/forgot-password/page.tsx"
+  "apps/web/app/[locale]/auth/reset-password/page.tsx"
 )
 
 for out in "${t006_outputs[@]}"; do
@@ -488,8 +513,8 @@ t003_outputs=(
   pnpm-lock.yaml
   apps/web/package.json
   apps/web/next.config.mjs
-  apps/web/app/page.tsx
-  apps/web/app/layout.tsx
+  "apps/web/app/(chooser)/page.tsx"
+  "apps/web/app/[locale]/layout.tsx"
   apps/api/package.json
   apps/api/src/main.ts
   apps/api/src/app.module.ts
@@ -549,6 +574,8 @@ EOF
 fi
 
 # --- Invariant 11: T-008 authentication frontend outputs exist ----------
+# T-009 consolidated the LT/EN route duplication into the `app/[locale]` and
+# `app/(chooser)` structure; the shared lib/components remain.
 
 t008_outputs=(
   apps/api/src/modules/auth/registration.controller.spec.ts
@@ -562,18 +589,13 @@ t008_outputs=(
   apps/web/app/_components/auth-nav.tsx
   apps/web/app/_components/auth-forms.tsx
   apps/web/app/_components/account-view.tsx
-  apps/web/app/layout.tsx
-  apps/web/app/page.tsx
-  apps/web/app/lt/layout.tsx
-  apps/web/app/en/layout.tsx
-  apps/web/app/lt/page.tsx
-  apps/web/app/en/page.tsx
-  apps/web/app/lt/auth/login/page.tsx
-  apps/web/app/en/auth/login/page.tsx
-  apps/web/app/lt/auth/register/page.tsx
-  apps/web/app/en/auth/register/page.tsx
-  apps/web/app/lt/account/page.tsx
-  apps/web/app/en/account/page.tsx
+  "apps/web/app/(chooser)/layout.tsx"
+  "apps/web/app/(chooser)/page.tsx"
+  apps/web/app/[locale]/layout.tsx
+  apps/web/app/[locale]/page.tsx
+  apps/web/app/[locale]/auth/login/page.tsx
+  apps/web/app/[locale]/auth/register/page.tsx
+  apps/web/app/[locale]/account/page.tsx
 )
 
 for out in "${t008_outputs[@]}"; do
@@ -615,6 +637,47 @@ for out in "${t007_outputs[@]}"; do
     note_fail "T-007 output missing: $out"
   fi
 done
+
+# --- Invariant 13: T-009 next-intl i18n outputs exist --------------------
+
+t009_outputs=(
+  apps/web/i18n/routing.ts
+  apps/web/i18n/request.ts
+  apps/web/i18n/navigation.ts
+  apps/web/messages/lt.json
+  apps/web/messages/en.json
+  apps/web/lib/locale-navigation.ts
+  apps/web/lib/locale-navigation.test.ts
+  apps/web/lib/messages.test.ts
+  "apps/web/app/[locale]/layout.tsx"
+  "apps/web/app/[locale]/page.tsx"
+  "apps/web/app/[locale]/account/page.tsx"
+  "apps/web/app/[locale]/auth/login/page.tsx"
+  "apps/web/app/[locale]/auth/register/page.tsx"
+  "apps/web/app/[locale]/auth/verify-email/page.tsx"
+  "apps/web/app/[locale]/auth/forgot-password/page.tsx"
+  "apps/web/app/[locale]/auth/reset-password/page.tsx"
+)
+
+for out in "${t009_outputs[@]}"; do
+  if [ -e "$out" ]; then
+    note_pass
+  else
+    note_fail "T-009 output missing: $out"
+  fi
+done
+
+if grep -qF "next-intl" apps/web/package.json; then
+  note_pass
+else
+  note_fail "apps/web/package.json does not depend on next-intl"
+fi
+
+if grep -qF "createNextIntlPlugin" apps/web/next.config.mjs; then
+  note_pass
+else
+  note_fail "next.config.mjs does not wire the next-intl plugin"
+fi
 
 # --- Summary -----------------------------------------------------------
 

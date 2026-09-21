@@ -1,26 +1,19 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 import * as authApi from '../../lib/auth-api';
-import {
-  googleButtonLabel,
-  googleStartUrl,
-  googleUnavailableNote,
-} from '../../lib/google-auth';
-import type { Locale } from '../../lib/auth-types';
+import { googleStartUrl } from '../../lib/google-auth';
+import type { AppLocale } from '../../lib/locale-navigation';
 
 /**
  * Navigates to the API Google start endpoint. The button is hidden while the
  * availability check is in flight and shows a clear note when Google is not
  * configured, so password authentication is never blocked by it.
  */
-export function GoogleSignInButton({
-  locale,
-  returnTo,
-}: {
-  locale: Locale;
-  returnTo?: string;
-}) {
+export function GoogleSignInButton({ returnTo }: { returnTo?: string }) {
+  const t = useTranslations('Google');
+  const locale = useLocale() as AppLocale;
   const [available, setAvailable] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -40,9 +33,7 @@ export function GoogleSignInButton({
   }
 
   if (!available) {
-    return (
-      <p className="text-sm text-gray-600">{googleUnavailableNote(locale)}</p>
-    );
+    return <p className="text-sm text-gray-600">{t('unavailable')}</p>;
   }
 
   return (
@@ -50,7 +41,7 @@ export function GoogleSignInButton({
       href={googleStartUrl(authApi.apiBaseUrl(), locale, returnTo)}
       className="border border-gray-500 px-3 py-1 text-center"
     >
-      {googleButtonLabel(locale)}
+      {t('button')}
     </a>
   );
 }

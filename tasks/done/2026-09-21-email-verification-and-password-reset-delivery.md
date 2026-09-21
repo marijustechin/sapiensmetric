@@ -256,13 +256,12 @@ The T-006 outputs below now exist; the harness asserts their presence.
   nullable `users.emailVerifiedAt` timestamp and the dedicated action-token
   table (migrations only; `synchronize` stays disabled).
 - Shared Zod contracts for the four request/confirm schemas.
-- Six exact web page files:
-  - `apps/web/app/lt/auth/verify-email/page.tsx`
-  - `apps/web/app/en/auth/verify-email/page.tsx`
-  - `apps/web/app/lt/auth/forgot-password/page.tsx`
-  - `apps/web/app/en/auth/forgot-password/page.tsx`
-  - `apps/web/app/lt/auth/reset-password/page.tsx`
-  - `apps/web/app/en/auth/reset-password/page.tsx`
+- Six exact web page files, consolidated by T-009 into three locale-aware
+  route files that generate both `lt` and `en` (originally one file per locale
+  under the web app):
+  - `apps/web/app/[locale]/auth/verify-email/page.tsx`
+  - `apps/web/app/[locale]/auth/forgot-password/page.tsx`
+  - `apps/web/app/[locale]/auth/reset-password/page.tsx`
 - Tests using a fake transport plus an explicit, opt-in SMTP smoke command.
 - The privacy gate document (`docs/email-verification.md`).
 - Documentation updates (`docs/architecture.md`, `docs/testing.md`,

@@ -56,11 +56,3 @@ export function loginHref(locale: Locale, returnTo?: string): string {
   }
   return `${base}?returnTo=${encodeURIComponent(returnTo)}`;
 }
-
-export function accountHref(locale: Locale): string {
-  return `/${locale}/account`;
-}
-
-export function homeHref(locale: Locale): string {
-  return `/${locale}`;
-}

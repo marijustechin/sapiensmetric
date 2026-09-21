@@ -7,7 +7,9 @@
  * kept in sync manually and must match the Zod contracts.
  */
 
-export type Locale = 'lt' | 'en';
+import type {AppLocale} from './locale-navigation';
+
+export type Locale = AppLocale;
 
 export interface AuthUser {
   id: string;

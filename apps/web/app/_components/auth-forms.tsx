@@ -1,66 +1,18 @@
 'use client';
 
-import Link from 'next/link';
+import { Link } from '../../i18n/navigation';
 import { useRouter } from 'next/navigation';
+import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useState, type FormEvent } from 'react';
 import * as authApi from '../../lib/auth-api';
 import { sanitizeReturnTo } from '../../lib/auth-navigation';
+import type { AppLocale } from '../../lib/locale-navigation';
 import {
   registerFeedback,
   type RegisterFeedback,
 } from '../../lib/register-feedback';
 import { useAuth } from './auth-provider';
 import { GoogleSignInButton } from './google-sign-in-button';
-import type { Locale } from '../../lib/auth-types';
-
-const COPY = {
-  lt: {
-    emailLabel: 'El. paštas',
-    passwordLabel: 'Slaptažodis',
-    newPassword: 'Naujas slaptažodis',
-    login: 'Prisijungti',
-    register: 'Registruotis',
-    resend: 'Siųsti patvirtinimo nuorodą',
-    verify: 'Patvirtinti el. pašto adresą',
-    requestReset: 'Siųsti slaptažodžio atkūrimo nuorodą',
-    confirmReset: 'Pakeisti slaptažodį',
-    forgotLink: 'Pamiršau slaptažodį',
-    registerLink: 'Sukurti paskyrą',
-    loginLink: 'Grįžti į prisijungimą',
-    generic: 'Jei paskyra atitinka sąlygas, netrukus gausite el. laišką.',
-    verified: 'El. pašto adresas patvirtintas. Galite prisijungti.',
-    resetDone: 'Slaptažodis pakeistas. Galite prisijungti.',
-    invalidLink: 'Nuoroda netinkama arba pasibaigusi.',
-    missingToken: 'Šiai nuorodai trūksta žymens.',
-    invalidCredentials: 'Neteisingi prisijungimo duomenys.',
-    invalidInput: 'Patikrinkite įvestus duomenis (slaptažodis 12–128 simbolių).',
-    googleError: 'Prisijungimas su Google nepavyko. Bandykite dar kartą.',
-    error: 'Nepavyko. Bandykite dar kartą.',
-  },
-  en: {
-    emailLabel: 'Email',
-    passwordLabel: 'Password',
-    newPassword: 'New password',
-    login: 'Sign in',
-    register: 'Register',
-    resend: 'Send verification link',
-    verify: 'Verify email address',
-    requestReset: 'Send password-reset link',
-    confirmReset: 'Change password',
-    forgotLink: 'Forgot password',
-    registerLink: 'Create an account',
-    loginLink: 'Back to sign in',
-    generic: 'If the account is eligible, an email will arrive shortly.',
-    verified: 'Email address verified. You can sign in.',
-    resetDone: 'Password changed. You can sign in.',
-    invalidLink: 'This link is invalid or has expired.',
-    missingToken: 'This link is missing its token.',
-    invalidCredentials: 'Invalid sign-in details.',
-    invalidInput: 'Check the entered details (password must be 12–128 characters).',
-    googleError: 'Google sign-in did not complete. Please try again.',
-    error: 'Something went wrong. Please try again.',
-  },
-} as const;
 
 /** Read the action token from the URL fragment only; never from a query string. */
 function useFragmentToken(): { token: string | null; ready: boolean } {
@@ -84,8 +36,9 @@ function useFragmentToken(): { token: string | null; ready: boolean } {
   return { token, ready };
 }
 
-export function LoginForm({ locale }: { locale: Locale }) {
-  const c = COPY[locale];
+export function LoginForm() {
+  const t = useTranslations('Auth');
+  const locale = useLocale() as AppLocale;
   const { login } = useAuth();
   const router = useRouter();
   const [email, setEmail] = useState('');
@@ -104,9 +57,9 @@ export function LoginForm({ locale }: { locale: Locale }) {
       ),
     );
     if (params.get('googleError')) {
-      setMessage(c.googleError);
+      setMessage(t('googleError'));
     }
-  }, [locale]);
+  }, [locale, t]);
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -119,20 +72,20 @@ export function LoginForm({ locale }: { locale: Locale }) {
       return;
     }
     if (result.kind === 'invalid-credentials') {
-      setMessage(c.invalidCredentials);
+      setMessage(t('invalidCredentials'));
       return;
     }
     if (result.kind === 'invalid-input') {
-      setMessage(c.invalidInput);
+      setMessage(t('invalidInput'));
       return;
     }
-    setMessage(c.error);
+    setMessage(t('error'));
   };
 
   return (
     <form onSubmit={onSubmit} className="flex max-w-sm flex-col gap-3">
       <label className="flex flex-col gap-1">
-        {c.emailLabel}
+        {t('emailLabel')}
         <input
           type="email"
           autoComplete="email"
@@ -143,7 +96,7 @@ export function LoginForm({ locale }: { locale: Locale }) {
         />
       </label>
       <label className="flex flex-col gap-1">
-        {c.passwordLabel}
+        {t('passwordLabel')}
         <input
           type="password"
           autoComplete="current-password"
@@ -154,20 +107,22 @@ export function LoginForm({ locale }: { locale: Locale }) {
         />
       </label>
       <button type="submit" disabled={busy} className="border border-gray-500 px-3 py-1">
-        {c.login}
+        {t('login')}
       </button>
       {message ? <p role="alert">{message}</p> : null}
       <p className="flex gap-3 text-sm">
-        <Link href={`/${locale}/auth/register`}>{c.registerLink}</Link>
-        <Link href={`/${locale}/auth/forgot-password`}>{c.forgotLink}</Link>
+        <Link href="/auth/register">{t('registerLink')}</Link>
+        <Link href="/auth/forgot-password">{t('forgotLink')}</Link>
       </p>
-      <GoogleSignInButton locale={locale} returnTo={returnTo} />
+      <GoogleSignInButton returnTo={returnTo} />
     </form>
   );
 }
 
-export function RegisterForm({ locale }: { locale: Locale }) {
-  const c = COPY[locale];
+export function RegisterForm() {
+  const t = useTranslations('Auth');
+  const feedbackT = useTranslations('RegisterFeedback');
+  const locale = useLocale() as AppLocale;
   const { register } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -177,20 +132,20 @@ export function RegisterForm({ locale }: { locale: Locale }) {
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (password.length < 12 || password.length > 128) {
-      setFeedback(registerFeedback(locale, 'invalid-input'));
+      setFeedback(registerFeedback('invalid-input'));
       return;
     }
     setBusy(true);
     setFeedback(null);
     const result = await register(email, password, locale);
     setBusy(false);
-    setFeedback(registerFeedback(locale, result.kind));
+    setFeedback(registerFeedback(result.kind));
   };
 
   return (
     <form onSubmit={onSubmit} className="flex max-w-sm flex-col gap-3">
       <label className="flex flex-col gap-1">
-        {c.emailLabel}
+        {t('emailLabel')}
         <input
           type="email"
           autoComplete="email"
@@ -201,7 +156,7 @@ export function RegisterForm({ locale }: { locale: Locale }) {
         />
       </label>
       <label className="flex flex-col gap-1">
-        {c.passwordLabel}
+        {t('passwordLabel')}
         <input
           type="password"
           autoComplete="new-password"
@@ -214,34 +169,37 @@ export function RegisterForm({ locale }: { locale: Locale }) {
         />
       </label>
       <button type="submit" disabled={busy} className="border border-gray-500 px-3 py-1">
-        {c.register}
+        {t('register')}
       </button>
-      {feedback ? <p role="status">{feedback.message}</p> : null}
+      {feedback ? (
+        <p role="status">{feedbackT(feedback.messageKey)}</p>
+      ) : null}
       {feedback && (feedback.showLogin || feedback.showResend || feedback.showForgot) ? (
         <p className="flex flex-wrap gap-3 text-sm">
           {feedback.showLogin ? (
-            <Link href={`/${locale}/auth/login`}>{c.loginLink}</Link>
+            <Link href="/auth/login">{t('loginLink')}</Link>
           ) : null}
           {feedback.showResend ? (
-            <Link href={`/${locale}/auth/verify-email`}>{c.resend}</Link>
+            <Link href="/auth/verify-email">{t('resend')}</Link>
           ) : null}
           {feedback.showForgot ? (
-            <Link href={`/${locale}/auth/forgot-password`}>{c.forgotLink}</Link>
+            <Link href="/auth/forgot-password">{t('forgotLink')}</Link>
           ) : null}
         </p>
       ) : null}
       {!feedback ? (
         <p className="flex gap-3 text-sm">
-          <Link href={`/${locale}/auth/login`}>{c.loginLink}</Link>
+          <Link href="/auth/login">{t('loginLink')}</Link>
         </p>
       ) : null}
-      <GoogleSignInButton locale={locale} />
+      <GoogleSignInButton />
     </form>
   );
 }
 
-export function VerifyEmailForm({ locale }: { locale: Locale }) {
-  const c = COPY[locale];
+export function VerifyEmailForm() {
+  const t = useTranslations('Auth');
+  const locale = useLocale() as AppLocale;
   const { token, ready } = useFragmentToken();
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
@@ -251,18 +209,18 @@ export function VerifyEmailForm({ locale }: { locale: Locale }) {
     setBusy(true);
     const result = await authApi.requestEmailVerification(email, locale);
     setBusy(false);
-    setMessage(result.kind === 'success' ? c.generic : c.error);
+    setMessage(result.kind === 'success' ? t('generic') : t('error'));
   };
 
   const onConfirm = async () => {
     if (!token) {
-      setMessage(c.missingToken);
+      setMessage(t('missingToken'));
       return;
     }
     setBusy(true);
     const result = await authApi.confirmEmailVerification(token);
     setBusy(false);
-    setMessage(result.kind === 'success' ? c.verified : c.invalidLink);
+    setMessage(result.kind === 'success' ? t('verified') : t('invalidLink'));
   };
 
   if (!ready) {
@@ -273,11 +231,11 @@ export function VerifyEmailForm({ locale }: { locale: Locale }) {
     return (
       <section className="flex max-w-sm flex-col gap-3">
         <button type="button" onClick={() => void onConfirm()} disabled={busy} className="border border-gray-500 px-3 py-1">
-          {c.verify}
+          {t('verify')}
         </button>
         {message ? <p role="status">{message}</p> : null}
-        <Link className="text-sm" href={`/${locale}/auth/login`}>
-          {c.loginLink}
+        <Link className="text-sm" href="/auth/login">
+          {t('loginLink')}
         </Link>
       </section>
     );
@@ -286,7 +244,7 @@ export function VerifyEmailForm({ locale }: { locale: Locale }) {
   return (
     <section className="flex max-w-sm flex-col gap-3">
       <label className="flex flex-col gap-1">
-        {c.emailLabel}
+        {t('emailLabel')}
         <input
           type="email"
           value={email}
@@ -295,18 +253,19 @@ export function VerifyEmailForm({ locale }: { locale: Locale }) {
         />
       </label>
       <button type="button" onClick={() => void onResend()} disabled={busy} className="border border-gray-500 px-3 py-1">
-        {c.resend}
+        {t('resend')}
       </button>
       {message ? <p role="status">{message}</p> : null}
-      <Link className="text-sm" href={`/${locale}/auth/login`}>
-        {c.loginLink}
+      <Link className="text-sm" href="/auth/login">
+        {t('loginLink')}
       </Link>
     </section>
   );
 }
 
-export function ForgotPasswordForm({ locale }: { locale: Locale }) {
-  const c = COPY[locale];
+export function ForgotPasswordForm() {
+  const t = useTranslations('Auth');
+  const locale = useLocale() as AppLocale;
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
@@ -316,13 +275,13 @@ export function ForgotPasswordForm({ locale }: { locale: Locale }) {
     setBusy(true);
     const result = await authApi.requestPasswordReset(email, locale);
     setBusy(false);
-    setMessage(result.kind === 'success' ? c.generic : c.error);
+    setMessage(result.kind === 'success' ? t('generic') : t('error'));
   };
 
   return (
     <form onSubmit={onSubmit} className="flex max-w-sm flex-col gap-3">
       <label className="flex flex-col gap-1">
-        {c.emailLabel}
+        {t('emailLabel')}
         <input
           type="email"
           value={email}
@@ -331,18 +290,18 @@ export function ForgotPasswordForm({ locale }: { locale: Locale }) {
         />
       </label>
       <button type="submit" disabled={busy} className="border border-gray-500 px-3 py-1">
-        {c.requestReset}
+        {t('requestReset')}
       </button>
       {message ? <p role="status">{message}</p> : null}
-      <Link className="text-sm" href={`/${locale}/auth/login`}>
-        {c.loginLink}
+      <Link className="text-sm" href="/auth/login">
+        {t('loginLink')}
       </Link>
     </form>
   );
 }
 
-export function ResetPasswordForm({ locale }: { locale: Locale }) {
-  const c = COPY[locale];
+export function ResetPasswordForm() {
+  const t = useTranslations('Auth');
   const { token, ready } = useFragmentToken();
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
@@ -351,17 +310,17 @@ export function ResetPasswordForm({ locale }: { locale: Locale }) {
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!token) {
-      setMessage(c.missingToken);
+      setMessage(t('missingToken'));
       return;
     }
     if (password.length < 12 || password.length > 128) {
-      setMessage(c.invalidInput);
+      setMessage(t('invalidInput'));
       return;
     }
     setBusy(true);
     const result = await authApi.confirmPasswordReset(token, password);
     setBusy(false);
-    setMessage(result.kind === 'success' ? c.resetDone : c.invalidLink);
+    setMessage(result.kind === 'success' ? t('resetDone') : t('invalidLink'));
   };
 
   if (!ready) {
@@ -369,13 +328,13 @@ export function ResetPasswordForm({ locale }: { locale: Locale }) {
   }
 
   if (!token) {
-    return <p>{c.missingToken}</p>;
+    return <p>{t('missingToken')}</p>;
   }
 
   return (
     <form onSubmit={onSubmit} className="flex max-w-sm flex-col gap-3">
       <label className="flex flex-col gap-1">
-        {c.newPassword}
+        {t('newPassword')}
         <input
           type="password"
           autoComplete="new-password"
@@ -388,11 +347,11 @@ export function ResetPasswordForm({ locale }: { locale: Locale }) {
         />
       </label>
       <button type="submit" disabled={busy} className="border border-gray-500 px-3 py-1">
-        {c.confirmReset}
+        {t('confirmReset')}
       </button>
       {message ? <p role="status">{message}</p> : null}
-      <Link className="text-sm" href={`/${locale}/auth/login`}>
-        {c.loginLink}
+      <Link className="text-sm" href="/auth/login">
+        {t('loginLink')}
       </Link>
     </form>
   );

@@ -280,6 +280,23 @@ where noted. Update this file when a decision is made or changed.
 - Date: 2026-09-21.
 - Status: decided. Authorises only the explicitly scoped T-007 work.
 
+### D-019 — UI internationalisation with next-intl
+- The web UI i18n layer is **next-intl** (pinned, explicitly authorised
+  dependency), used with the static-export App Router and an explicit
+  `app/[locale]` segment for the two supported UI locales, `lt` and `en`.
+- Locale-prefixed URLs are preserved (`/lt/...`, `/en/...`); `/` remains the
+  existing static bilingual language chooser. No middleware/proxy and no
+  runtime browser-language detection are added.
+- UI copy lives in checked-in message catalogues: `apps/web/messages/lt.json`
+  and `apps/web/messages/en.json`.
+- This decision covers **UI** translation only. Translation/localisation of
+  assessment items, questions, explanations, scoring, or API/database content is
+  **out of scope** here and belongs in the API/database assessment-item model,
+  not in the UI message catalogues.
+- Russian (or any locale other than `lt`/`en`) is not added.
+- Date: 2026-09-21.
+- Status: decided. Authorises only the explicitly scoped T-009 work.
+
 ## Open decisions
 
 > T-001 note (2026-09-09): the discovery baseline (`docs/measurement-model.md`,

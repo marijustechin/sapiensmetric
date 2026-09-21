@@ -17,7 +17,8 @@ item-provenance decision proposal (T-002), the application foundation scaffold
 authentication core (T-005), email verification/password-reset delivery through
 generic SMTP (T-006), Google OpenID Connect sign-in (T-007), and the classical
 LT/EN authentication frontend (T-008) are complete, approved, and archived in
-`tasks/done/`.
+`tasks/done/`. T-009 (next-intl bilingual UI refactor) is active in
+`tasks/current.md` and not yet reviewed or archived.
 
 T-006 (email verification and password-reset delivery through generic SMTP) is
 implemented, approved, and archived. See
@@ -53,8 +54,9 @@ root local `.env` (see below); no second API-specific env file is created.
 ## Repository layout
 
 - `apps/web` (`@sapiensmetric/web`) — Next.js App Router, static export,
-  Tailwind baseline, plus the LT/EN authentication frontend (login,
-  registration, email verification, password reset, account).
+  Tailwind baseline, and the next-intl bilingual LT/EN authentication frontend
+  (`app/[locale]`, message catalogues in `messages/`: login, registration,
+  email verification, password reset, account).
 - `apps/api` (`@sapiensmetric/api`) — NestJS + Fastify, `GET /health` plus
   `/auth/*` credentials auth core (see `docs/authentication.md`).
 - `packages/contracts` (`@sapiensmetric/contracts`) — shared Zod contracts.

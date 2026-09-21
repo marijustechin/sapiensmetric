@@ -2,35 +2,14 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useLocale, useTranslations } from 'next-intl';
 import { useAuth } from './auth-provider';
 import { loginHref } from '../../lib/auth-navigation';
-import type { Locale } from '../../lib/auth-types';
+import type { AppLocale } from '../../lib/locale-navigation';
 
-const COPY = {
-  lt: {
-    loading: 'Tikrinama sesija…',
-    error: 'Nepavyko patikrinti sesijos. Bandykite dar kartą.',
-    retry: 'Bandyti dar kartą',
-    redirecting: 'Nukreipiama į prisijungimą…',
-    signedInAs: 'Prisijungęs kaip',
-    notice: 'Tai paskyros būsenos puslapis. Joks vertinimas čia nesiūlomas.',
-    signOut: 'Atsijungti',
-    backHome: 'Į pradžią',
-  },
-  en: {
-    loading: 'Checking session…',
-    error: 'Could not check your session. Please try again.',
-    retry: 'Retry',
-    redirecting: 'Redirecting to sign in…',
-    signedInAs: 'Signed in as',
-    notice: 'This is an account-state page. No assessment is offered here.',
-    signOut: 'Sign out',
-    backHome: 'Home',
-  },
-} as const;
-
-export function AccountView({ locale }: { locale: Locale }) {
-  const c = COPY[locale];
+export function AccountView() {
+  const t = useTranslations('Account');
+  const locale = useLocale() as AppLocale;
   const { status, user, retryBootstrap, logout } = useAuth();
   const router = useRouter();
 
@@ -43,26 +22,26 @@ export function AccountView({ locale }: { locale: Locale }) {
   }, [status, locale, router]);
 
   if (status === 'loading') {
-    return <p>{c.loading}</p>;
+    return <p>{t('loading')}</p>;
   }
 
   if (status === 'error') {
     return (
       <section className="flex max-w-sm flex-col gap-3">
-        <p role="alert">{c.error}</p>
+        <p role="alert">{t('error')}</p>
         <button
           type="button"
           onClick={retryBootstrap}
           className="border border-gray-500 px-3 py-1"
         >
-          {c.retry}
+          {t('retry')}
         </button>
       </section>
     );
   }
 
   if (status === 'unauthenticated' || !user) {
-    return <p>{c.redirecting}</p>;
+    return <p>{t('redirecting')}</p>;
   }
 
   const onSignOut = async () => {
@@ -72,15 +51,15 @@ export function AccountView({ locale }: { locale: Locale }) {
 
   return (
     <section className="flex max-w-sm flex-col gap-3">
-      <p>{c.signedInAs}</p>
+      <p>{t('signedInAs')}</p>
       <p className="font-mono">{user.email}</p>
-      <p className="text-sm text-gray-600">{c.notice}</p>
+      <p className="text-sm text-gray-600">{t('notice')}</p>
       <button
         type="button"
         onClick={() => void onSignOut()}
         className="border border-gray-500 px-3 py-1"
       >
-        {c.signOut}
+        {t('signOut')}
       </button>
     </section>
   );

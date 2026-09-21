@@ -168,8 +168,9 @@ tests**; no SMTP connection is opened and no `.env` value is read.
 - `auth.integration.spec.ts` (real MySQL, transport overridden with a fake) —
   duplicate conflict and concurrent registration create exactly one user record
   and exactly one verification token.
-- `apps/web/lib/register-feedback.test.ts` — the LT/EN register feedback mapping
-  for every outcome (message and which navigation links are shown).
+- `apps/web/lib/register-feedback.test.ts` — the LT/EN register outcome flags and
+  message keys for every outcome (the copy itself is asserted by the T-009
+  catalogue test).
 
 ## T-007 Google sign-in testing boundary (D-018)
 
@@ -201,6 +202,29 @@ exchange, or credential is used.
 
 The real-MySQL integration suite (`auth.integration.spec.ts`) runs with the mail
 transport faked; it does not exercise Google.
+
+## T-009 UI internationalisation testing boundary (next-intl)
+
+The refactor keeps the dependency-free Node test runner and adds focused tests
+for the new i18n layer:
+
+- `apps/web/lib/messages.test.ts` — both catalogues load, expose the same nested
+  key set, and every critical UI key is present and non-empty; locale-specific
+  copy differs where expected.
+- `apps/web/lib/locale-navigation.test.ts` — locale validation (`lt`/`en` only),
+  `otherLocale`, `localizePath` (safe same-origin paths only; rejects external,
+  protocol-relative, backslash, control-character, and non-string/non-path
+  values), locale-specific default account destinations, same-route language
+  switching, and safe `returnTo` remapping/dropping.
+- `apps/web/lib/register-feedback.test.ts` — outcome flags and message keys.
+- `apps/web/lib/google-auth.test.ts` — Google start URL, default LT/EN account
+  destinations, and login-query `returnTo` propagation/rejection (no network).
+
+The full route matrix is verified by the static web build (`pnpm build`), which
+must emit `/`, both locale homes, both locales of every auth page, and both
+account pages. `<html lang>` and localized copy are checked by inspecting the
+static output. No SMTP, live OAuth, deployment, migration, or external call is
+performed.
 
 ## Workflow expectations
 

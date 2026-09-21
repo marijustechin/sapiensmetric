@@ -10,6 +10,8 @@ database dependency.
 
 - `apps/web` → **@sapiensmetric/web** — public web application.
   - Next.js App Router, **static export** for the public marketing/site pages.
+  - UI internationalisation: **next-intl** (T-009, D-019) with the `lt`/`en`
+    `app/[locale]` structure and checked-in message catalogues.
   - Tailwind CSS + shadcn/ui (shadcn deferred; not installed in T-003).
   - Zod contracts for shared/API schemas.
 - `apps/api` → **@sapiensmetric/api** — API service.
@@ -113,7 +115,34 @@ test runner).
 - React state: `apps/web/app/_components/auth-provider.tsx` holds the access
   token in memory only and performs the refresh + `/auth/me` bootstrap.
 - Routes: `/{lt,en}` home, `/{lt,en}/auth/{login,register,verify-email,forgot-password,reset-password}`,
-  and the protected `/{lt,en}/account`.
+  and the protected `/{lt,en}/account`. T-009 later consolidated these LT/EN
+  pages under a single `app/[locale]` implementation (see below).
+
+## T-009 UI internationalisation (next-intl, static export)
+
+T-009 replaces the hand-duplicated LT/EN page structure with `next-intl`,
+shared locale-aware routes/components, and checked-in message catalogues. It
+adds `next-intl` as the UI i18n layer (D-019) and keeps the static-export build,
+the exact route matrix, and all auth/OAuth security behaviour unchanged.
+
+- i18n configuration: `apps/web/i18n/routing.ts` (locales `lt`/`en`,
+  `localePrefix: 'always'`), `apps/web/i18n/request.ts` (message loading for the
+  explicit locale; no request headers, cookies, or proxy), and
+  `apps/web/i18n/navigation.ts` (locale-aware `Link`/`useRouter`/`usePathname`).
+- Message catalogues: `apps/web/messages/lt.json`, `apps/web/messages/en.json`.
+- Routes: `apps/web/app/[locale]/...` — one implementation per route, generated
+  for both locales via `generateStaticParams` in the `[locale]` root layout —
+  plus `apps/web/app/(chooser)/` for the static bilingual `/` language chooser.
+  The `[locale]` layout is a root layout so `<html lang>` follows the active
+  locale; the build has no `app/layout.tsx`.
+- Pure helpers: `apps/web/lib/locale-navigation.ts` (locale validation,
+  same-route language switching, and safe `returnTo` locale remapping); the
+  language switcher never uses `document.cookie`.
+- No middleware/proxy and no runtime browser-language detection are added.
+  The static build emits the same route matrix as T-008 (both locales, every
+  public route) and remains refresh-safe on static hosting.
+- Assessment-item translations are intentionally **not** in the UI catalogues;
+  they belong in the API/database model (D-019).
 
 ## T-007 Google OpenID Connect sign-in (implemented, in review)
 

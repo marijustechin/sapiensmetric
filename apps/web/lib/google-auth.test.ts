@@ -1,10 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {
-  googleButtonLabel,
-  googleStartUrl,
-  googleUnavailableNote,
-} from './google-auth.ts';
+import { googleStartUrl } from './google-auth.ts';
 import { sanitizeReturnTo } from './auth-navigation.ts';
 import type { Locale } from './auth-types.ts';
 
@@ -41,7 +37,7 @@ test('login query returnTo propagates into the Google start URL', () => {
   );
 });
 
-test('defaults LT and EN targets when no returnTo is present', () => {
+test('defaults LT and EN account targets when no returnTo is present', () => {
   for (const locale of LOCALES) {
     const target = sanitizeReturnTo(
       new URLSearchParams('').get('returnTo'),
@@ -69,12 +65,4 @@ test('external and malformed login returnTo are rejected to the safe default', (
     assert.equal(target, '/en/account');
     assert.ok(!googleStartUrl(API_BASE, 'en', target).includes('evil'));
   }
-});
-
-test('button label and unavailable note exist for both locales', () => {
-  for (const locale of LOCALES) {
-    assert.ok(googleButtonLabel(locale).length > 0);
-    assert.ok(googleUnavailableNote(locale).length > 0);
-  }
-  assert.notEqual(googleButtonLabel('lt'), googleButtonLabel('en'));
 });

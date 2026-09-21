@@ -1,0 +1,78 @@
+{
+  "Metadata": {
+    "title": "Sapiens Metric",
+    "description": "Sapiens Metric — lokali autentifikavimo priekio testavimo aplinka. Vertinimas kol kas nesiūlomas."
+  },
+  "Chooser": {
+    "prompt": "Choose a language / Pasirinkite kalbą",
+    "lithuanian": "Lietuvių",
+    "english": "English",
+    "note": "Local development authentication frontend. No assessment is offered yet."
+  },
+  "Home": {
+    "description": "Lokalus autentifikavimo testavimo priekis. Vertinimas kol kas nesiūlomas."
+  },
+  "Nav": {
+    "home": "Pradžia",
+    "login": "Prisijungti",
+    "register": "Registruotis",
+    "verify": "Patvirtinti el. paštą",
+    "forgot": "Pamiršau slaptažodį",
+    "account": "Paskyra",
+    "signOut": "Atsijungti",
+    "switchToEnglish": "English",
+    "switchToLithuanian": "Lietuviškai"
+  },
+  "Auth": {
+    "title": {
+      "login": "Prisijungti",
+      "register": "Registruotis",
+      "verifyEmail": "El. pašto patvirtinimas",
+      "forgotPassword": "Slaptažodžio atkūrimas",
+      "resetPassword": "Naujas slaptažodis",
+      "account": "Paskyra"
+    },
+    "emailLabel": "El. paštas",
+    "passwordLabel": "Slaptažodis",
+    "newPassword": "Naujas slaptažodis",
+    "login": "Prisijungti",
+    "register": "Registruotis",
+    "resend": "Siųsti patvirtinimo nuorodą",
+    "verify": "Patvirtinti el. pašto adresą",
+    "requestReset": "Siųsti slaptažodžio atkūrimo nuorodą",
+    "confirmReset": "Pakeisti slaptažodį",
+    "forgotLink": "Pamiršau slaptažodį",
+    "registerLink": "Sukurti paskyrą",
+    "loginLink": "Grįžti į prisijungimą",
+    "generic": "Jei paskyra atitinka sąlygas, netrukus gausite el. laišką.",
+    "verified": "El. pašto adresas patvirtintas. Galite prisijungti.",
+    "resetDone": "Slaptažodis pakeistas. Galite prisijungti.",
+    "invalidLink": "Nuoroda netinkama arba pasibaigusi.",
+    "missingToken": "Šiai nuorodai trūksta žymens.",
+    "invalidCredentials": "Neteisingi prisijungimo duomenys.",
+    "invalidInput": "Patikrinkite įvestus duomenis (slaptažodis 12–128 simbolių).",
+    "googleError": "Prisijungimas su Google nepavyko. Bandykite dar kartą.",
+    "error": "Nepavyko. Bandykite dar kartą."
+  },
+  "RegisterFeedback": {
+    "success": "Paskyra sukurta. Patvirtinkite el. pašto adresą per gautą nuorodą, tada prisijunkite.",
+    "alreadyRegistered": "Šis el. pašto adresas jau užregistruotas. Prisijunkite arba siųskite patvirtinimo nuorodą iš naujo.",
+    "deliveryFailed": "Paskyra sukurta, bet patvirtinimo el. laiško išsiųsti nepavyko. Siųskite patvirtinimo nuorodą iš naujo.",
+    "invalidInput": "Patikrinkite įvestus duomenis (slaptažodis 12–128 simbolių).",
+    "error": "Nepavyko. Bandykite dar kartą."
+  },
+  "Account": {
+    "loading": "Tikrinama sesija…",
+    "error": "Nepavyko patikrinti sesijos. Bandykite dar kartą.",
+    "retry": "Bandyti dar kartą",
+    "redirecting": "Nukreipiama į prisijungimą…",
+    "signedInAs": "Prisijungęs kaip",
+    "notice": "Tai paskyros būsenos puslapis. Joks vertinimas čia nesiūlomas.",
+    "signOut": "Atsijungti",
+    "backHome": "Į pradžią"
+  },
+  "Google": {
+    "button": "Prisijungti su Google",
+    "unavailable": "Prisijungimas su Google šioje aplinkoje nesukonfigūruotas."
+  }
+}

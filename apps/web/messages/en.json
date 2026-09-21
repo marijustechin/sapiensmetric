@@ -1,0 +1,78 @@
+{
+  "Metadata": {
+    "title": "Sapiens Metric",
+    "description": "Sapiens Metric — serious cognitive-ability and knowledge-assessment platform (foundation scaffold)."
+  },
+  "Chooser": {
+    "prompt": "Choose a language / Pasirinkite kalbą",
+    "lithuanian": "Lietuvių",
+    "english": "English",
+    "note": "Local development authentication frontend. No assessment is offered yet."
+  },
+  "Home": {
+    "description": "Local authentication test frontend. No assessment is offered yet."
+  },
+  "Nav": {
+    "home": "Home",
+    "login": "Sign in",
+    "register": "Register",
+    "verify": "Verify email",
+    "forgot": "Forgot password",
+    "account": "Account",
+    "signOut": "Sign out",
+    "switchToEnglish": "English",
+    "switchToLithuanian": "Lietuviškai"
+  },
+  "Auth": {
+    "title": {
+      "login": "Sign in",
+      "register": "Register",
+      "verifyEmail": "Verify your email",
+      "forgotPassword": "Forgot password",
+      "resetPassword": "Reset password",
+      "account": "Account"
+    },
+    "emailLabel": "Email",
+    "passwordLabel": "Password",
+    "newPassword": "New password",
+    "login": "Sign in",
+    "register": "Register",
+    "resend": "Send verification link",
+    "verify": "Verify email address",
+    "requestReset": "Send password-reset link",
+    "confirmReset": "Change password",
+    "forgotLink": "Forgot password",
+    "registerLink": "Create an account",
+    "loginLink": "Back to sign in",
+    "generic": "If the account is eligible, an email will arrive shortly.",
+    "verified": "Email address verified. You can sign in.",
+    "resetDone": "Password changed. You can sign in.",
+    "invalidLink": "This link is invalid or has expired.",
+    "missingToken": "This link is missing its token.",
+    "invalidCredentials": "Invalid sign-in details.",
+    "invalidInput": "Check the entered details (password must be 12–128 characters).",
+    "googleError": "Google sign-in did not complete. Please try again.",
+    "error": "Something went wrong. Please try again."
+  },
+  "RegisterFeedback": {
+    "success": "Account created. Verify your email address using the link we sent, then sign in.",
+    "alreadyRegistered": "This email address is already registered. Sign in, or send a new verification link.",
+    "deliveryFailed": "The account was created, but the verification email could not be sent. Send a new verification link.",
+    "invalidInput": "Check the entered details (password must be 12–128 characters).",
+    "error": "Something went wrong. Please try again."
+  },
+  "Account": {
+    "loading": "Checking session…",
+    "error": "Could not check your session. Please try again.",
+    "retry": "Retry",
+    "redirecting": "Redirecting to sign in…",
+    "signedInAs": "Signed in as",
+    "notice": "This is an account-state page. No assessment is offered here.",
+    "signOut": "Sign out",
+    "backHome": "Home"
+  },
+  "Google": {
+    "button": "Sign in with Google",
+    "unavailable": "Google sign-in is not configured in this environment."
+  }
+}

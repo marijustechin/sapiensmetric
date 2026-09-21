@@ -6,8 +6,11 @@ authorises work, and only one task is active at a time.
 
 ## Now
 
-- No task is currently active. T-007 (Google OAuth 2.0 / OpenID Connect
-  sign-in) is approved and archived in `tasks/done/`.
+- **T-009 (next-intl bilingual frontend refactor for the LT/EN UI) is active**
+  in `tasks/current.md`; it is implemented and awaiting human review. It adds
+  `next-intl` as the UI i18n layer (D-019).
+- T-007 (Google OAuth 2.0 / OpenID Connect sign-in) is approved and archived in
+  `tasks/done/`.
 - T-008 (classical authentication frontend, LT/EN browser journey) is approved
   and archived in `tasks/done/`.
 - T-006 (email verification and password-reset delivery through generic SMTP)
