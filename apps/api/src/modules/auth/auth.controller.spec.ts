@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach, afterAll } from 'vitest';
 import { Test } from '@nestjs/testing';
 import {
   FastifyAdapter,
@@ -23,12 +23,31 @@ import {
   SessionStore,
   SessionRecord,
 } from './sessions/session-store.js';
+import { ActionTokenService } from './action-token.service.js';
+import { IpRateLimiter } from './ip-rate-limiter.js';
+import { MAILER_SERVICE, SmtpMailer } from '../mailer/mailer.service.js';
+import { MAIL_TRANSPORT, MailTransport } from '../mailer/transport.js';
+import {
+  ACTION_TOKEN_STORE,
+  ActionTokenStore,
+} from './action-tokens/action-token.store.js';
+
+const stubActionTokenStore: ActionTokenStore = {
+  issue: () => Promise.resolve({ status: 'issued' as const, id: 'stub' }),
+  deleteById: () => Promise.resolve(),
+  consumeVerification: () => Promise.resolve(false),
+  consumeForPasswordReset: () => Promise.resolve(false),
+  deleteStale: () => Promise.resolve(0),
+};
+
+const stubTransport: MailTransport = { send: () => Promise.resolve() };
 
 const ORIGIN = 'http://localhost:3001';
 const TEST_SECRET = 'test-secret-that-is-definitely-long-enough-123456';
 
 function testConfig(): AppConfig {
   return {
+    api: { port: 3000 },
     db: { host: '127.0.0.1', port: 3307, database: 'd', username: 'u', password: 'p' },
     cors: { origin: ORIGIN },
     jwt: {
@@ -40,6 +59,20 @@ function testConfig(): AppConfig {
       refreshSessionTtlSeconds: 30 * 24 * 60 * 60,
       cookieSecure: false,
     },
+    mail: {
+      host: '127.0.0.1',
+      port: 1025,
+      secure: false,
+      user: 'u',
+      password: 'p',
+      from: 'no-reply@example.test',
+      testRecipient: null,
+    },
+    tokens: {
+      verificationTtlSeconds: 86400,
+      passwordResetTtlSeconds: 1800,
+    },
+    publicAppUrl: ORIGIN,
   };
 }
 
@@ -69,11 +102,26 @@ class InMemoryUserStore implements UserStore {
       id: randomUUID(),
       email: data.email,
       passwordHash: data.passwordHash,
+      emailVerifiedAt: null,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
     this.map.set(user.id, user);
     return Promise.resolve(user);
+  }
+
+  markVerified(id: string): void {
+    const user = this.map.get(id);
+    if (user) {
+      user.emailVerifiedAt = new Date();
+    }
+  }
+
+  markUnverified(id: string): void {
+    const user = this.map.get(id);
+    if (user) {
+      user.emailVerifiedAt = null;
+    }
   }
 
   countByEmail(email: string): number {
@@ -206,9 +254,14 @@ describe('AuthController (Docker-free HTTP)', () => {
       providers: [
         AuthService,
         AccessTokenGuard,
+        ActionTokenService,
+        IpRateLimiter,
         { provide: APP_CONFIG, useValue: testConfig() },
         { provide: USER_STORE, useValue: userStore },
         { provide: SESSION_STORE, useValue: sessionStore },
+        { provide: ACTION_TOKEN_STORE, useValue: stubActionTokenStore },
+        { provide: MAIL_TRANSPORT, useValue: stubTransport },
+        { provide: MAILER_SERVICE, useClass: SmtpMailer },
         { provide: PASSWORD_SERVICE, useClass: Argon2PasswordService },
         { provide: TOKEN_SERVICE, useClass: JwtTokenService },
       ],
@@ -225,6 +278,15 @@ describe('AuthController (Docker-free HTTP)', () => {
 
   afterAll(async () => {
     await app.close();
+  });
+
+  // T-006: the shared fixture user must be created as verified explicitly
+  // before tests that exercise normal login/session behaviour.
+  beforeEach(async () => {
+    const existing = await userStore.findByEmail(email);
+    if (existing && !existing.emailVerifiedAt) {
+      userStore.markVerified(existing.id);
+    }
   });
 
   function instance() {
@@ -536,6 +598,23 @@ describe('AuthController (Docker-free HTTP)', () => {
     expect(refreshAfter.statusCode).toBe(200);
   });
 
+  it('rejects logout with no Origin and no refresh cookie', async () => {
+    const res = await instance().inject({
+      method: 'POST',
+      url: '/auth/logout',
+    });
+    expect(res.statusCode).toBe(401);
+  });
+
+  it('rejects logout with a mismatched Origin and no refresh cookie', async () => {
+    const res = await instance().inject({
+      method: 'POST',
+      url: '/auth/logout',
+      headers: { origin: 'https://evil.example' },
+    });
+    expect(res.statusCode).toBe(401);
+  });
+
   it('clears the refresh cookie on logout and rejects /auth/me', async () => {
     const login = await instance().inject({
       method: 'POST',
@@ -611,5 +690,79 @@ describe('AuthController (Docker-free HTTP)', () => {
       });
       expect(me.statusCode).toBe(401);
     }
+  });
+
+  // --- T-006 verification access gate ------------------------------------
+
+  it('rejects an unverified login with a generic 401 and issues no refresh cookie', async () => {
+    const unverified = 'unverified@example.test';
+    await instance().inject({
+      method: 'POST',
+      url: '/auth/register',
+      payload: { email: unverified, password },
+    });
+    const res = await instance().inject({
+      method: 'POST',
+      url: '/auth/login',
+      payload: { email: unverified, password },
+    });
+    expect(res.statusCode).toBe(401);
+    expect(setCookieRaw(res)).toBe('');
+  });
+
+  it('rejects an existing session when its user becomes unverified', async () => {
+    const login = await instance().inject({
+      method: 'POST',
+      url: '/auth/login',
+      payload: { email, password },
+    });
+    expect(login.statusCode).toBe(200);
+    const accessToken = login.json().accessToken;
+    const refresh = cookieHeader(login);
+    const user = await userStore.findByEmail(email);
+    expect(user).not.toBeNull();
+    userStore.markUnverified(user!.id);
+
+    const me = await instance().inject({
+      method: 'GET',
+      url: '/auth/me',
+      headers: { authorization: `Bearer ${accessToken}` },
+    });
+    expect(me.statusCode).toBe(401);
+
+    const refreshed = await instance().inject({
+      method: 'POST',
+      url: '/auth/refresh',
+      headers: { origin: ORIGIN, cookie: `sm_refresh=${refresh}` },
+    });
+    expect(refreshed.statusCode).toBe(401);
+
+    userStore.markVerified(user!.id);
+  });
+
+  it('permits normal login after verification succeeds', async () => {
+    const pending = 'pending@example.test';
+    await instance().inject({
+      method: 'POST',
+      url: '/auth/register',
+      payload: { email: pending, password },
+    });
+    const blocked = await instance().inject({
+      method: 'POST',
+      url: '/auth/login',
+      payload: { email: pending, password },
+    });
+    expect(blocked.statusCode).toBe(401);
+
+    const user = await userStore.findByEmail(pending);
+    expect(user).not.toBeNull();
+    userStore.markVerified(user!.id);
+
+    const allowed = await instance().inject({
+      method: 'POST',
+      url: '/auth/login',
+      payload: { email: pending, password },
+    });
+    expect(allowed.statusCode).toBe(200);
   });
 });

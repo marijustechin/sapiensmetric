@@ -48,9 +48,60 @@ T-003 created the minimal web/API baseline:
 T-003 resolved O-001 (test runner: Vitest, D-011) and O-005 (package names,
 D-012).
 
+## T-006 email verification and password reset (implemented, approved, archived)
+
+T-006 implements "Email verification and password-reset delivery through generic
+SMTP", per D-016 (`docs/decisions.md`) and the archived task record
+(`tasks/done/2026-09-21-email-verification-and-password-reset-delivery.md`). It
+adds:
+
+- a provider-agnostic mailer module (`apps/api/src/modules/mailer/`) using
+  generic authenticated SMTP (nodemailer) behind a transport boundary; no
+  provider SDK; implicit TLS for `SMTP_SECURE=true` and required STARTTLS (no
+  plaintext fallback) otherwise;
+- opaque, SHA-256-hashed, purpose-scoped, single-use, expiring action tokens
+  (24h verification, 30min reset), persisted in `email_action_tokens`, with a
+  nullable `users.emailVerifiedAt`;
+- non-enumerating `/auth/email-verification/*` and `/auth/password-reset/*`
+  endpoints; requests issue/send only for eligible accounts and always return a
+  generic 202;
+- request gating: per-user-and-purpose 15-minute cooldown plus an in-memory
+  per-IP limit (3 calls per hour per IP per endpoint), and an in-memory per-IP
+  limit of 5 password-reset confirmation calls per hour per IP applied before
+  Argon2 hashing; the limiter expires stale entries and caps distinct keys at
+  10,000 (new keys rejected without allocation); a transport rejection rolls
+  back the token and does not consume the cooldown;
+- the verification access gate on login, refresh, and every session-
+  authenticated route;
+- a minimal LT/EN browser flow across six static pages with fragment-only
+  tokens;
+- public web/API configuration through the single root `.env`: `PUBLIC_APP_URL`
+  and `CORS_ORIGIN` are exact canonical HTTP(S) origins that must be equal after
+  canonicalisation (`PUBLIC_APP_URL` is the web/browser origin used in email
+  links); `NEXT_PUBLIC_API_BASE_URL` is the separately validated, only exposed
+  build-time web value and missing/invalid configuration fails the static web
+  build; `API_PORT` is the validated local Nest listener port and need not equal
+  the public API URL port (production may sit behind a reverse proxy); no secret
+  under the `NEXT_PUBLIC_` prefix;
+- canonical Origin enforcement on refresh and on every `POST /auth/logout`
+  attempt, before considering whether a refresh cookie is present;
+- a data-minimisation/retention privacy gate document
+  (`docs/email-verification.md`); O-006 remains open.
+
+API source layout additions:
+
+- `apps/api/src/modules/mailer/` — mailer boundary + generic SMTP transport.
+- `apps/api/src/modules/auth/action-tokens/` — EmailActionToken entity/store.
+- `apps/api/src/modules/auth/action-token.service.ts` — token generation,
+  hashing, TTLs, and consumption.
+- `apps/api/src/modules/auth/ip-rate-limiter.ts` — in-memory per-IP limiter.
+- `apps/api/src/database/migrations/1781440000001-CreateEmailActionTokens.ts`.
+- `apps/api/src/database/cleanup-action-tokens.ts` — explicit retention cleanup.
+- `apps/api/src/smtp-smoke.ts` — opt-in live-SMTP smoke command.
+
 ## Explicitly deferred beyond T-003
 
-- Email verification, password-reset delivery, and Google OAuth (T-006, T-007).
+- Google OAuth is T-007.
 - Product UI features and public marketing/site content beyond the minimal
   development page.
 - shadcn component installation (unless a real UI need arises).

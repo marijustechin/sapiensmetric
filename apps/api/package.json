@@ -10,6 +10,8 @@
     "test:integration": "vitest run --config vitest.integration.config.ts",
     "migration:run": "tsx src/database/migrate.ts",
     "migration:show": "tsx src/database/migrate-status.ts",
+    "tokens:cleanup": "tsx src/database/cleanup-action-tokens.ts",
+    "smtp:smoke": "tsx src/smtp-smoke.ts",
     "start": "node dist/main.js"
   },
   "dependencies": {
@@ -26,6 +28,7 @@
     "fastify": "4.28.1",
     "jsonwebtoken": "9.0.2",
     "mysql2": "3.11.5",
+    "nodemailer": "6.9.16",
     "reflect-metadata": "0.2.2",
     "rxjs": "7.8.1",
     "typeorm": "0.3.20",
@@ -34,6 +37,7 @@
   "devDependencies": {
     "@nestjs/testing": "10.4.6",
     "@types/jsonwebtoken": "9.0.7",
+    "@types/nodemailer": "6.4.16",
     "tsx": "4.19.2",
     "typescript": "5.6.3",
     "vitest": "2.1.4"

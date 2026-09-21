@@ -6,23 +6,23 @@ authorises work, and only one task is active at a time.
 
 ## Now
 
-- No task is currently active. T-005 (TypeORM persistence and credentials
-  authentication core) is complete and archived.
+- No task is currently active. T-006 (email verification and password-reset
+  delivery through generic SMTP) is approved and archived in `tasks/done/`.
+- T-005 (TypeORM persistence and credentials authentication core) is complete
+  and archived.
 
-## Next (not yet created)
+## Next (not yet authorised)
 
-- **T-006** — Privacy review plus email verification/password-reset delivery.
-
-## After that (not yet created)
-
-- **T-007** — Google OAuth.
+- **T-007** — Google OAuth (requires its own recorded decision in
+  `docs/decisions.md` and an explicitly scoped task before it is added).
 - vHosts Node-to-MySQL feasibility (later, separate infrastructure task).
 
 ## Blocked
 
 - Product-owner approval of the T-002 instrument/provenance proposals is
   required before any item authoring.
-- O-006 privacy review is required before any data collection.
+- O-006 privacy review is required before any data collection, including any
+  real use of the T-006 email flows.
 - O-007 IP review is required before relying on third-party material.
 
 ## Later

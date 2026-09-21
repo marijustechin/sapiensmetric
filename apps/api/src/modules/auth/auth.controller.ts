@@ -14,11 +14,18 @@ import {
 } from '@nestjs/common';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import {
+  acceptedResponseSchema,
+  emailVerificationRequestSchema,
   loginRequestSchema,
-  registerRequestSchema,
   meResponseSchema,
   loginResponseSchema,
+  passwordResetConfirmRequestSchema,
+  passwordResetRequestSchema,
+  passwordResetResponseSchema,
+  registerRequestSchema,
   registerResponseSchema,
+  verificationConfirmRequestSchema,
+  verifiedResponseSchema,
 } from '@sapiensmetric/contracts';
 import { AuthService } from './auth.service.js';
 import { AccessTokenGuard, AuthenticatedRequest } from './access-token.guard.js';
@@ -113,6 +120,10 @@ export class AuthController {
     @Req() request: FastifyRequest,
     @Res({ passthrough: true }) reply: CookieReply,
   ): Promise<void> {
+    // Enforce the Origin rule on every logout attempt, before considering
+    // whether a refresh cookie is present.
+    this.auth.assertOrigin(request.headers.origin);
+
     const cookies = (request as FastifyRequest & {
       cookies?: Record<string, string>;
     }).cookies;
@@ -131,5 +142,74 @@ export class AuthController {
       throw new UnauthorizedException();
     }
     return meResponseSchema.parse(user);
+  }
+
+  // --- T-006: email verification and password reset -----------------------
+
+  @Post('email-verification/request')
+  @HttpCode(HttpStatus.ACCEPTED)
+  async requestEmailVerification(
+    @Body() body: unknown,
+    @Req() request: FastifyRequest,
+  ): Promise<typeof acceptedResponseSchema._type> {
+    const parsed = emailVerificationRequestSchema.safeParse(body);
+    if (!parsed.success) {
+      throw new BadRequestException();
+    }
+    await this.auth.requestEmailVerification(
+      parsed.data.email,
+      parsed.data.locale,
+      request.ip ?? '',
+    );
+    return acceptedResponseSchema.parse({ status: 'accepted' });
+  }
+
+  @Post('email-verification/confirm')
+  @HttpCode(HttpStatus.OK)
+  async confirmEmailVerification(
+    @Body() body: unknown,
+  ): Promise<typeof verifiedResponseSchema._type> {
+    const parsed = verificationConfirmRequestSchema.safeParse(body);
+    if (!parsed.success) {
+      throw new BadRequestException();
+    }
+    await this.auth.confirmEmailVerification(parsed.data.token);
+    return verifiedResponseSchema.parse({ status: 'verified' });
+  }
+
+  @Post('password-reset/request')
+  @HttpCode(HttpStatus.ACCEPTED)
+  async requestPasswordReset(
+    @Body() body: unknown,
+    @Req() request: FastifyRequest,
+  ): Promise<typeof acceptedResponseSchema._type> {
+    const parsed = passwordResetRequestSchema.safeParse(body);
+    if (!parsed.success) {
+      throw new BadRequestException();
+    }
+    await this.auth.requestPasswordReset(
+      parsed.data.email,
+      parsed.data.locale,
+      request.ip ?? '',
+    );
+    return acceptedResponseSchema.parse({ status: 'accepted' });
+  }
+
+  @Post('password-reset/confirm')
+  @HttpCode(HttpStatus.OK)
+  async confirmPasswordReset(
+    @Body() body: unknown,
+    @Req() request: FastifyRequest,
+  ): Promise<typeof passwordResetResponseSchema._type> {
+    const parsed = passwordResetConfirmRequestSchema.safeParse(body);
+    if (!parsed.success) {
+      throw new BadRequestException();
+    }
+    await this.auth.confirmPasswordReset(
+      parsed.data.token,
+      parsed.data.password,
+      request.ip ?? '',
+    );
+    return passwordResetResponseSchema.parse({ status: 'reset' });
   }
 }

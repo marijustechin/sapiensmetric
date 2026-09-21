@@ -48,9 +48,20 @@ See `docs/product-brief.md` and `docs/assessment-principles.md`.
 
 These restrictions apply during the current bootstrap phase only:
 
-- No Redis, no queues, no microservices, no authentication implementation.
+- No Redis, no queues, no microservices.
 
-Later capabilities (authentication, queues, additional data stores, and any
-other capability restricted above) require an explicit recorded decision in
-`docs/decisions.md` and an explicitly scoped task before they are added. They
-must **not** be added speculatively.
+Credentials authentication is no longer under a blanket ban: the T-005
+credentials authentication core (local development only) is complete, approved,
+and archived in `tasks/done/`. The control that replaces the ban is that any
+**new** auth capability (email verification, password-reset delivery, Google
+OAuth, and any other auth change) requires all of the following before it is
+added:
+
+1. an explicit recorded decision in `docs/decisions.md`;
+2. an explicitly scoped task in `tasks/current.md`;
+3. human review and approval.
+
+Nothing auth-related may be added speculatively. Later capabilities (queues,
+additional data stores, deployment, and any other capability restricted above)
+require an explicit recorded decision in `docs/decisions.md` and an explicitly
+scoped task before they are added. They must **not** be added speculatively.

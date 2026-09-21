@@ -5,17 +5,34 @@ A serious cognitive-ability and knowledge-assessment platform.
 - Product: **Sapiens Metric**
 - Domain: **sapiensmetric.eu**
 - Languages: Lithuanian and English
-- Status: **Foundation + local MySQL + credentials auth core.** A buildable
-  pnpm monorepo with a static web baseline, a NestJS/Fastify API (health +
-  `/auth/*`), shared Zod contracts, and a local MySQL 8.0.46 environment.
-  No assessment items, scoring, email verification, or production deployment
-  yet.
+- Status: **Foundation + local MySQL + credentials auth + email flows.** A
+  buildable pnpm monorepo with a static web baseline, a NestJS/Fastify API
+  (health + `/auth/*`), shared Zod contracts, and a local MySQL 8.0.46
+  environment. No assessment items, scoring, or production deployment yet.
 
 The documentation and discovery baseline (T-001), the initial-instrument and
 item-provenance decision proposal (T-002), the application foundation scaffold
-(T-003), the local MySQL development environment (T-004), and the credentials
-authentication core (T-005) are complete and archived in `tasks/done/`. No task
-is currently active.
+(T-003), the local MySQL development environment (T-004), the credentials
+authentication core (T-005), and email verification/password-reset delivery
+through generic SMTP (T-006) are complete, approved, and archived in
+`tasks/done/`.
+
+T-006 (email verification and password-reset delivery through generic SMTP) is
+implemented, approved, and archived. See
+`docs/authentication.md` and `docs/email-verification.md`. It adds the
+`CreateEmailActionTokens` migration, the `/auth/email-verification/*` and
+`/auth/password-reset/*` endpoints, a minimal Lithuanian/English browser flow,
+request gating (15-minute per-purpose cooldown plus a memory-bounded in-memory
+per-IP limit), a password-reset-confirmation per-IP limit applied before
+hashing, transport-rejection rollback, a verification access gate, canonical
+Origin enforcement on refresh/logout, and non-downgrading SMTP TLS. `PUBLIC_APP_URL`
+and `CORS_ORIGIN` must be equal canonical HTTP(S) origins; `NEXT_PUBLIC_API_BASE_URL`
+is a separate, browser-visible API base URL and `API_PORT` is the validated local
+listener port (production may sit behind a reverse proxy, so the two ports need
+not match). For direct local development `NEXT_PUBLIC_API_BASE_URL` must point at
+the running API listener. The static web build fails closed if
+`NEXT_PUBLIC_API_BASE_URL` is missing or invalid. It is not production-ready and
+no real user data is used (O-006 remains open).
 
 T-005 uses a single environment-file strategy: the Nest API loads only the
 root local `.env` (see below); no second API-specific env file is created.
@@ -32,7 +49,9 @@ root local `.env` (see below); no second API-specific env file is created.
 - `docs/` — product, assessment, architecture, testing, and decision docs.
 - `tasks/` — current task and archived tasks.
 - `TODO.md` — planning index (never authorises work).
-- `scripts/verify.sh` — dependency-free documentation-harness checks.
+- `scripts/verify.sh` — dependency-free documentation-harness checks
+  (including the archived task records, the no-active-task state, and the
+  completed T-003/T-004/T-005/T-006 outputs).
 
 ## Local setup
 

@@ -1,11 +1,11 @@
-# tasks/current.md
+# No active task
 
 No task is currently active.
 
-A new task requires explicit human approval before it may be started. When a
-task is approved, replace this file with the task definition (objective,
-inputs, required outputs, non-goals, acceptance criteria, and required reading
-order), and work on **one task at a time**.
+T-006 (email verification and password-reset delivery through generic SMTP) was
+approved by human review on 2026-09-21 and is archived in `tasks/done/`
+(`tasks/done/2026-09-21-email-verification-and-password-reset-delivery.md`).
 
-Do not archive to `tasks/done/` until a human has reviewed and approved the
-completed task.
+No new task is authorised. The next task must be explicitly scoped in this file
+and approved before any work begins, in accordance with `AGENTS.md` (one task at
+a time; human review before archival; no speculative work).

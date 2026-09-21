@@ -5,6 +5,13 @@ import {
   registerResponseSchema,
   loginResponseSchema,
   meResponseSchema,
+  emailVerificationRequestSchema,
+  passwordResetRequestSchema,
+  verificationConfirmRequestSchema,
+  passwordResetConfirmRequestSchema,
+  acceptedResponseSchema,
+  verifiedResponseSchema,
+  passwordResetResponseSchema,
 } from './auth';
 
 describe('auth contracts', () => {
@@ -68,5 +75,62 @@ describe('auth contracts', () => {
         email: 'person@example.test',
       }),
     ).toMatchObject({ email: 'person@example.test' });
+  });
+});
+
+describe('T-006 auth contracts', () => {
+  it('accepts request schemas for lt and en with a locale', () => {
+    expect(
+      emailVerificationRequestSchema.parse({
+        email: 'person@example.test',
+        locale: 'lt',
+      }).locale,
+    ).toBe('lt');
+    expect(
+      passwordResetRequestSchema.parse({
+        email: 'person@example.test',
+        locale: 'en',
+      }).locale,
+    ).toBe('en');
+  });
+
+  it('rejects an unsupported locale', () => {
+    expect(() =>
+      emailVerificationRequestSchema.parse({
+        email: 'person@example.test',
+        locale: 'fr',
+      }),
+    ).toThrow();
+  });
+
+  it('requires a token for confirmation schemas', () => {
+    expect(verificationConfirmRequestSchema.parse({ token: 'abc' })).toEqual({
+      token: 'abc',
+    });
+    expect(() => verificationConfirmRequestSchema.parse({ token: '' })).toThrow();
+  });
+
+  it('enforces the 12-128 character password rule on reset confirmation', () => {
+    expect(() =>
+      passwordResetConfirmRequestSchema.parse({ token: 'abc', password: 'short' }),
+    ).toThrow();
+    expect(
+      passwordResetConfirmRequestSchema.parse({
+        token: 'abc',
+        password: 'a-reasonable-password-123',
+      }).password,
+    ).toBe('a-reasonable-password-123');
+  });
+
+  it('accepts the generic and success response schemas', () => {
+    expect(acceptedResponseSchema.parse({ status: 'accepted' }).status).toBe(
+      'accepted',
+    );
+    expect(verifiedResponseSchema.parse({ status: 'verified' }).status).toBe(
+      'verified',
+    );
+    expect(passwordResetResponseSchema.parse({ status: 'reset' }).status).toBe(
+      'reset',
+    );
   });
 });
