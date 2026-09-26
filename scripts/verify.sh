@@ -12,7 +12,7 @@
 #      discovery documents, and the four T-002 documents exist.
 #   2. The T-001, T-002, T-003, T-004, T-005, and T-006 task archives exist
 #      (T-007..T-010 are asserted in invariant 3).
-#   3. The archived T-006..T-010 records contain their exact titles and final
+#   3. The archived T-006..T-011 records contain their exact titles and final
 #      approved statuses; the archived T-006 record contains the required
 #      definition sections, the six exact browser routes, and the access-gate
 #      markers; tasks/current.md declares that no task is active.
@@ -37,10 +37,13 @@
 #      the static-export invariant script, the claims guard, the aligned local
 #      profile, and the env-file isolation behaviour); the approved branding
 #      WebP assets exist and are referenced from their stable paths; the root
-#      route is a static-export default-locale redirect, not a chooser; and
-#      D-020, D-021, and D-022 are recorded. The static-export route structure,
-#      the exported branding assets, and the exported root redirect are verified
+#      route is a remembered-language redirect, not a chooser; and D-020,
+#      D-021, and D-022 are recorded. The static-export route structure, the
+#      exported branding assets, and the exported root redirect are verified
 #      separately by scripts/verify-static-export.sh after a build.
+#  15. The T-011 FSD light structure exists (docs/fsd-light.md, the boundary
+#      check script, the shared/features/widgets layers, and no entities/
+#      processes), D-023 is recorded, and the boundary check runs in pnpm verify.
 #
 # Exit code 0 = all invariants hold; non-zero = at least one failed.
 
@@ -113,9 +116,10 @@ for a in "${archives[@]}"; do
   fi
 done
 
-# --- Invariant 3: T-006..T-010 archived; no active task -----------------
+# --- Invariant 3: T-006..T-011 archived; no active task -----------------
 # The archived records' exact headings and final statuses are asserted
-# literally; tasks/current.md must declare that no task is active.
+# literally; tasks/current.md must declare that no task is active and record
+# T-012 (roles and admin) as the next planned task.
 
 t006_archive='tasks/done/2026-09-21-email-verification-and-password-reset-delivery.md'
 t006_heading='# T-006 — Email verification and password-reset delivery through generic SMTP (archived)'
@@ -197,10 +201,32 @@ else
   note_fail "T-010 archive does not contain the final approved status"
 fi
 
+t011_archive='tasks/done/2026-09-26-fsd-light-frontend-structure.md'
+t011_heading='# T-011 — FSD light frontend structure (archived)'
+t011_status='- **Final status:** Approved (human review granted)'
+
+if grep -qxF -- "$t011_heading" "$t011_archive"; then
+  note_pass
+else
+  note_fail "T-011 archive does not contain the exact archived heading"
+fi
+
+if grep -qxF -- "$t011_status" "$t011_archive"; then
+  note_pass
+else
+  note_fail "T-011 archive does not contain the final approved status"
+fi
+
 if grep -qF 'No task is active' tasks/current.md; then
   note_pass
 else
   note_fail "tasks/current.md does not declare that no task is active"
+fi
+
+if grep -qF 'T-012' tasks/current.md && grep -qF 'roles and admin' tasks/current.md; then
+  note_pass
+else
+  note_fail "tasks/current.md does not record T-012 (roles and admin) as the next planned task"
 fi
 
 t007_sections=(
@@ -575,7 +601,9 @@ done
 # file inside the repo (relative "path/file.ext" or "./path/file.ext"), then
 # check each candidate exists. We intentionally do not require directories
 # that are described as "planned"/future to exist, so we only check tokens that
-# resolve under known top-level dirs with an extension.
+# resolve under known top-level dirs with an extension. Historical task records
+# under `tasks/done/` are excluded: they may reference paths as they existed at
+# the time and must not be rewritten to track later refactors.
 candidates="$(
   grep -hroE '(\.{0,2}/)?[A-Za-z0-9._/-]+\.(md|sh|ts|tsx|json|yml|yaml|txt|gitkeep)' \
     --include='*.md' \
@@ -585,6 +613,7 @@ candidates="$(
     --exclude-dir=dist \
     --exclude-dir=out \
     --exclude-dir=coverage \
+    --exclude-dir=done \
     . 2>/dev/null \
   | sed -E 's/^\(//; s/[),:;]*$//'
 )"
@@ -614,16 +643,16 @@ fi
 
 t008_outputs=(
   apps/api/src/modules/auth/registration.controller.spec.ts
-  apps/web/lib/auth-types.ts
-  apps/web/lib/auth-api.ts
-  apps/web/lib/auth-navigation.ts
-  apps/web/lib/auth-navigation.test.ts
-  apps/web/lib/register-feedback.ts
-  apps/web/lib/register-feedback.test.ts
-  apps/web/app/_components/auth-provider.tsx
-  apps/web/app/_components/auth-nav.tsx
-  apps/web/app/_components/auth-forms.tsx
-  apps/web/app/_components/account-view.tsx
+  apps/web/features/auth/auth-types.ts
+  apps/web/features/auth/auth-api.ts
+  apps/web/features/auth/auth-navigation.ts
+  apps/web/features/auth/auth-navigation.test.ts
+  apps/web/features/auth/register-feedback.ts
+  apps/web/features/auth/register-feedback.test.ts
+  apps/web/features/auth/auth-provider.tsx
+  apps/web/widgets/auth-nav/auth-nav.tsx
+  apps/web/features/auth/auth-forms.tsx
+  apps/web/features/auth/account-view.tsx
   "apps/web/app/(root)/layout.tsx"
   "apps/web/app/(root)/page.tsx"
   apps/web/app/[locale]/layout.tsx
@@ -658,11 +687,11 @@ t007_outputs=(
   apps/api/src/modules/auth/google/google-auth.controller.spec.ts
   apps/api/src/modules/auth/google/google-id-token.service.spec.ts
   apps/api/src/database/migrations/1781440000002-CreateUserIdentities.ts
-  apps/web/lib/google-auth.ts
-  apps/web/lib/google-auth.test.ts
-  apps/web/lib/single-flight.ts
-  apps/web/lib/single-flight.test.ts
-  apps/web/app/_components/google-sign-in-button.tsx
+  apps/web/features/auth/google-auth.ts
+  apps/web/features/auth/google-auth.test.ts
+  apps/web/shared/lib/single-flight.ts
+  apps/web/shared/lib/single-flight.test.ts
+  apps/web/features/auth/google-sign-in-button.tsx
 )
 
 for out in "${t007_outputs[@]}"; do
@@ -676,14 +705,14 @@ done
 # --- Invariant 13: T-009 next-intl i18n outputs exist --------------------
 
 t009_outputs=(
-  apps/web/i18n/routing.ts
-  apps/web/i18n/request.ts
-  apps/web/i18n/navigation.ts
+  apps/web/shared/i18n/routing.ts
+  apps/web/shared/i18n/request.ts
+  apps/web/shared/i18n/navigation.ts
   apps/web/messages/lt.json
   apps/web/messages/en.json
-  apps/web/lib/locale-navigation.ts
-  apps/web/lib/locale-navigation.test.ts
-  apps/web/lib/messages.test.ts
+  apps/web/shared/lib/locale-navigation.ts
+  apps/web/shared/lib/locale-navigation.test.ts
+  apps/web/shared/i18n/messages.test.ts
   "apps/web/app/[locale]/layout.tsx"
   "apps/web/app/[locale]/page.tsx"
   "apps/web/app/[locale]/account/page.tsx"
@@ -718,14 +747,17 @@ fi
 
 t010_outputs=(
   scripts/verify-static-export.sh
-  apps/web/lib/claims-guard.test.ts
-  apps/web/lib/locale-navigation.ts
-  apps/web/lib/locale-navigation.test.ts
-  apps/web/lib/branding.ts
-  apps/web/lib/locale-preference.ts
-  apps/web/lib/locale-preference.test.ts
-  apps/web/app/_components/brand-mark.tsx
-  apps/web/app/_components/locale-preference-sync.tsx
+  apps/web/shared/lib/claims-guard.test.ts
+  apps/web/shared/lib/locale-navigation.ts
+  apps/web/shared/lib/locale-navigation.test.ts
+  apps/web/shared/branding/branding.ts
+  apps/web/shared/lib/locale-preference.ts
+  apps/web/shared/lib/locale-preference.test.ts
+  apps/web/shared/ui/brand-mark.tsx
+  apps/web/shared/ui/loading-screen.tsx
+  apps/web/features/locale-preference/locale-preference-sync.tsx
+  apps/web/features/locale-preference/root-redirect.tsx
+  apps/web/widgets/app-shell/app-shell.tsx
   "apps/web/app/(root)/page.tsx"
   apps/api/src/config/env.spec.ts
 )
@@ -782,10 +814,10 @@ branding_markers=(
 )
 
 for marker in "${branding_markers[@]}"; do
-  if grep -qF "$marker" apps/web/lib/branding.ts; then
+  if grep -qF "$marker" apps/web/shared/branding/branding.ts; then
     note_pass
   else
-    note_fail "apps/web/lib/branding.ts is missing the stable asset path: $marker"
+    note_fail "apps/web/shared/branding/branding.ts is missing the stable asset path: $marker"
   fi
 done
 
@@ -813,22 +845,28 @@ else
   note_fail "docs/decisions.md does not contain the exact D-022 heading"
 fi
 
-if grep -qF 'role="status"' "apps/web/app/(root)/page.tsx" &&
-  grep -qF 'animate-spin' "apps/web/app/(root)/page.tsx" &&
-  grep -qF 'resolveRootTargetFromStorage' "apps/web/app/(root)/page.tsx"; then
+if grep -qF 'role="status"' "apps/web/shared/ui/loading-screen.tsx" &&
+  grep -qF 'animate-spin' "apps/web/shared/ui/loading-screen.tsx"; then
   note_pass
 else
-  note_fail "the root page is not a centred loading state with a preference-based redirect"
+  note_fail "the shared loading screen is not a centred accessible spinner"
 fi
 
-if grep -qiE 'http-equiv|httpEquiv' "apps/web/app/(root)/page.tsx"; then
-  note_fail "the root page still uses a meta refresh (it would defeat a remembered lt preference)"
+if grep -qF 'resolveRootTargetFromStorage' "apps/web/features/locale-preference/root-redirect.tsx" &&
+  grep -qF 'location.replace' "apps/web/features/locale-preference/root-redirect.tsx"; then
+  note_pass
+else
+  note_fail "the root redirect feature does not resolve the preference and replace the location"
+fi
+
+if grep -qiE 'http-equiv|httpEquiv' "apps/web/features/locale-preference/root-redirect.tsx"; then
+  note_fail "the root redirect still uses a meta refresh (it would defeat a remembered lt preference)"
 else
   note_pass
 fi
 
-if grep -qiE 'Pasirinkite kalb|Choose a language|Redirecting' "apps/web/app/(root)/page.tsx"; then
-  note_fail "the root page still presents chooser/placeholder copy"
+if grep -qiE 'Pasirinkite kalb|Choose a language|Redirecting' "apps/web/features/locale-preference/root-redirect.tsx"; then
+  note_fail "the root redirect still presents chooser/placeholder copy"
 else
   note_pass
 fi
@@ -837,6 +875,50 @@ if grep -qF 'LocalePreferenceSync' "apps/web/app/[locale]/layout.tsx"; then
   note_pass
 else
   note_fail "the locale layout does not persist the locale preference on entry"
+fi
+
+# --- Invariant 15: FSD light structure and boundaries (T-011) ------------
+
+if [ -f docs/fsd-light.md ]; then
+  note_pass
+else
+  note_fail "docs/fsd-light.md is missing"
+fi
+
+if [ -f scripts/verify-fsd-boundaries.mjs ]; then
+  note_pass
+else
+  note_fail "scripts/verify-fsd-boundaries.mjs is missing"
+fi
+
+for layer in shared features widgets; do
+  if [ -d "apps/web/$layer" ]; then
+    note_pass
+  else
+    note_fail "apps/web/$layer/ is missing (FSD light layer)"
+  fi
+done
+
+for forbidden in entities processes; do
+  if [ -e "apps/web/$forbidden" ]; then
+    note_fail "apps/web/$forbidden/ must not exist yet (FSD light has no such layer)"
+  else
+    note_pass
+  fi
+done
+
+d023_heading='### D-023 — FSD light web frontend structure'
+
+if grep -qxF -- "$d023_heading" docs/decisions.md; then
+  note_pass
+else
+  note_fail "docs/decisions.md does not contain the exact D-023 heading"
+fi
+
+if grep -qF 'verify-fsd-boundaries' package.json; then
+  note_pass
+else
+  note_fail "package.json does not run the FSD boundary check in the verify chain"
 fi
 
 # --- Summary -----------------------------------------------------------

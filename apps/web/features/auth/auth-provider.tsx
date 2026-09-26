@@ -10,9 +10,9 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import * as authApi from '../../lib/auth-api';
-import { createSingleFlight } from '../../lib/single-flight';
-import type { AuthUser, Locale } from '../../lib/auth-types';
+import * as authApi from './auth-api';
+import { createSingleFlight } from '../../shared/lib/single-flight';
+import type { AuthUser, Locale } from './auth-types';
 
 export type AuthStatus =
   | 'loading'

@@ -1,14 +1,14 @@
 import { readFileSync, existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import createNextIntlPlugin from 'next-intl/plugin';
-import { normalizePublicApiBaseUrl } from './lib/public-api-base.mjs';
+import { normalizePublicApiBaseUrl } from './shared/api/public-api-base.mjs';
 
 /**
  * next-intl is the UI i18n layer. It is configured for static export: no
  * middleware/proxy is added, and the request configuration resolves the locale
  * from the `[locale]` segment only.
  */
-const withNextIntl = createNextIntlPlugin('./i18n/request.ts');
+const withNextIntl = createNextIntlPlugin('./shared/i18n/request.ts');
 
 /**
  * The static web build receives only the deliberately exposed public value

@@ -1,5 +1,5 @@
 import { getTranslations } from 'next-intl/server';
-import { VerifyEmailForm } from '../../../_components/auth-forms';
+import { VerifyEmailForm } from '../../../../features/auth/auth-forms';
 
 export default async function Page({
   params,

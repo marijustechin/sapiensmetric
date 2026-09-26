@@ -180,7 +180,7 @@ tests**; no SMTP connection is opened and no `.env` value is read.
 - `auth.integration.spec.ts` (real MySQL, transport overridden with a fake) —
   duplicate conflict and concurrent registration create exactly one user record
   and exactly one verification token.
-- `apps/web/lib/register-feedback.test.ts` — the LT/EN register outcome flags and
+- `apps/web/features/auth/register-feedback.test.ts` — the LT/EN register outcome flags and
   message keys for every outcome (the copy itself is asserted by the T-009
   catalogue test).
 
@@ -203,10 +203,10 @@ exchange, or credential is used.
   `returnTo` propagation boundary: login-query `returnTo` → start request →
   transaction → callback redirect, default LT/EN targets, and external/malformed
   `returnTo` rejection to the safe default.
-- `apps/web/lib/google-auth.test.ts` — the Google start URL (locale, login-query
+- `apps/web/features/auth/google-auth.test.ts` — the Google start URL (locale, login-query
   `returnTo` propagation, default LT/EN targets, external/malformed rejection,
   trailing-slash normalisation) and the LT/EN button/unavailable copy.
-- `apps/web/lib/single-flight.test.ts` — the bootstrap single-flight guard
+- `apps/web/shared/lib/single-flight.test.ts` — the bootstrap single-flight guard
   (concurrent runs coalesce, a fresh run starts after completion, a retry runs
   after rejection). This prevents a double-invoked mount effect after the
   full-page Google callback redirect from firing two concurrent refreshes that
@@ -220,22 +220,22 @@ transport faked; it does not exercise Google.
 The refactor keeps the dependency-free Node test runner and adds focused tests
 for the new i18n layer:
 
-- `apps/web/lib/messages.test.ts` — both catalogues load, expose the same nested
+- `apps/web/shared/i18n/messages.test.ts` — both catalogues load, expose the same nested
   key set, and every critical UI key is present and non-empty; locale-specific
   copy differs where expected.
-- `apps/web/lib/locale-navigation.test.ts` — locale validation (`lt`/`en` only),
+- `apps/web/shared/lib/locale-navigation.test.ts` — locale validation (`lt`/`en` only),
   `otherLocale`, `localizePath` (safe same-origin paths only; rejects external,
   protocol-relative, backslash, control-character, and non-string/non-path
   values), locale-specific default account destinations, same-route language
   switching, and safe `returnTo` remapping/dropping.
-- `apps/web/lib/register-feedback.test.ts` — outcome flags and message keys.
-- `apps/web/lib/locale-preference.test.ts` — the remembered-language root
+- `apps/web/features/auth/register-feedback.test.ts` — outcome flags and message keys.
+- `apps/web/shared/lib/locale-preference.test.ts` — the remembered-language root
   redirect: no stored preference -> `/en/`, stored `lt` -> `/lt/`, stored `en`
   -> `/en/`, unsupported values fall back to `/en/`, persistence on locale entry,
   tolerance of storage failures, the root page's centred loading state (and no
   meta refresh / chooser / placeholder copy), and that the locale layout wires
   the preference sync.
-- `apps/web/lib/google-auth.test.ts` — Google start URL, default LT/EN account
+- `apps/web/features/auth/google-auth.test.ts` — Google start URL, default LT/EN account
   destinations, and login-query `returnTo` propagation/rejection (no network).
 
 The full route matrix is verified by the static web build (`pnpm build`), which
@@ -263,7 +263,14 @@ It also asserts the approved branding assets (D-021) reach the export under
 that the light-shell brand mark (dark variant) is referenced. For the root route
 (D-022) it asserts that the exported `index.html` renders the accessible centred
 loading state, contains no meta refresh, offers the JavaScript-disabled English
-fallback link, and presents no chooser or placeholder copy.
+fallback link, and presents no chooser or placeholder copy. Finally, it asserts
+the **generated CSS** contains representative utilities used by each FSD layer —
+the moved logo (`h-8`, `w-8`), navigation (`flex-wrap`, `px-8`, `py-3`,
+`ml-auto`, `border-b`, `border-gray-200`), loading screen (`sr-only`,
+`animate-spin`, `justify-center`, `rounded-full`, `border-t-gray-700`), an app
+heading (`text-2xl`), and a features component (`font-mono`) — and that the
+pages link a CSS asset, so a Tailwind content-glob regression cannot pass
+silently (class names in TSX alone are insufficient).
 
 The RSC `.txt` payloads Next.js emits next to an `index.html` are not secret
 leakage, but a directory listing must never stand in for a page; the invariant
@@ -274,8 +281,9 @@ suite.
 
 ## T-010 claims guard
 
-`apps/web/lib/claims-guard.test.ts` runs with the web unit tests
-(`node --test lib/*.test.ts`) and enforces the boundaries of
+`apps/web/shared/lib/claims-guard.test.ts` runs with the web unit tests
+(`node --test $(find shared features -name '*.test.ts')`, which now discovers
+the co-located tests across the FSD layers) and enforces the boundaries of
 `docs/claims-ladder.md` on **public user-facing UI text**
 (`apps/web/messages/*.json`). It rejects IQ, percentile/norm-referenced
 comparisons, predictive framing, construct-measurement claims, diagnostic
@@ -288,6 +296,17 @@ documentation, task records, or tests, where discussing forbidden claims is
 legitimate. When report/result templates or any other user-visible text
 locations are added, they MUST be registered in the guard's
 `PUBLIC_UI_TEXT_SOURCES` list so they are covered.
+
+## T-011 FSD light boundaries
+
+`scripts/verify-fsd-boundaries.mjs` (Node built-ins only) is the focused FSD
+light check. It parses every `.ts`/`.tsx` file under
+`apps/web/{app,widgets,features,shared}`, resolves relative imports, and fails if
+a module imports a higher layer (`app` -> `widgets` -> `features` -> `shared`;
+own layer or lower only). It also fails if an `entities/` or `processes/`
+directory appears. It is part of the `pnpm verify` chain and runnable directly
+with `pnpm verify:fsd`. The policy and the deliberate Next.js/next-intl
+exceptions are documented in `docs/fsd-light.md` (D-023).
 
 ## Workflow expectations
 

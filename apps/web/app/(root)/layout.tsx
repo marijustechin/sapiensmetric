@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
-import { BRANDING } from '../../lib/branding';
+import { BRANDING } from '../../shared/branding/branding';
 import '../globals.css';
 
 /**

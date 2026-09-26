@@ -29,7 +29,7 @@ interface PublicTextSource {
 
 const PUBLIC_UI_TEXT_SOURCES: PublicTextSource[] = LOCALES.map((locale) => ({
   label: `messages/${locale}.json`,
-  path: resolve(here, `../messages/${locale}.json`),
+  path: resolve(here, `../../messages/${locale}.json`),
 }));
 
 interface ForbiddenClaim {

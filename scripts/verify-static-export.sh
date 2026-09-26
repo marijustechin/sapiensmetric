@@ -17,6 +17,10 @@
 #   3. Each localized page declares the matching `<html lang="lt">`/`"en">`.
 #   4. The previous flat deep-route `.html` format (e.g. `lt/auth/login.html`,
 #      `lt.html`) is absent; no page inside a locale is served as a flat file.
+#   5. The generated CSS contains the representative utilities used by the FSD
+#      layers (including `sr-only` and `animate-spin`) and the root/locale pages
+#      link a CSS asset, so a Tailwind content-glob regression cannot pass
+#      silently.
 #
 # Exit code 0 = all invariants hold; non-zero = at least one failed.
 
@@ -188,6 +192,65 @@ if [ -f "$root_page" ] && grep -qiE 'Pasirinkite kalb|Choose a language|Redirect
   note_fail "root index.html still presents chooser/placeholder copy"
 else
   note_pass
+fi
+
+# --- Generated CSS: Tailwind must cover every FSD source layer ------------
+# Class names in TSX are not enough: the utilities must be present in the
+# emitted CSS. The representative utilities below are only used by the moved
+# logo (shared/ui), navigation (widgets), loading screen (shared/ui), an app
+# page heading, and a features component, so a missing Tailwind content glob
+# (the post-FSD-move regression) fails here. `sr-only` and `animate-spin` are
+# included explicitly.
+
+css_dir="$OUT_DIR/_next/static"
+css_files="$(find "$css_dir" -type f -name '*.css' 2>/dev/null | sort)"
+
+if [ -z "$css_files" ]; then
+  note_fail "no generated CSS found under _next/static (Tailwind build?)"
+else
+  css_utilities=(
+    sr-only
+    animate-spin
+    h-8
+    w-8
+    justify-center
+    rounded-full
+    border-t-gray-700
+    font-mono
+    flex-wrap
+    px-8
+    py-3
+    ml-auto
+    border-b
+    border-gray-200
+    text-2xl
+  )
+
+  for class in "${css_utilities[@]}"; do
+    found=0
+    while IFS= read -r file; do
+      [ -n "$file" ] || continue
+      if grep -qE "\\.${class}[{,]" "$file"; then
+        found=1
+        break
+      fi
+    done <<EOF
+$css_files
+EOF
+    if [ "$found" -eq 1 ]; then
+      note_pass
+    else
+      note_fail "generated CSS is missing .${class} (check tailwind.config.ts content globs)"
+    fi
+  done
+
+  for page in index.html lt/index.html en/index.html; do
+    if [ -f "$OUT_DIR/$page" ] && grep -qE '/_next/static/[^"]+\.css' "$OUT_DIR/$page"; then
+      note_pass
+    else
+      note_fail "no CSS asset referenced in $page"
+    fi
+  done
 fi
 
 printf '\nverify-static-export.sh: %d passed, %d failed\n' "$passes" "$failures"

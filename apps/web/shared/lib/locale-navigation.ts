@@ -7,7 +7,7 @@
  * remapping for the language switcher.
  *
  * The security boundary for arbitrary query input remains `sanitizeReturnTo`
- * in `auth-navigation.ts`; the helpers here only ever produce same-origin
+ * in `features/auth/auth-navigation.ts`; the helpers here only ever produce same-origin
  * absolute paths.
  */
 

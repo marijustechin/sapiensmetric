@@ -18,6 +18,6 @@ export default getRequestConfig(async ({locale}) => {
 
   return {
     locale: resolved,
-    messages: (await import(`../messages/${resolved}.json`)).default,
+    messages: (await import(`../../messages/${resolved}.json`)).default,
   };
 });

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 
 const moduleUrl = new URL(
-  '../../../web/lib/public-api-base.mjs',
+  '../../../web/shared/api/public-api-base.mjs',
   import.meta.url,
 ).href;
 

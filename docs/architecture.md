@@ -108,12 +108,16 @@ a static-export Next.js frontend; no server route, API change, database change,
 or new dependency is introduced (the focused unit test uses the built-in Node
 test runner).
 
-- Frontend logic: `apps/web/lib/auth-api.ts` (typed fetch client using
+- Frontend logic: `apps/web/features/auth/auth-api.ts` (typed fetch client using
   `NEXT_PUBLIC_API_BASE_URL` with `credentials: 'include'`),
-  `apps/web/lib/auth-types.ts`, and `apps/web/lib/auth-navigation.ts`
-  (same-origin `returnTo` validation).
-- React state: `apps/web/app/_components/auth-provider.tsx` holds the access
+  `apps/web/features/auth/auth-types.ts`, and
+  `apps/web/features/auth/auth-navigation.ts` (same-origin `returnTo`
+  validation). The generic API base helper stays in
+  `apps/web/shared/api/public-api-base.mjs`.
+- React state: `apps/web/features/auth/auth-provider.tsx` holds the access
   token in memory only and performs the refresh + `/auth/me` bootstrap.
+
+(Paths reflect the T-011 FSD light re-layering; see below and `docs/fsd-light.md`.)
 - Routes: `/{lt,en}` home, `/{lt,en}/auth/{login,register,verify-email,forgot-password,reset-password}`,
   and the protected `/{lt,en}/account`. T-009 later consolidated these LT/EN
   pages under a single `app/[locale]` implementation (see below).
@@ -125,10 +129,11 @@ shared locale-aware routes/components, and checked-in message catalogues. It
 adds `next-intl` as the UI i18n layer (D-019) and keeps the static-export build,
 the exact route matrix, and all auth/OAuth security behaviour unchanged.
 
-- i18n configuration: `apps/web/i18n/routing.ts` (locales `lt`/`en`,
-  `localePrefix: 'always'`), `apps/web/i18n/request.ts` (message loading for the
-  explicit locale; no request headers, cookies, or proxy), and
-  `apps/web/i18n/navigation.ts` (locale-aware `Link`/`useRouter`/`usePathname`).
+- i18n configuration: `apps/web/shared/i18n/routing.ts` (locales `lt`/`en`,
+  `localePrefix: 'always'`), `apps/web/shared/i18n/request.ts` (message loading
+  for the explicit locale; no request headers, cookies, or proxy), and
+  `apps/web/shared/i18n/navigation.ts` (locale-aware
+  `Link`/`useRouter`/`usePathname`).
 - Message catalogues: `apps/web/messages/lt.json`, `apps/web/messages/en.json`.
 - Routes: `apps/web/app/[locale]/...` — one implementation per route, generated
   for both locales via `generateStaticParams` in the `[locale]` root layout —
@@ -138,7 +143,7 @@ the exact route matrix, and all auth/OAuth security behaviour unchanged.
   entry via `LocalePreferenceSync`.
   The `[locale]` layout is a root layout so `<html lang>` follows the active
   locale; the build has no `app/layout.tsx`.
-- Pure helpers: `apps/web/lib/locale-navigation.ts` (locale validation,
+- Pure helpers: `apps/web/shared/lib/locale-navigation.ts` (locale validation,
   same-route language switching, and safe `returnTo` locale remapping); the
   language switcher never uses `document.cookie`.
 - No middleware/proxy and no runtime browser-language detection are added.
@@ -164,12 +169,29 @@ auth, API, database, SMTP, or OAuth behaviour:
 - `loadAppConfig()` reads the root `.env` only when no explicit environment
   object is supplied, so tests stay `.env`-free and do not mutate `process.env`.
 - The UI fallback locale is `en`, aligned with the API authentication default.
-- `apps/web/lib/claims-guard.test.ts` guards public UI copy against
+- `apps/web/shared/lib/claims-guard.test.ts` guards public UI copy against
   `docs/claims-ladder.md`; future report/result templates must register with it.
 - The approved branding WebP assets are used as supplied from the stable
-  `/branding/...` public paths (D-021); `apps/web/lib/branding.ts` centralises
-  the paths, `apps/web/app/_components/brand-mark.tsx` renders the light-shell
-  (`dark`) variant, and the supplied favicon is registered in both root layouts.
+  `/branding/...` public paths (D-021); `apps/web/shared/branding/branding.ts`
+  centralises the paths, `apps/web/shared/ui/brand-mark.tsx` renders the
+  light-shell (`dark`) variant, and the supplied favicon is registered in both
+  root layouts.
+
+## T-011 FSD light web structure (behaviour-preserving)
+
+T-011 (D-023) re-layers `apps/web` into a deliberately light
+Feature-Sliced-Design-style structure: `app` (routes, layouts, metadata, and
+route composition only), `widgets` (composed screen blocks such as the app shell
+and auth navigation), `features` (user interactions such as auth and locale
+preference), and `shared` (generic UI, branding, i18n infrastructure, API
+helpers, and low-level utilities). The allowed import direction is
+`app -> widgets -> features -> shared` (a module may import its own layer or any
+lower one, never an upper one); `entities/` and `processes/` are intentionally
+not introduced. `scripts/verify-fsd-boundaries.mjs` (dependency-free) enforces
+this in the `pnpm verify` chain, and `docs/fsd-light.md` documents the policy and
+the deliberate Next.js/next-intl exceptions. Routing, static export, locale
+persistence, auth behaviour, public API configuration, and all tests are
+unchanged; no API or database change.
 
 ## T-007 Google OpenID Connect sign-in (implemented, approved, archived)
 

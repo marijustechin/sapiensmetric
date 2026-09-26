@@ -1,4 +1,4 @@
-import { BRANDING } from '../../lib/branding';
+import { BRANDING } from '../branding/branding';
 
 /**
  * Brand mark for the approved WebP asset set (see `lib/branding.ts`).

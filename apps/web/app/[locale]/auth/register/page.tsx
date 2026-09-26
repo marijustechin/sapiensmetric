@@ -1,5 +1,5 @@
 import { getTranslations } from 'next-intl/server';
-import { RegisterForm } from '../../../_components/auth-forms';
+import { RegisterForm } from '../../../../features/auth/auth-forms';
 
 export default async function Page({
   params,

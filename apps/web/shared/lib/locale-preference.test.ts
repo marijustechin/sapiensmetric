@@ -88,21 +88,30 @@ test('storage failures are tolerated', () => {
   assert.equal(resolveRootTargetFromStorage(throwing), '/en/');
 });
 
-test('the root page renders a centred loading state, not a chooser or meta refresh', () => {
-  const page = readFileSync(resolve(here, '../app/(root)/page.tsx'), 'utf8');
-  assert.match(page, /role="status"/);
-  assert.match(page, /aria-busy="true"/);
-  assert.match(page, /animate-spin/);
-  assert.match(page, /resolveRootTargetFromStorage/);
-  assert.match(page, /location\.replace/);
-  assert.doesNotMatch(page, /http-equiv|httpEquiv/i);
-  assert.doesNotMatch(page, /Pasirinkite kalb/i);
-  assert.doesNotMatch(page, /Choose a language/i);
-  assert.doesNotMatch(page, /Redirecting/i);
+test('the root redirect feature renders the shared loading state, not a chooser or meta refresh', () => {
+  const feature = readFileSync(
+    resolve(here, '../../features/locale-preference/root-redirect.tsx'),
+    'utf8',
+  );
+  assert.match(feature, /resolveRootTargetFromStorage/);
+  assert.match(feature, /location\.replace/);
+  assert.doesNotMatch(feature, /http-equiv|httpEquiv/i);
+  assert.doesNotMatch(feature, /Pasirinkite kalb/i);
+  assert.doesNotMatch(feature, /Choose a language/i);
+  assert.doesNotMatch(feature, /Redirecting/i);
+
+  const loading = readFileSync(resolve(here, '../ui/loading-screen.tsx'), 'utf8');
+  assert.match(loading, /role="status"/);
+  assert.match(loading, /aria-busy="true"/);
+  assert.match(loading, /animate-spin/);
+  assert.match(loading, /min-h-screen/);
 });
 
 test('entering a localized route wires the preference sync (persistence)', () => {
-  const layout = readFileSync(resolve(here, '../app/[locale]/layout.tsx'), 'utf8');
+  const layout = readFileSync(
+    resolve(here, '../../app/[locale]/layout.tsx'),
+    'utf8',
+  );
   assert.match(layout, /LocalePreferenceSync/);
   assert.match(layout, /locale=\{locale\}/);
 });

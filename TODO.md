@@ -6,9 +6,13 @@ authorises work, and only one task is active at a time.
 
 ## Now
 
-- **No task is active.** T-009 and T-010 are complete, approved, and archived in
-  `tasks/done/`. The next task number is **T-011**; only `tasks/current.md` with
-  explicit human approval authorises work.
+- **No task is active.** T-011 is approved and archived; T-001..T-011 are
+  complete/archived in `tasks/done/`. Only `tasks/current.md` with explicit human
+  approval authorises work.
+- **T-011 (FSD light frontend structure)** is approved (2026-09-26) and archived
+  at `tasks/done/2026-09-26-fsd-light-frontend-structure.md` (D-023). It
+  re-layered `apps/web` into `app` / `widgets` / `features` / `shared` with an
+  enforced import direction, behaviour-preserving, with no new dependency.
 - **T-010 (static-export directory routes, local config/test isolation, and a
   public-UI claims guard)** is approved (2026-09-26) and archived at
   `tasks/done/2026-09-26-static-export-routes-config-isolation-claims-guard.md`.
@@ -31,10 +35,13 @@ authorises work, and only one task is active at a time.
 
 ## Next (not yet authorised)
 
+- **T-012 — roles and admin.** The next planned task (the expected
+  `entities/user` slice belongs here). Requires an explicitly scoped
+  `tasks/current.md` entry with human approval before any work starts.
 - **Assessment foundations** — the first real assessment work (item model,
   provenance workflow, scoring package). Blocked on O-002, O-003, O-006, and
   O-007; requires product-owner approval of the T-002 instrument/provenance
-  proposals. This is the next strategic step.
+  proposals.
 - vHosts Node-to-MySQL feasibility (later, separate infrastructure task).
 
 ## Blocked

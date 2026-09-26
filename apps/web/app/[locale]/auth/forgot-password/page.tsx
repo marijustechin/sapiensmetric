@@ -1,5 +1,5 @@
 import { getTranslations } from 'next-intl/server';
-import { ForgotPasswordForm } from '../../../_components/auth-forms';
+import { ForgotPasswordForm } from '../../../../features/auth/auth-forms';
 
 export default async function Page({
   params,

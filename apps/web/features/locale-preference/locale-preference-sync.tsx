@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { persistLocalePreference } from '../../lib/locale-preference';
+import { persistLocalePreference } from '../../shared/lib/locale-preference';
 
 /**
  * Persist the active locale as the local preference whenever a locale-prefixed

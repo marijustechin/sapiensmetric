@@ -1,7 +1,15 @@
 import type { Config } from 'tailwindcss';
 
 const config: Config = {
-  content: ['./app/**/*.{ts,tsx}'],
+  // Tailwind must scan every FSD source layer that carries class names.
+  // After the T-011 moves, limiting this to `./app/**` silently dropped the
+  // utilities used by the moved logo, navigation, and loading components.
+  content: [
+    './app/**/*.{ts,tsx}',
+    './shared/**/*.{ts,tsx}',
+    './features/**/*.{ts,tsx}',
+    './widgets/**/*.{ts,tsx}',
+  ],
   theme: {
     extend: {},
   },

@@ -1,5 +1,5 @@
 import { getTranslations } from 'next-intl/server';
-import { AccountView } from '../../_components/account-view';
+import { AccountView } from '../../../features/auth/account-view';
 
 export default async function Page({
   params,

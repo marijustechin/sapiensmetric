@@ -314,7 +314,7 @@ where noted. Update this file when a decision is made or changed.
   `NEXT_PUBLIC_API_BASE_URL` is the API origin. The web `dev` script pins the
   Next.js dev server to `3333` (no manual CLI argument), and the API port is
   `3334`, not `3333`, so the two do not collide.
-- The UI fallback locale (`apps/web/lib/locale-navigation.ts` `DEFAULT_LOCALE`)
+- The UI fallback locale (`apps/web/shared/lib/locale-navigation.ts` `DEFAULT_LOCALE`)
   is `en`, deliberately matching the API authentication default (`en` when
   `locale` is omitted) and the Google start default. The `[locale]` layout still
   rejects unsupported locales and `/` remains the bilingual chooser.
@@ -345,7 +345,7 @@ where noted. Update this file when a decision is made or changed.
   - `sapiens-metric-logo-favicon.webp` — the supplied favicon mark.
 - The filenames and paths are a **stable interface**: future visual tone
   adjustments may replace file contents, but must preserve these exact
-  filenames and paths. Paths are centralised in `apps/web/lib/branding.ts`.
+  filenames and paths. Paths are centralised in `apps/web/shared/branding/branding.ts`.
 - The variant is chosen for the actual background it sits on; the current shell
   is light, so `logo-dark` is used and the supplied favicon is registered as the
   web app icon in both root layouts.
@@ -383,7 +383,7 @@ where noted. Update this file when a decision is made or changed.
 - The bilingual chooser screen and its `Chooser` message namespace are removed;
   the `(chooser)` route group is renamed `(root)`. This supersedes the `/`
   handling in D-019 and D-020.
-- `apps/web/lib/locale-preference.ts` holds the storage key, targets, and
+- `apps/web/shared/lib/locale-preference.ts` holds the storage key, targets, and
   resolution; `locale-preference.test.ts` covers no-preference/`lt`/`en`/
   unsupported cases, persistence, storage failures, and the root page's loading
   state; `scripts/verify-static-export.sh` asserts the exported root renders the
@@ -391,6 +391,30 @@ where noted. Update this file when a decision is made or changed.
   no chooser.
 - Date: 2026-09-26.
 - Status: decided. Authorises only the explicitly scoped root-route change.
+
+### D-023 — FSD light web frontend structure
+- `apps/web` follows a deliberately **light** Feature-Sliced-Design-style
+  structure with four layers: `app` (Next.js routes, layouts, metadata, and
+  route composition only), `widgets` (composed screen blocks), `features` (user
+  interactions), and `shared` (generic UI, branding, i18n infrastructure, API
+  helpers, and low-level utilities).
+- Allowed import direction: a module may import its own layer or any lower layer
+  (`app` -> `widgets` -> `features` -> `shared`), never an upper one.
+  `entities/` and `processes/` are intentionally **not** introduced;
+  `entities/user` belongs to a later roles/admin task.
+- Enforced by `scripts/verify-fsd-boundaries.mjs` (dependency-free; Node
+  built-ins only), which is part of the `pnpm verify` chain. No architectural
+  framework and no path-alias toolchain is added (relative imports only, so the
+  modules run under the dependency-free Node test runner).
+- Deliberate Next.js/next-intl exceptions (see `docs/fsd-light.md`): `app/`
+  stays at the web root and holds routes/layouts/metadata plus `globals.css`;
+  `messages/` and `public/` stay at the web root; framework config stays at the
+  web root; i18n infrastructure lives in `shared/i18n`.
+- Behaviour-preserving: routing, static export, locale persistence, auth
+  behaviour, public API configuration, and all existing tests are unchanged. No
+  API or database change.
+- Date: 2026-09-26.
+- Status: decided. Authorises only the explicitly scoped T-011 work.
 
 ## Open decisions
 

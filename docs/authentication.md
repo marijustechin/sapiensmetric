@@ -193,7 +193,7 @@ static-export client components; the only configured API base is
 - On refresh success, `GET /auth/me` (Bearer) supplies the account identity.
 - Protected route: only `/{lt,en}/account` (client-side gate); other auth pages
   remain public.
-- `returnTo` is same-origin-validated (`apps/web/lib/auth-navigation.ts`): an
+- `returnTo` is same-origin-validated (`apps/web/features/auth/auth-navigation.ts`): an
   external, protocol-relative, or malformed value falls back to the account path.
 - Logout calls `POST /auth/logout` (Origin-checked) and clears the in-memory
   token.

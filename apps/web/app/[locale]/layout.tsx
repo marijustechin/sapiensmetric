@@ -3,11 +3,11 @@ import type { ReactNode } from 'react';
 import { NextIntlClientProvider, hasLocale } from 'next-intl';
 import { getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
-import { AuthProvider } from '../_components/auth-provider';
-import { AuthNav } from '../_components/auth-nav';
-import { LocalePreferenceSync } from '../_components/locale-preference-sync';
-import { routing } from '../../i18n/routing';
-import { BRANDING } from '../../lib/branding';
+import { AuthProvider } from '../../features/auth/auth-provider';
+import { LocalePreferenceSync } from '../../features/locale-preference/locale-preference-sync';
+import { AppShell } from '../../widgets/app-shell/app-shell';
+import { routing } from '../../shared/i18n/routing';
+import { BRANDING } from '../../shared/branding/branding';
 import '../globals.css';
 
 /**
@@ -61,10 +61,7 @@ export default async function LocaleLayout({
         <LocalePreferenceSync locale={locale} />
         <NextIntlClientProvider locale={locale} messages={messages}>
           <AuthProvider>
-            <div className="min-h-screen">
-              <AuthNav />
-              <main className="p-8">{children}</main>
-            </div>
+            <AppShell>{children}</AppShell>
           </AuthProvider>
         </NextIntlClientProvider>
       </body>

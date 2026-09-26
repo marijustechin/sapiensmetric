@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import * as authApi from '../../lib/auth-api';
-import { googleStartUrl } from '../../lib/google-auth';
-import type { AppLocale } from '../../lib/locale-navigation';
+import * as authApi from './auth-api';
+import { googleStartUrl } from './google-auth';
+import type { AppLocale } from '../../shared/lib/locale-navigation';
 
 /**
  * Navigates to the API Google start endpoint. The button is hidden while the

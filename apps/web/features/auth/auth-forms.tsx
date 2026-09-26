@@ -1,16 +1,16 @@
 'use client';
 
-import { Link } from '../../i18n/navigation';
+import { Link } from '../../shared/i18n/navigation';
 import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useState, type FormEvent } from 'react';
-import * as authApi from '../../lib/auth-api';
-import { sanitizeReturnTo } from '../../lib/auth-navigation';
-import type { AppLocale } from '../../lib/locale-navigation';
+import * as authApi from './auth-api';
+import { sanitizeReturnTo } from './auth-navigation';
+import type { AppLocale } from '../../shared/lib/locale-navigation';
 import {
   registerFeedback,
   type RegisterFeedback,
-} from '../../lib/register-feedback';
+} from './register-feedback';
 import { useAuth } from './auth-provider';
 import { GoogleSignInButton } from './google-sign-in-button';
 

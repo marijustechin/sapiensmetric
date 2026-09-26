@@ -4,8 +4,8 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useAuth } from './auth-provider';
-import { loginHref } from '../../lib/auth-navigation';
-import type { AppLocale } from '../../lib/locale-navigation';
+import { loginHref } from './auth-navigation';
+import type { AppLocale } from '../../shared/lib/locale-navigation';
 
 export function AccountView() {
   const t = useTranslations('Account');

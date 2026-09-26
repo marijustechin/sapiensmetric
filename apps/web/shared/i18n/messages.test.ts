@@ -3,10 +3,10 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
-import { LOCALES, type AppLocale } from './locale-navigation.ts';
+import { LOCALES, type AppLocale } from '../lib/locale-navigation.ts';
 
 const here = dirname(fileURLToPath(import.meta.url));
-const messagesDir = resolve(here, '../messages');
+const messagesDir = resolve(here, '../../messages');
 
 type Catalogue = Record<string, unknown>;
 

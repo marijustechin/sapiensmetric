@@ -1,14 +1,14 @@
 'use client';
 
-import { Link, usePathname, useRouter } from '../../i18n/navigation';
+import { Link, usePathname, useRouter } from '../../shared/i18n/navigation';
 import { useLocale, useTranslations } from 'next-intl';
-import { useAuth } from './auth-provider';
-import { BrandMark } from './brand-mark';
+import { useAuth } from '../../features/auth/auth-provider';
+import { BrandMark } from '../../shared/ui/brand-mark';
 import {
   otherLocale,
   switchLocaleTarget,
   type AppLocale,
-} from '../../lib/locale-navigation';
+} from '../../shared/lib/locale-navigation';
 
 export function AuthNav() {
   const t = useTranslations('Nav');

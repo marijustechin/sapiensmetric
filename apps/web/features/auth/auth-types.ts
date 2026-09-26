@@ -7,7 +7,7 @@
  * kept in sync manually and must match the Zod contracts.
  */
 
-import type {AppLocale} from './locale-navigation';
+import type {AppLocale} from '../../shared/lib/locale-navigation';
 
 export type Locale = AppLocale;
 

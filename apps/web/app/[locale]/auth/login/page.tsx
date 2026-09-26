@@ -1,5 +1,5 @@
 import { getTranslations } from 'next-intl/server';
-import { LoginForm } from '../../../_components/auth-forms';
+import { LoginForm } from '../../../../features/auth/auth-forms';
 
 export default async function Page({
   params,
