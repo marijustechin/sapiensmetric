@@ -48,10 +48,12 @@ export class AccessTokenGuard implements CanActivate {
       throw new UnauthorizedException();
     }
 
-    // Verification access gate (D-016): every session-authenticated route
-    // rejects an unverified user, so existing sessions cannot bypass it.
+    // Verification access gate (D-016) and account status (T-012): every
+    // session-authenticated route rejects an unverified or suspended user, so
+    // existing sessions cannot bypass it. The user is re-read per request, so
+    // a demotion or suspension takes effect immediately (no role JWT claim).
     const user = await this.users.findById(payload.sub);
-    if (!user || !user.emailVerifiedAt) {
+    if (!user || !user.emailVerifiedAt || user.status !== 'active') {
       throw new UnauthorizedException();
     }
 

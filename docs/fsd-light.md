@@ -15,13 +15,13 @@ and unaffected.
 | Layer | Owns | Examples |
 | --- | --- | --- |
 | `shared/` | Generic, reusable, framework-light building blocks: UI primitives, branding, i18n infrastructure, the API base helper (build-time config), low-level pure utilities. | `shared/ui/brand-mark.tsx`, `shared/ui/loading-screen.tsx`, `shared/branding/branding.ts`, `shared/i18n/*`, `shared/api/public-api-base.mjs`, `shared/lib/*` |
-| `features/` | User interactions and the logic behind them: auth (forms, provider, API client, types, navigation/`returnTo`, Google helper, button, account view, register feedback) and locale preference. | `features/auth/*`, `features/locale-preference/*` |
+| `features/` | User interactions and the logic behind them: auth (forms, provider, API client, types, navigation/`returnTo`, Google helper, button, account view, register feedback), locale preference, and admin actions. | `features/auth/*`, `features/locale-preference/*`, `features/admin/*` |
+| `entities/` | Reusable domain models, safe types, and entity-level presentation. | `entities/user/*` |
 | `widgets/` | Composed screen blocks that combine features/shared into a meaningful block of UI. | `widgets/app-shell/*`, `widgets/auth-nav/*` |
 | `app/` | Next.js App Router routes, layouts, metadata, and route composition only. No business logic, no reusable UI, no direct `fetch`. | `app/(root)/*`, `app/[locale]/*` |
 
-`entities/` and `processes/` are intentionally **not** introduced. An
-`entities/user` slice belongs to the following roles/admin task; `processes/` is
-not needed at this scale.
+`entities/` was introduced by T-012 (`entities/user`: safe user model and
+presentation). `processes/` is intentionally **not** introduced at this scale.
 
 ## Allowed import direction
 
@@ -29,13 +29,17 @@ A module may import from its **own layer** or any **lower** layer, never an
 upper one:
 
 ```
-app (4)  ->  app, widgets, features, shared
-widgets (3)  ->  widgets, features, shared
-features (2) ->  features, shared
-shared (1)   ->  shared only
+app (5)       ->  app, widgets, features, entities, shared
+widgets (4)   ->  widgets, features, entities, shared
+features (3)  ->  features, entities, shared
+entities (2)  ->  entities, shared
+shared (1)    ->  shared only
 ```
 
-- `shared` must never import `features`, `widgets`, or `app`.
+- `shared` must never import `entities`, `features`, `widgets`, or `app`.
+- `entities` must never import `features`, `widgets`, or `app` (in particular,
+  `entities/user` must not depend on `features/auth`; session ownership stays in
+  `features/auth` and is consumed by features/widgets).
 - `features` must never import `widgets` or `app`.
 - Cross-imports **within** a layer are allowed (e.g. `features/auth` →
   `features/locale-preference` would be allowed; currently there are none).
@@ -83,8 +87,8 @@ resolves relative imports, and fails on any upward import. It also fails if an
 chain (`node scripts/verify-fsd-boundaries.mjs`).
 
 **Tailwind content coverage.** `apps/web/tailwind.config.ts` `content` must scan
-every class-carrying layer: `./app/**`, `./shared/**`, `./features/**`, and
-`./widgets/**`. Limiting it to `./app/**` after the moves silently dropped the
+every class-carrying layer: `./app/**`, `./widgets/**`, `./features/**`,
+`./entities/**`, and `./shared/**`. Limiting it to `./app/**` after the moves silently dropped the
 utilities used by the moved logo, navigation, and loading components (this was a
 real regression, fixed under T-011). Because class names in TSX are not proof
 that CSS is emitted, `scripts/verify-static-export.sh` asserts the generated CSS

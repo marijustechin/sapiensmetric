@@ -36,6 +36,8 @@ export type RegisterResult =
 interface AuthContextValue {
   status: AuthStatus;
   user: AuthUser | null;
+  /** Current in-memory access token, or null. Never persisted. */
+  getAccessToken: () => string | null;
   retryBootstrap: () => void;
   login: (email: string, password: string) => Promise<LoginResult>;
   register: (
@@ -173,6 +175,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     () => ({
       status,
       user,
+      getAccessToken: () => accessTokenRef.current,
       retryBootstrap: () => {
         void bootstrap();
       },

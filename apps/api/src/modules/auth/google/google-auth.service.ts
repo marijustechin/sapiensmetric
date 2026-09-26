@@ -121,6 +121,11 @@ export class GoogleAuthService {
       return { outcome: 'error', reason: 'account_rejected', locale };
     }
 
+    // T-012: a suspended account must not obtain a new Google session.
+    if (user.status !== 'active') {
+      return { outcome: 'error', reason: 'account_suspended', locale };
+    }
+
     const refreshToken = this.tokens.generateRefreshToken();
     const expiresAt = new Date(Date.now() + this.config.auth.refreshSessionTtlMs);
     await this.sessions.issueSession(

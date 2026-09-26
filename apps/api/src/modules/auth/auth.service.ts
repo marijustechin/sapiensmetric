@@ -153,9 +153,10 @@ export class AuthService {
     if (!valid) {
       throw new UnauthorizedException();
     }
-    // Access gate (D-016): an unverified user is treated exactly like invalid
-    // credentials — no access token and no refresh cookie.
-    if (!user.emailVerifiedAt) {
+    // Access gate (D-016) + account status (T-012): an unverified or suspended
+    // user is treated exactly like invalid credentials — no access token and no
+    // refresh cookie.
+    if (!user.emailVerifiedAt || user.status !== 'active') {
       throw new UnauthorizedException();
     }
 
@@ -186,11 +187,12 @@ export class AuthService {
 
     const tokenHash = this.tokens.hashRefreshToken(refreshToken);
     const existing = await this.sessions.findByTokenHash(tokenHash);
-    // Existing sessions must not bypass the verification access gate.
+    // Existing sessions must not bypass the verification access gate or a
+    // suspension (T-012), and reactivation must not revive a revoked session.
     const user = existing
       ? await this.users.findById(existing.userId)
       : null;
-    if (!user || !user.emailVerifiedAt) {
+    if (!user || !user.emailVerifiedAt || user.status !== 'active') {
       throw new UnauthorizedException();
     }
 
@@ -222,7 +224,7 @@ export class AuthService {
 
   async me(userId: string): Promise<{ id: string; email: string } | null> {
     const user = await this.users.findById(userId);
-    if (!user || !user.emailVerifiedAt) {
+    if (!user || !user.emailVerifiedAt || user.status !== 'active') {
       return null;
     }
     return { id: user.id, email: user.email };

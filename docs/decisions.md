@@ -416,6 +416,35 @@ where noted. Update this file when a decision is made or changed.
 - Date: 2026-09-26.
 - Status: decided. Authorises only the explicitly scoped T-011 work.
 
+### D-024 — User roles, account status, and administration
+- One role per user: `user`, `editor`, or `admin`. Existing users and all public
+  registrations (including Google sign-ups) default to `user`; public requests
+  can never set or change a role. `editor` currently has ordinary account access
+  only; content-management permissions are deferred.
+- Account status (`active` | `suspended`) is separate from `emailVerifiedAt`.
+  Added by migration `1781440000003-CreateRolesAndAdminAudit`; TypeORM
+  `synchronize` stays `false`.
+- Authorisation is re-evaluated on every request from the database (session row
+  plus user role/status); no role is trusted from the JWT. Suspension
+  invalidates access and refresh sessions and blocks new credentials/OAuth
+  sessions; revoke-all invalidates access and refresh; reactivation does not
+  revive revoked sessions; password reset and email verification never
+  reactivate a suspended account.
+- Self-protection (no self role change, no self-suspension) and
+  last-active-verified-administrator protection are enforced inside the database
+  transaction, including concurrent requests.
+- Administrative mutations are recorded in `admin_audit_log` atomically with the
+  change; audit entries hold no credentials or tokens and are read-only in the
+  UI.
+- Administrator bootstrap is a CLI (`admin:promote`) requiring an explicit target
+  and a deliberate `--apply`; no public endpoint, default password, or
+  first-registrant promotion. The action is attributed to an explicit CLI actor.
+- FSD light gains an `entities` layer: the direction is
+  `app -> widgets -> features -> entities -> shared`; `entities/user` must not
+  import `features`. Tailwind scans `./entities/**`.
+- Date: 2026-09-26.
+- Status: decided. Authorises only the explicitly scoped T-012 work.
+
 ## Open decisions
 
 > T-001 note (2026-09-09): the discovery baseline (`docs/measurement-model.md`,

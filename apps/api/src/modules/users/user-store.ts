@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import type { UserRole, UserStatus } from '@sapiensmetric/contracts';
 import { User } from './user.entity.js';
 
 export interface UserRecord {
@@ -8,6 +9,8 @@ export interface UserRecord {
   email: string;
   passwordHash: string;
   emailVerifiedAt: Date | null;
+  role: UserRole;
+  status: UserStatus;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -66,6 +69,8 @@ export class TypeOrmUserStore implements UserStore {
     passwordHash: string;
     emailVerifiedAt?: Date | null;
   }): Promise<UserRecord> {
+    // Role/status intentionally not settable here: every created account
+    // defaults to `user` / `active` (public registration can never escalate).
     return this.repo.save(this.repo.create(data));
   }
 }

@@ -100,6 +100,8 @@ class InMemoryUserStore implements UserStore {
       email: data.email,
       passwordHash: data.passwordHash,
       emailVerifiedAt: null,
+      role: 'user',
+      status: 'active',
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -186,6 +188,16 @@ class InMemorySessionStore implements SessionStore {
     }
     for (const s of this.map.values()) {
       if (owner !== null && s.userId === owner && !s.revokedAt) {
+        s.revokedAt = new Date();
+        s.revokedReason = reason;
+      }
+    }
+    return Promise.resolve();
+  }
+
+  revokeAllForUser(userId: string, reason: string): Promise<void> {
+    for (const s of this.map.values()) {
+      if (s.userId === userId && !s.revokedAt) {
         s.revokedAt = new Date();
         s.revokedReason = reason;
       }

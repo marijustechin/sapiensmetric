@@ -193,6 +193,27 @@ the deliberate Next.js/next-intl exceptions. Routing, static export, locale
 persistence, auth behaviour, public API configuration, and all tests are
 unchanged; no API or database change.
 
+## T-012 roles, account status, and administration
+
+T-012 (D-024) adds one role per user (`user` | `editor` | `admin`) and an account
+status (`active` | `suspended`) separate from email verification, plus a
+bilingual admin dashboard and an audit trail. Migration
+`1781440000003-CreateRolesAndAdminAudit`; `synchronize` stays `false`. The admin
+API lives in `apps/api/src/modules/admin/` (`GET /admin/summary|users|audit` and
+role/status/revoke-session mutations) behind `AdminGuard`, which requires an
+authenticated, active, verified administrator. Authorisation is re-evaluated per
+request from the database, so demotion/suspension/revocation take effect
+immediately. See `docs/authentication.md` and `tasks/current.md`. The web side
+adds `entities/user`, `features/admin`, `widgets/admin-shell`, and
+`apps/web/app/[locale]/admin/`, extending the FSD light direction to
+`app -> widgets -> features -> entities -> shared`.
+
+Deferred: `editor` content-management permissions; hard deletion, impersonation,
+manual email verification, admin-set passwords, and additional email-sending
+actions. Migration `1781440000003-CreateRolesAndAdminAudit`; bootstrap command
+`pnpm --filter @sapiensmetric/api admin:promote -- --email <email> [--apply]`
+(see `docs/local-development.md`).
+
 ## T-007 Google OpenID Connect sign-in (implemented, approved, archived)
 
 T-007 adds optional Google OIDC sign-in (authorization-code flow with PKCE)

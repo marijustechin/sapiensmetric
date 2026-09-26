@@ -55,6 +55,13 @@ export interface SessionStore {
     tokenHash: string,
     reason: string,
   ): Promise<void>;
+  /**
+   * Revoke every active session for a user (T-012 admin actions and
+   * suspension). Invalidates refresh tokens immediately; existing access
+   * tokens stop working on the next request because the guard checks the
+   * session row.
+   */
+  revokeAllForUser(userId: string, reason: string): Promise<void>;
 }
 
 @Injectable()
@@ -155,6 +162,13 @@ export class TypeOrmSessionStore implements SessionStore {
     await this.dataSource.transaction(async (manager) => {
       await this.lockUser(manager, old.userId);
       await this.revokeAllActive(manager, old.userId, reason);
+    });
+  }
+
+  async revokeAllForUser(userId: string, reason: string): Promise<void> {
+    await this.dataSource.transaction(async (manager) => {
+      await this.lockUser(manager, userId);
+      await this.revokeAllActive(manager, userId, reason);
     });
   }
 }

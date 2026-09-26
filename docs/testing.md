@@ -308,6 +308,44 @@ directory appears. It is part of the `pnpm verify` chain and runnable directly
 with `pnpm verify:fsd`. The policy and the deliberate Next.js/next-intl
 exceptions are documented in `docs/fsd-light.md` (D-023).
 
+## T-012 roles/admin testing boundary
+
+- `apps/api/src/modules/admin/admin.controller.spec.ts` (Docker-free, in-memory
+  doubles) covers: unauthenticated `401`; user/editor `403`; suspended-admin
+  `401`; summary counts; safe DTOs (no hashes/tokens); search/role/status/
+  verification filters, pagination and sorting; unknown id `404`, invalid uuid
+  `400`; role change + audit entry; self-protection `409`; public role-escalation
+  rejection `400`; demotion removing admin access on the next request; suspension
+  invalidating access and refresh; revoke-all invalidating access; reactivation
+  not reviving sessions; last-active-administrator protection under concurrency
+  (store level); and no audit entry on a failed mutation.
+- `apps/api/src/database/promote-admin.spec.ts` (Docker-free) covers the
+  bootstrap argument parsing and decisions (unverified/suspended failure,
+  already-admin no-op, dry-run vs apply, the `--` separator).
+- `apps/api/src/modules/admin/admin.integration.spec.ts` (real MySQL) covers
+  atomic role-change + audit persistence, self-protection, suspension revoking
+  sessions (and reactivation not reviving them), and serialised concurrent
+  admin demotions without deadlock or losing administrators.
+- `apps/api/src/modules/auth/*.spec.ts` continue to cover credentials/OAuth
+  behaviour; the access guard now also rejects suspended users.
+- `apps/api/src/modules/auth/auth.integration.spec.ts` (real MySQL, fake
+  transport) covers persistence and session invalidation.
+- The web admin routes are verified by `pnpm build` and
+  `scripts/verify-static-export.sh` (both `/lt/admin/` and `/en/admin/` are
+  emitted, and `border-purple-300` from `entities/user` is generated).
+- `apps/web/features/admin/admin-filters.test.ts` covers automatic filter
+  application, page reset, Reset semantics, the stale-response request gate, and
+  the debounced runner (injected fake scheduler).
+- `apps/web/features/admin/admin-access.test.ts` covers bootstrap waiting,
+  locale preservation, unauthenticated/non-admin/admin redirect decisions,
+  expired-session recovery, and that network/server failures stay retryable
+  (never a permission redirect) and that no forbidden screen is rendered.
+- `apps/web/features/auth/login-links.test.ts` covers the login registration
+  link and the safe encoded `returnTo`.
+
+No live SMTP or live OAuth is used; local fixtures are isolated and existing
+development users are preserved.
+
 ## Workflow expectations
 
 - Every task must state how its work is verified (tests, script, or manual

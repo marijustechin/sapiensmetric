@@ -217,6 +217,9 @@ class CountingIdentityStore implements IdentityStore {
     this.creates += 1;
     return Promise.reject(new Error('must not create'));
   }
+  findByUserId(): Promise<IdentityRecord[]> {
+    return Promise.resolve([]);
+  }
 }
 
 const noopSessions = {

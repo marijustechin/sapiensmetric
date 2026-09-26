@@ -6,9 +6,10 @@ const config: Config = {
   // utilities used by the moved logo, navigation, and loading components.
   content: [
     './app/**/*.{ts,tsx}',
-    './shared/**/*.{ts,tsx}',
-    './features/**/*.{ts,tsx}',
     './widgets/**/*.{ts,tsx}',
+    './features/**/*.{ts,tsx}',
+    './entities/**/*.{ts,tsx}',
+    './shared/**/*.{ts,tsx}',
   ],
   theme: {
     extend: {},

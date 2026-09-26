@@ -121,6 +121,8 @@ class InMemoryUserStore implements UserStore {
       email: data.email,
       passwordHash: data.passwordHash,
       emailVerifiedAt: data.emailVerifiedAt ?? null,
+      role: 'user',
+      status: 'active',
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -178,6 +180,12 @@ class InMemoryIdentityStore implements IdentityStore {
     return Promise.resolve(identity);
   }
 
+  findByUserId(userId: string): Promise<IdentityRecord[]> {
+    return Promise.resolve(
+      [...this.map.values()].filter((i) => i.userId === userId),
+    );
+  }
+
   countForSubject(provider: string, subject: string): number {
     let count = 0;
     for (const i of this.map.values()) {
@@ -203,6 +211,16 @@ class InMemorySessionStore implements SessionStore {
 
   findById(id: string): Promise<SessionRecord | null> {
     return Promise.resolve(this.map.get(id) ?? null);
+  }
+
+  revokeAllForUser(userId: string, reason: string): Promise<void> {
+    for (const s of this.map.values()) {
+      if (s.userId === userId && !s.revokedAt) {
+        s.revokedAt = new Date();
+        s.revokedReason = reason;
+      }
+    }
+    return Promise.resolve();
   }
 
   issueSession(

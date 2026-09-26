@@ -41,9 +41,12 @@
 #      D-021, and D-022 are recorded. The static-export route structure, the
 #      exported branding assets, and the exported root redirect are verified
 #      separately by scripts/verify-static-export.sh after a build.
-#  15. The T-011 FSD light structure exists (docs/fsd-light.md, the boundary
-#      check script, the shared/features/widgets layers, and no entities/
+#  15. The FSD light structure exists (docs/fsd-light.md, the boundary check
+#      script, the app/widgets/features/entities/shared layers, and no
 #      processes), D-023 is recorded, and the boundary check runs in pnpm verify.
+#  16. The T-012 roles/admin outputs exist (contracts, migration, the admin
+#      module, the bootstrap CLI, entities/user, the admin feature/widget/route)
+#      and D-024 is recorded.
 #
 # Exit code 0 = all invariants hold; non-zero = at least one failed.
 
@@ -116,10 +119,9 @@ for a in "${archives[@]}"; do
   fi
 done
 
-# --- Invariant 3: T-006..T-011 archived; no active task -----------------
+# --- Invariant 3: T-006..T-012 archived; no active task -----------------
 # The archived records' exact headings and final statuses are asserted
-# literally; tasks/current.md must declare that no task is active and record
-# T-012 (roles and admin) as the next planned task.
+# literally; tasks/current.md must declare that no task is active.
 
 t006_archive='tasks/done/2026-09-21-email-verification-and-password-reset-delivery.md'
 t006_heading='# T-006 — Email verification and password-reset delivery through generic SMTP (archived)'
@@ -217,16 +219,26 @@ else
   note_fail "T-011 archive does not contain the final approved status"
 fi
 
+t012_archive='tasks/done/2026-09-26-user-roles-and-admin-dashboard.md'
+t012_heading='# T-012 — User roles and admin dashboard (archived)'
+t012_status='- **Final status:** Approved (human review granted)'
+
+if grep -qxF -- "$t012_heading" "$t012_archive"; then
+  note_pass
+else
+  note_fail "T-012 archive does not contain the exact archived heading"
+fi
+
+if grep -qxF -- "$t012_status" "$t012_archive"; then
+  note_pass
+else
+  note_fail "T-012 archive does not contain the final approved status"
+fi
+
 if grep -qF 'No task is active' tasks/current.md; then
   note_pass
 else
   note_fail "tasks/current.md does not declare that no task is active"
-fi
-
-if grep -qF 'T-012' tasks/current.md && grep -qF 'roles and admin' tasks/current.md; then
-  note_pass
-else
-  note_fail "tasks/current.md does not record T-012 (roles and admin) as the next planned task"
 fi
 
 t007_sections=(
@@ -877,7 +889,7 @@ else
   note_fail "the locale layout does not persist the locale preference on entry"
 fi
 
-# --- Invariant 15: FSD light structure and boundaries (T-011) ------------
+# --- Invariant 15: FSD light structure and boundaries (T-011/T-012) ------
 
 if [ -f docs/fsd-light.md ]; then
   note_pass
@@ -891,7 +903,7 @@ else
   note_fail "scripts/verify-fsd-boundaries.mjs is missing"
 fi
 
-for layer in shared features widgets; do
+for layer in entities shared features widgets; do
   if [ -d "apps/web/$layer" ]; then
     note_pass
   else
@@ -899,9 +911,9 @@ for layer in shared features widgets; do
   fi
 done
 
-for forbidden in entities processes; do
+for forbidden in processes; do
   if [ -e "apps/web/$forbidden" ]; then
-    note_fail "apps/web/$forbidden/ must not exist yet (FSD light has no such layer)"
+    note_fail "apps/web/$forbidden/ must not exist (FSD light has no such layer)"
   else
     note_pass
   fi
@@ -919,6 +931,71 @@ if grep -qF 'verify-fsd-boundaries' package.json; then
   note_pass
 else
   note_fail "package.json does not run the FSD boundary check in the verify chain"
+fi
+
+# --- Invariant 16: T-012 roles/admin outputs and D-024 ------------------
+
+t012_outputs=(
+  packages/contracts/src/admin.ts
+  apps/api/src/database/migrations/1781440000003-CreateRolesAndAdminAudit.ts
+  apps/api/src/database/promote-admin.ts
+  apps/api/src/modules/admin/admin-audit.entity.ts
+  apps/api/src/modules/admin/admin-store.ts
+  apps/api/src/modules/admin/admin.service.ts
+  apps/api/src/modules/admin/admin.guard.ts
+  apps/api/src/modules/admin/admin.controller.ts
+  apps/api/src/modules/admin/admin.module.ts
+  apps/api/src/modules/admin/admin.controller.spec.ts
+  apps/api/src/modules/admin/admin.integration.spec.ts
+  apps/api/src/database/promote-admin.logic.ts
+  apps/api/src/database/promote-admin.spec.ts
+  apps/web/entities/user/model/types.ts
+  apps/web/entities/user/ui/role-badge.tsx
+  apps/web/entities/user/ui/status-badge.tsx
+  apps/web/entities/user/ui/verified-badge.tsx
+  apps/web/features/admin/admin-api.ts
+  apps/web/features/admin/admin-screen.tsx
+  apps/web/features/admin/admin-filters.ts
+  apps/web/features/admin/admin-filters.test.ts
+  apps/web/features/admin/admin-access.ts
+  apps/web/features/admin/admin-access.test.ts
+  apps/web/features/auth/login-links.test.ts
+  apps/web/widgets/admin-shell/admin-shell.tsx
+  "apps/web/app/[locale]/admin/page.tsx"
+)
+
+for out in "${t012_outputs[@]}"; do
+  if [ -e "$out" ]; then
+    note_pass
+  else
+    note_fail "T-012 output missing: $out"
+  fi
+done
+
+if grep -qF 'admin:promote' apps/api/package.json; then
+  note_pass
+else
+  note_fail "apps/api/package.json is missing the admin:promote bootstrap command"
+fi
+
+if grep -qF './entities/**' apps/web/tailwind.config.ts; then
+  note_pass
+else
+  note_fail "tailwind.config.ts does not scan the entities layer"
+fi
+
+d024_heading='### D-024 — User roles, account status, and administration'
+
+if grep -qxF -- "$d024_heading" docs/decisions.md; then
+  note_pass
+else
+  note_fail "docs/decisions.md does not contain the exact D-024 heading"
+fi
+
+if grep -qF 'admin:promote' docs/local-development.md; then
+  note_pass
+else
+  note_fail "docs/local-development.md does not document the admin:promote command"
 fi
 
 # --- Summary -----------------------------------------------------------

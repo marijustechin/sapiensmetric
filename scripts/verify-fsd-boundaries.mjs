@@ -21,9 +21,13 @@ import { fileURLToPath } from 'node:url';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const WEB_ROOT = join(ROOT, 'apps', 'web');
 
-/** Layer ranks: a module may import its own rank or lower, never higher. */
-const LAYERS = { app: 4, widgets: 3, features: 2, shared: 1 };
-const FORBIDDEN_LAYER_DIRS = ['entities', 'processes'];
+/**
+ * Layer ranks: a module may import its own rank or lower, never higher.
+ * Direction: app -> widgets -> features -> entities -> shared (T-012 adds
+ * `entities` below `features`).
+ */
+const LAYERS = { app: 5, widgets: 4, features: 3, entities: 2, shared: 1 };
+const FORBIDDEN_LAYER_DIRS = ['processes'];
 const SOURCE_EXT = /\.(ts|tsx)$/;
 
 function walk(dir, out = []) {

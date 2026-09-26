@@ -54,6 +54,6 @@ import {
     { provide: GOOGLE_ID_TOKEN_VERIFIER, useExisting: GoogleIdTokenService },
     { provide: GOOGLE_TOKEN_CLIENT, useExisting: GoogleOAuthTokenClient },
   ],
-  exports: [AuthService, AccessTokenGuard, ActionTokenService],
+  exports: [AuthService, AccessTokenGuard, ActionTokenService, TOKEN_SERVICE],
 })
 export class AuthModule {}

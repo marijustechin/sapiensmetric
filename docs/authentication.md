@@ -153,6 +153,40 @@ Registration is conventional and clear rather than non-enumerating:
   reject an unverified user. Existing sessions cannot bypass the gate.
 - No response reveals "email not verified".
 
+## Roles, account status, and session validity (T-012)
+
+Permission matrix (API-enforced):
+
+| Capability | user | editor | admin |
+| --- | --- | --- | --- |
+| Own account access (login, `/account`, logout) | yes | yes | yes |
+| Content management | – | deferred | – |
+| Admin summary / user list / user detail | no | no | yes |
+| Change role / suspend / reactivate / revoke sessions | no | no | yes |
+
+- One role per user (`user` | `editor` | `admin`) and a separate account status
+  (`active` | `suspended`). Both are read from the database on every request; no
+  role is trusted from the JWT.
+- `AccessTokenGuard` rejects a missing/revoked/expired session, an unverified
+  user, or a non-active user with `401`. `AdminGuard` additionally requires
+  `role = admin` (`403` otherwise).
+- Suspension revokes the user's active sessions and blocks new credentials and
+  OAuth sessions; revoke-all invalidates access and refresh; reactivation does
+  not revive revoked sessions; password reset and email verification never
+  reactivate a suspended account.
+- Admin endpoints: `GET /admin/summary`, `GET /admin/users` (search,
+  role/status/verification filters, bounded pagination, deterministic sorting),
+  `GET /admin/users/:id` (+ linked provider names),
+  `PATCH /admin/users/:id/role`, `PATCH /admin/users/:id/status`,
+  `POST /admin/users/:id/revoke-sessions`, `GET /admin/audit`.
+- Administrators cannot change their own role or suspend themselves; the last
+  active verified administrator cannot be demoted or suspended (enforced in the
+  transaction, including concurrent requests).
+- Administrative mutations and their `admin_audit_log` entries are atomic; audit
+  entries contain no credentials or tokens.
+- Bootstrap: `pnpm --filter @sapiensmetric/api admin:promote -- --email <email>`
+  (dry run) or `... --apply` (see `docs/local-development.md`).
+
 ## In-memory limits and Origin enforcement
 
 - Request endpoints: per-user-and-purpose 15-minute cooldown plus an in-memory

@@ -8,6 +8,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run",
     "test:integration": "vitest run --config vitest.integration.config.ts",
+    "admin:promote": "tsx src/database/promote-admin.ts",
     "migration:run": "tsx src/database/migrate.ts",
     "migration:show": "tsx src/database/migrate-status.ts",
     "tokens:cleanup": "tsx src/database/cleanup-action-tokens.ts",

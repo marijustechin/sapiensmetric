@@ -68,5 +68,89 @@
   "Google": {
     "button": "Prisijungti su Google",
     "unavailable": "Prisijungimas su Google šioje aplinkoje nesukonfigūruotas."
+  },
+  "Admin": {
+    "title": "Administravimas",
+    "subtitle": "Naudotojų vaidmenys, paskyros būsena ir audito istorija.",
+    "nav": {
+      "account": "Paskyra",
+      "home": "Pradžia"
+    },
+    "loading": "Įkeliamas administravimas…",
+    "error": "Nepavyko įkelti administravimo. Bandykite dar kartą.",
+    "sessionError": "Nepavyko patikrinti sesijos. Bandykite dar kartą.",
+    "actionError": "Šio veiksmo atlikti nepavyko.",
+    "retry": "Bandyti dar kartą",
+    "forbidden": "Neturite administratoriaus teisių.",
+    "sessionExpired": "Jūsų sesija baigėsi arba nesate prisijungę. Prisijunkite kaip administratorius.",
+    "goToLogin": "Eiti į prisijungimą",
+    "summary": {
+      "total": "Iš viso naudotojų",
+      "verified": "Patvirtinti",
+      "unverified": "Nepatvirtinti",
+      "active": "Aktyvūs",
+      "suspended": "Sustabdyti",
+      "admins": "Administratoriai"
+    },
+    "filters": {
+      "search": "Ieškoti pagal el. paštą",
+      "role": "Vaidmuo",
+      "status": "Būsena",
+      "verified": "Patvirtinimas",
+      "all": "Visi",
+      "apply": "Taikyti",
+      "reset": "Atstatyti"
+    },
+    "table": {
+      "email": "El. paštas",
+      "role": "Vaidmuo",
+      "status": "Būsena",
+      "verified": "Patvirtinta",
+      "created": "Užregistruota",
+      "actions": "Veiksmai",
+      "view": "Peržiūrėti"
+    },
+    "empty": "Nė vienas naudotojas neatitinka filtrų.",
+    "detail": {
+      "title": "Naudotojo informacija",
+      "providers": "Prisijungimo teikėjai",
+      "none": "Nėra",
+      "close": "Uždaryti"
+    },
+    "actions": {
+      "changeRole": "Keisti vaidmenį",
+      "confirmRole": "Pakeisti šio naudotojo vaidmenį į {role}?",
+      "roleUpdated": "Vaidmuo atnaujintas.",
+      "suspend": "Sustabdyti",
+      "confirmSuspend": "Sustabdyti šią paskyrą ir panaikinti sesijas?",
+      "suspended": "Paskyra sustabdyta.",
+      "reactivate": "Aktyvuoti",
+      "reactivated": "Paskyra aktyvuota.",
+      "revokeSessions": "Panaikinti visas sesijas",
+      "confirmRevoke": "Panaikinti visas šios paskyros sesijas?",
+      "revoked": "Sesijos panaikintos."
+    },
+    "role": {
+      "user": "Naudotojas",
+      "editor": "Redaktorius",
+      "admin": "Administratorius"
+    },
+    "status": {
+      "active": "Aktyvi",
+      "suspended": "Sustabdyta"
+    },
+    "verified": {
+      "yes": "Patvirtinta",
+      "no": "Nepatvirtinta"
+    },
+    "pagination": {
+      "previous": "Ankstesnis",
+      "next": "Kitas",
+      "page": "Puslapis {page} iš {total}"
+    },
+    "audit": {
+      "title": "Audito istorija",
+      "empty": "Nėra audito įrašų."
+    }
   }
 }

@@ -12,15 +12,17 @@ A serious cognitive-ability and knowledge-assessment platform.
   MySQL 8.0.46 environment. No assessment items, scoring, norming, or production
   deployment yet.
 
-T-001..T-011 are complete, approved, and archived in `tasks/done/` (T-009, T-010,
-and T-011 were approved on 2026-09-26). **No task is currently active**; the next
-planned task is **T-012 — roles and admin** (not yet authorised). T-009 delivered
+T-001..T-012 are complete, approved, and archived in `tasks/done/`. **No task is
+currently active.** T-012 (D-024) added one role per user (`user` | `editor` |
+`admin`), an account status (`active` | `suspended`) separate from email
+verification, the bilingual admin API/dashboard, an audit trail, and a local
+bootstrap CLI (`admin:promote`). T-009 delivered
 the next-intl LT/EN frontend (commit `52fe481`). T-010 corrected the
 static-export format, unified the local profile, isolated `.env` handling in
 tests, added the public-UI claims guard, wired the approved branding assets
 (D-021), and replaced the `/` chooser with a remembered-language redirect
 (D-022). T-011 re-layered `apps/web` into a light FSD structure (`app` /
-`widgets` / `features` / `shared`, D-023).
+`widgets` / `features` / `entities` / `shared`, D-023/D-024).
 
 T-006 (email verification and password-reset delivery through generic SMTP) is
 implemented, approved, and archived. See

@@ -68,5 +68,89 @@
   "Google": {
     "button": "Sign in with Google",
     "unavailable": "Google sign-in is not configured in this environment."
+  },
+  "Admin": {
+    "title": "Administration",
+    "subtitle": "User roles, account status, and audit history.",
+    "nav": {
+      "account": "Account",
+      "home": "Home"
+    },
+    "loading": "Loading administration…",
+    "error": "Could not load administration. Please try again.",
+    "sessionError": "Could not verify your session. Please try again.",
+    "actionError": "That action could not be completed.",
+    "retry": "Retry",
+    "forbidden": "You do not have administrator access.",
+    "sessionExpired": "Your session has expired or you are not signed in. Sign in as an administrator.",
+    "goToLogin": "Go to sign in",
+    "summary": {
+      "total": "Total users",
+      "verified": "Verified",
+      "unverified": "Unverified",
+      "active": "Active",
+      "suspended": "Suspended",
+      "admins": "Administrators"
+    },
+    "filters": {
+      "search": "Search by email",
+      "role": "Role",
+      "status": "Status",
+      "verified": "Verification",
+      "all": "All",
+      "apply": "Apply",
+      "reset": "Reset"
+    },
+    "table": {
+      "email": "Email",
+      "role": "Role",
+      "status": "Status",
+      "verified": "Verified",
+      "created": "Registered",
+      "actions": "Actions",
+      "view": "View"
+    },
+    "empty": "No users match the current filters.",
+    "detail": {
+      "title": "User details",
+      "providers": "Sign-in providers",
+      "none": "None",
+      "close": "Close"
+    },
+    "actions": {
+      "changeRole": "Change role",
+      "confirmRole": "Change this user's role to {role}?",
+      "roleUpdated": "Role updated.",
+      "suspend": "Suspend",
+      "confirmSuspend": "Suspend this account and revoke its sessions?",
+      "suspended": "Account suspended.",
+      "reactivate": "Reactivate",
+      "reactivated": "Account reactivated.",
+      "revokeSessions": "Revoke all sessions",
+      "confirmRevoke": "Revoke all sessions for this account?",
+      "revoked": "Sessions revoked."
+    },
+    "role": {
+      "user": "User",
+      "editor": "Editor",
+      "admin": "Administrator"
+    },
+    "status": {
+      "active": "Active",
+      "suspended": "Suspended"
+    },
+    "verified": {
+      "yes": "Verified",
+      "no": "Unverified"
+    },
+    "pagination": {
+      "previous": "Previous",
+      "next": "Next",
+      "page": "Page {page} of {total}"
+    },
+    "audit": {
+      "title": "Audit history",
+      "empty": "No audit entries."
+    }
   }
 }

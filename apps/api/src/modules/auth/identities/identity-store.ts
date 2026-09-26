@@ -28,6 +28,8 @@ export interface IdentityStore {
     provider: string;
     subject: string;
   }): Promise<IdentityRecord>;
+  /** Linked identities for a user (used for admin provider names, T-012). */
+  findByUserId(userId: string): Promise<IdentityRecord[]>;
 }
 
 /** MySQL duplicate-entry detection (ER_DUP_ENTRY / errno 1062). */
@@ -65,5 +67,9 @@ export class TypeOrmIdentityStore implements IdentityStore {
     subject: string;
   }): Promise<IdentityRecord> {
     return this.repo.save(this.repo.create(data));
+  }
+
+  findByUserId(userId: string): Promise<IdentityRecord[]> {
+    return this.repo.find({ where: { userId } });
   }
 }

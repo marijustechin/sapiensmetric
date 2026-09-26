@@ -1,15 +1,14 @@
 # tasks/current.md — no active task
 
-- **Status:** No task is active. T-011 is approved and archived; T-001..T-011
+- **Status:** No task is active. T-012 is approved and archived; T-001..T-012
   are complete/archived in `tasks/done/`.
-- **Next planned task: T-012 — roles and admin.** Not yet authorised. It must be
-  explicitly scoped here with human approval before any work starts; an
-  `entities/user` slice is expected in that task.
 - Only a task explicitly scoped here (with human approval) authorises work; see
   `AGENTS.md`. This file is a planning pointer, not an authorisation.
 
 ## Recently completed (archived)
 
+- **T-012 — User roles and admin dashboard.** Approved 2026-09-26 and archived
+  at `tasks/done/2026-09-26-user-roles-and-admin-dashboard.md` (D-024).
 - **T-011 — FSD light frontend structure.** Approved 2026-09-26 and archived at
   `tasks/done/2026-09-26-fsd-light-frontend-structure.md`.
 - **T-010 — Static-export directory routes, config/test isolation, and claims
@@ -23,6 +22,7 @@
 
 ## Next (not yet authorised)
 
-- **T-012 — roles and admin.** The next planned task (see above).
-- **Assessment foundations** (item model, provenance workflow, scoring package)
-  — blocked on O-002, O-003, O-006, and O-007; see `TODO.md`.
+- No new task is authorised. The existing roadmap's next strategic item is the
+  **assessment foundations** work (item model, provenance workflow, scoring
+  package), blocked on O-002, O-003, O-006, and O-007 — see `TODO.md`. It must
+  be explicitly scoped here with human approval before any work starts.

@@ -56,6 +56,7 @@ expected_routes=(
   "lt/auth/forgot-password" "en/auth/forgot-password"
   "lt/auth/reset-password" "en/auth/reset-password"
   "lt/account" "en/account"
+  "lt/admin" "en/admin"
 )
 
 # Locale that each localized page's <html lang> must declare. The root `/`
@@ -224,6 +225,7 @@ else
     border-b
     border-gray-200
     text-2xl
+    border-purple-300
   )
 
   for class in "${css_utilities[@]}"; do

@@ -56,6 +56,39 @@ docker compose stop           # stop (keeps data)
 docker compose start          # start again (keeps data)
 ```
 
+## Migrations
+
+Schema is migrations-only (`synchronize: false`):
+
+```bash
+pnpm --filter @sapiensmetric/api migration:run     # apply committed migrations
+pnpm --filter @sapiensmetric/api migration:show    # list executed/pending
+```
+
+T-012 adds `1781440000003-CreateRolesAndAdminAudit` (`users.role`,
+`users.status`, `admin_audit_log`). Applied to the local Docker MySQL
+(`127.0.0.1:3307`). No production database has been touched.
+
+## Administrator bootstrap (T-012)
+
+Promote one explicitly identified, existing, **active**, **verified** account:
+
+```bash
+# dry run (default)
+pnpm --filter @sapiensmetric/api admin:promote -- --email you@example.com
+# apply
+pnpm --filter @sapiensmetric/api admin:promote -- --email you@example.com --apply
+# or by id
+pnpm --filter @sapiensmetric/api admin:promote -- --id <uuid> --apply
+```
+
+Requires exactly one of `--email`/`--id` and, to change anything, `--apply`.
+Fails clearly when the account is missing, ambiguous (neither/both targets),
+suspended, or unverified. Repeated execution is a safe no-op. The action is
+recorded in `admin_audit_log` with an explicit `cli` actor (`cli:promote-admin`);
+no human identity is invented. There is no public bootstrap endpoint, default
+admin password, or automatic first-registrant promotion.
+
 ## Destructive reset (separate, do not run casually)
 
 ```bash
