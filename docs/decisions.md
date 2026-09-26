@@ -445,6 +445,61 @@ where noted. Update this file when a decision is made or changed.
 - Date: 2026-09-26.
 - Status: decided. Authorises only the explicitly scoped T-012 work.
 
+### D-025 — Public website, educational content, SEO, and the analytics boundary
+- A useful public website is published before any assessment release. It presents
+  SapiensMetric as a developing assessment project and states on every public
+  page that assessments are **not available yet**. No tests, scores, norms,
+  validation, credentials, customers, testimonials, partnerships, team members,
+  or launch dates are invented.
+- Public content is repository-managed (typed data under `apps/web/shared/content/`,
+  no CMS/database), authored naturally in English and Lithuanian, with recorded
+  sources and review dates. Educational discussion of IQ and percentiles is
+  allowed only when accurate and separated from product claims.
+- The claims guard is split: strict `PRODUCT_COPY_RULES` for product UI copy and
+  `EDUCATIONAL_CONTENT_RULES` for public content (which allow accurate
+  educational use and flag unsupported product claims / invented social proof).
+  Regex checks are a safety net, not proof of scientific accuracy.
+- SEO: canonical production URLs under `https://sapiensmetric.eu`, reciprocal
+  EN/LT `hreflang` (`x-default` → English), unique titles/descriptions, Open
+  Graph with absolute production image URLs, a generated `sitemap.xml` limited
+  to public pages/articles, `robots.txt` that allows crawling (so `noindex` is
+  readable; not a substitute for it), `noindex, nofollow` on auth/account/admin,
+  and a static 404. Localhost/preview URLs are kept out of production metadata.
+- Analytics boundary: **no** GA4, GTM, advertising, or tracking in T-013. The
+  T-014 plan is: Search Console domain verification and sitemap submission; a
+  single GTM implementation driving GA4 (no duplicate tracking); analytics
+  loaded only after consent, with rejection and withdrawal; cookie settings
+  matching the actually deployed services; and exclusion of credentials, email
+  addresses, tokens, admin data, and assessment answers from analytics. A
+  nonfunctional consent banner is not added.
+- Staging/preview indexing is prevented by `noindex` metadata (and, in
+  deployment, platform-level controls); hiding navigation is never treated as
+  access control.
+- Date: 2026-09-26.
+- Status: decided. Authorises only the explicitly scoped T-013 work.
+
+### D-026 — Release decisions: operator, contact, hosting, and first release scope
+- Public website origin: **https://sapiensmetric.eu**.
+- Website operator: **Marijus Šmiginas** (name only; no business registration
+  details, postal address, or legal status are asserted or published).
+- Public contact: **info@sapiensmetric.eu** (confirmed monitored mailbox),
+  published as a `mailto:` link on Contact/Privacy and the footer.
+- Transactional email sender (`SMTP_FROM`) remains **website@sapiensmetric.eu**;
+  it is not the public contact address.
+- Current hosting: **vHost**. The provider has announced a migration to
+  **Bacloud**; no assumption is made about a different control panel or server
+  configuration.
+- Future API origin: **https://api.sapiensmetric.eu** — planned, and NOT
+  deployed or activated in this release.
+- First release scope: **public informational pages and articles only**. Auth,
+  account, and admin routes and the assessment itself are not part of the public
+  release (they remain in the full application build).
+- GA4/GTM and consent are deferred to a later task; Search Console preparation
+  belongs to T-014. No analytics or consent scripts are added.
+- Date: 2026-09-26.
+- Status: decided. Authorises the T-013 finalisation and the T-014 release
+  preparation.
+
 ## Open decisions
 
 > T-001 note (2026-09-09): the discovery baseline (`docs/measurement-model.md`,

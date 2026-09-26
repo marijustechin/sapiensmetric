@@ -346,6 +346,23 @@ exceptions are documented in `docs/fsd-light.md` (D-023).
 No live SMTP or live OAuth is used; local fixtures are isolated and existing
 development users are preserved.
 
+## T-013 public site / SEO testing boundary
+
+- `apps/web/shared/lib/content-claims-guard.test.ts` runs the adjusted
+  `EDUCATIONAL_CONTENT_RULES` over the shipped content and a representative
+  allowed/disallowed case matrix (educational IQ/percentile statements are
+  allowed; unsupported product claims and invented social proof are flagged).
+- `apps/web/shared/lib/locale-links.test.ts` covers the actual generated public
+  article URLs in both locales (`/lt/articles/{slug}/`, `/en/articles/{slug}/`)
+  and page links.
+- `scripts/verify-static-export.sh` checks the public EN/LT routes (home, guide,
+  results, about, contact, privacy, the **articles index**, three articles),
+  that exported HTML contains **no cross-locale public anchors** and that
+  article links stay in-locale, canonical/hreflang
+  production metadata (no localhost), the "assessments not available"
+  statement, `sitemap.xml` (production URLs, no auth/account/admin),
+  `robots.txt`, `noindex` on auth/account/admin, and the static 404.
+
 ## Workflow expectations
 
 - Every task must state how its work is verified (tests, script, or manual

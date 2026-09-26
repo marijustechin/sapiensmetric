@@ -1,4 +1,6 @@
-import { AdminShell } from '../../../widgets/admin-shell/admin-shell';
+import { AdminShell } from '../../../../widgets/admin-shell/admin-shell';
+import { noindexMetadata } from '../../../../shared/content/seo';
+export const metadata = noindexMetadata('Admin');
 
 /**
  * Admin route (T-012). Thin composition only; the widget composes the admin

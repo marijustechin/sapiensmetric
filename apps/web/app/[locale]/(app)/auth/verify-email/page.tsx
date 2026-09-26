@@ -1,5 +1,7 @@
 import { getTranslations } from 'next-intl/server';
-import { AccountView } from '../../../features/auth/account-view';
+import { VerifyEmailForm } from '../../../../../features/auth/auth-forms';
+import { noindexMetadata } from '../../../../../shared/content/seo';
+export const metadata = noindexMetadata('Verify email');
 
 export default async function Page({
   params,
@@ -11,8 +13,8 @@ export default async function Page({
 
   return (
     <section className="max-w-sm">
-      <h1 className="text-2xl font-bold">{t('account')}</h1>
-      <AccountView />
+      <h1 className="text-2xl font-bold">{t('verifyEmail')}</h1>
+      <VerifyEmailForm />
     </section>
   );
 }

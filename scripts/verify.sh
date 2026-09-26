@@ -119,7 +119,7 @@ for a in "${archives[@]}"; do
   fi
 done
 
-# --- Invariant 3: T-006..T-012 archived; no active task -----------------
+# --- Invariant 3: T-006..T-013 archived; no active task -----------------
 # The archived records' exact headings and final statuses are asserted
 # literally; tasks/current.md must declare that no task is active.
 
@@ -233,6 +233,22 @@ if grep -qxF -- "$t012_status" "$t012_archive"; then
   note_pass
 else
   note_fail "T-012 archive does not contain the final approved status"
+fi
+
+t013_archive='tasks/done/2026-09-26-public-website-educational-content-seo.md'
+t013_heading='# T-013 — Public website, educational content, and SEO foundation (archived)'
+t013_status='- **Final status:** Approved (human review granted)'
+
+if grep -qxF -- "$t013_heading" "$t013_archive"; then
+  note_pass
+else
+  note_fail "T-013 archive does not contain the exact archived heading"
+fi
+
+if grep -qxF -- "$t013_status" "$t013_archive"; then
+  note_pass
+else
+  note_fail "T-013 archive does not contain the final approved status"
 fi
 
 if grep -qF 'No task is active' tasks/current.md; then
@@ -512,9 +528,9 @@ t006_outputs=(
   apps/api/src/database/cleanup-action-tokens.ts
   apps/api/src/smtp-smoke.ts
   docs/email-verification.md
-  "apps/web/app/[locale]/auth/verify-email/page.tsx"
-  "apps/web/app/[locale]/auth/forgot-password/page.tsx"
-  "apps/web/app/[locale]/auth/reset-password/page.tsx"
+  "apps/web/app/[locale]/(app)/auth/verify-email/page.tsx"
+  "apps/web/app/[locale]/(app)/auth/forgot-password/page.tsx"
+  "apps/web/app/[locale]/(app)/auth/reset-password/page.tsx"
 )
 
 for out in "${t006_outputs[@]}"; do
@@ -667,11 +683,11 @@ t008_outputs=(
   apps/web/features/auth/account-view.tsx
   "apps/web/app/(root)/layout.tsx"
   "apps/web/app/(root)/page.tsx"
-  apps/web/app/[locale]/layout.tsx
-  apps/web/app/[locale]/page.tsx
-  apps/web/app/[locale]/auth/login/page.tsx
-  apps/web/app/[locale]/auth/register/page.tsx
-  apps/web/app/[locale]/account/page.tsx
+  "apps/web/app/[locale]/layout.tsx"
+  "apps/web/app/[locale]/(site)/page.tsx"
+  "apps/web/app/[locale]/(app)/auth/login/page.tsx"
+  "apps/web/app/[locale]/(app)/auth/register/page.tsx"
+  "apps/web/app/[locale]/(app)/account/page.tsx"
 )
 
 for out in "${t008_outputs[@]}"; do
@@ -726,13 +742,13 @@ t009_outputs=(
   apps/web/shared/lib/locale-navigation.test.ts
   apps/web/shared/i18n/messages.test.ts
   "apps/web/app/[locale]/layout.tsx"
-  "apps/web/app/[locale]/page.tsx"
-  "apps/web/app/[locale]/account/page.tsx"
-  "apps/web/app/[locale]/auth/login/page.tsx"
-  "apps/web/app/[locale]/auth/register/page.tsx"
-  "apps/web/app/[locale]/auth/verify-email/page.tsx"
-  "apps/web/app/[locale]/auth/forgot-password/page.tsx"
-  "apps/web/app/[locale]/auth/reset-password/page.tsx"
+  "apps/web/app/[locale]/(site)/page.tsx"
+  "apps/web/app/[locale]/(app)/account/page.tsx"
+  "apps/web/app/[locale]/(app)/auth/login/page.tsx"
+  "apps/web/app/[locale]/(app)/auth/register/page.tsx"
+  "apps/web/app/[locale]/(app)/auth/verify-email/page.tsx"
+  "apps/web/app/[locale]/(app)/auth/forgot-password/page.tsx"
+  "apps/web/app/[locale]/(app)/auth/reset-password/page.tsx"
 )
 
 for out in "${t009_outputs[@]}"; do
@@ -961,7 +977,7 @@ t012_outputs=(
   apps/web/features/admin/admin-access.test.ts
   apps/web/features/auth/login-links.test.ts
   apps/web/widgets/admin-shell/admin-shell.tsx
-  "apps/web/app/[locale]/admin/page.tsx"
+  "apps/web/app/[locale]/(app)/admin/page.tsx"
 )
 
 for out in "${t012_outputs[@]}"; do
@@ -996,6 +1012,69 @@ if grep -qF 'admin:promote' docs/local-development.md; then
   note_pass
 else
   note_fail "docs/local-development.md does not document the admin:promote command"
+fi
+
+# --- Invariant 17: T-013 public site / SEO outputs and D-025 -------------
+
+t013_outputs=(
+  apps/web/shared/content/types.ts
+  apps/web/shared/content/site.ts
+  apps/web/shared/content/pages.ts
+  apps/web/shared/content/articles.ts
+  apps/web/shared/content/seo.ts
+  apps/web/shared/content/index.ts
+  apps/web/shared/ui/content-page.tsx
+  apps/web/shared/ui/article-list.tsx
+  apps/web/shared/lib/claims-rules.ts
+  apps/web/shared/lib/content-claims-guard.test.ts
+  apps/web/shared/lib/locale-links.ts
+  apps/web/shared/lib/locale-links.test.ts
+  apps/web/widgets/site-header/site-header.tsx
+  apps/web/widgets/site-footer/site-footer.tsx
+  apps/web/widgets/site-shell/site-shell.tsx
+  "apps/web/app/[locale]/(site)/layout.tsx"
+  "apps/web/app/[locale]/(site)/page.tsx"
+  "apps/web/app/[locale]/(site)/assessment-guide/page.tsx"
+  "apps/web/app/[locale]/(site)/understanding-results/page.tsx"
+  "apps/web/app/[locale]/(site)/about/page.tsx"
+  "apps/web/app/[locale]/(site)/contact/page.tsx"
+  "apps/web/app/[locale]/(site)/privacy/page.tsx"
+  "apps/web/app/[locale]/(site)/articles/page.tsx"
+  "apps/web/app/[locale]/(site)/articles/[slug]/page.tsx"
+  "apps/web/app/[locale]/(app)/layout.tsx"
+  "apps/web/app/sitemap.ts"
+  "apps/web/app/robots.ts"
+  "apps/web/app/not-found.tsx"
+  docs/content.md
+  docs/publication-checklist.md
+)
+
+for out in "${t013_outputs[@]}"; do
+  if [ -e "$out" ]; then
+    note_pass
+  else
+    note_fail "T-013 output missing: $out"
+  fi
+done
+
+d025_heading='### D-025 — Public website, educational content, SEO, and the analytics boundary'
+
+if grep -qxF -- "$d025_heading" docs/decisions.md; then
+  note_pass
+else
+  note_fail "docs/decisions.md does not contain the exact D-025 heading"
+fi
+
+if grep -qF 'T-014' docs/decisions.md && grep -qF 'GTM' docs/decisions.md; then
+  note_pass
+else
+  note_fail "docs/decisions.md does not record the T-014 analytics plan"
+fi
+
+if grep -qF 'admin:promote' docs/local-development.md; then
+  note_pass
+else
+  note_fail "docs/local-development.md lost the admin:promote command"
 fi
 
 # --- Summary -----------------------------------------------------------

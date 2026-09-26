@@ -12,11 +12,15 @@ A serious cognitive-ability and knowledge-assessment platform.
   MySQL 8.0.46 environment. No assessment items, scoring, norming, or production
   deployment yet.
 
-T-001..T-012 are complete, approved, and archived in `tasks/done/`. **No task is
-currently active.** T-012 (D-024) added one role per user (`user` | `editor` |
-`admin`), an account status (`active` | `suspended`) separate from email
-verification, the bilingual admin API/dashboard, an audit trail, and a local
-bootstrap CLI (`admin:promote`). T-009 delivered
+T-001..T-013 are complete, approved, and archived in `tasks/done/`. **No task is
+currently active**; the owner-approved next task is T-014 (frontend-only
+publication preparation). T-013 (D-025/D-026) added a bilingual public website
+with original educational content about assessments, SEO metadata, a generated
+sitemap/robots, no analytics, the confirmed public contact
+`info@sapiensmetric.eu`, and a locale-link fix. T-012 (D-024) added
+one role per user (`user` | `editor` | `admin`), an account status
+(`active` | `suspended`) separate from email verification, the bilingual admin
+API/dashboard, an audit trail, and a local bootstrap CLI (`admin:promote`). T-009 delivered
 the next-intl LT/EN frontend (commit `52fe481`). T-010 corrected the
 static-export format, unified the local profile, isolated `.env` handling in
 tests, added the public-UI claims guard, wired the approved branding assets

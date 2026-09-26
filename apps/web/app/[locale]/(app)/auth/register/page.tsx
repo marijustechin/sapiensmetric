@@ -1,5 +1,7 @@
 import { getTranslations } from 'next-intl/server';
-import { ResetPasswordForm } from '../../../../features/auth/auth-forms';
+import { RegisterForm } from '../../../../../features/auth/auth-forms';
+import { noindexMetadata } from '../../../../../shared/content/seo';
+export const metadata = noindexMetadata('Register');
 
 export default async function Page({
   params,
@@ -11,8 +13,8 @@ export default async function Page({
 
   return (
     <section className="max-w-sm">
-      <h1 className="text-2xl font-bold">{t('resetPassword')}</h1>
-      <ResetPasswordForm />
+      <h1 className="text-2xl font-bold">{t('register')}</h1>
+      <RegisterForm />
     </section>
   );
 }

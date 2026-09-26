@@ -6,9 +6,15 @@ authorises work, and only one task is active at a time.
 
 ## Now
 
-- **No task is active.** T-012 is approved and archived; T-001..T-012 are
+- **No task is active.** T-013 is approved and archived; T-001..T-013 are
   complete/archived in `tasks/done/`. Only `tasks/current.md` with explicit human
   approval authorises work.
+- **T-013 (Public website, educational content, and SEO foundation)** is
+  approved (2026-09-26) and archived at
+  `tasks/done/2026-09-26-public-website-educational-content-seo.md`
+  (D-025/D-026): a bilingual public website with original educational content,
+  SEO metadata, sitemap/robots, noindex on non-public routes, no analytics, and
+  the confirmed public contact `info@sapiensmetric.eu`.
 - **T-012 (User roles and admin dashboard)** is approved (2026-09-26) and
   archived at `tasks/done/2026-09-26-user-roles-and-admin-dashboard.md` (D-024):
   per-user roles + account status, the admin API/dashboard, an audit trail, the
@@ -40,6 +46,9 @@ authorises work, and only one task is active at a time.
 
 ## Next (not yet authorised)
 
+- **T-014 — frontend-only publication preparation.** Owner-approved next task:
+  public release build, runtime cleanup, publication content, hosting and
+  Search Console preparation. To be scoped in `tasks/current.md` before work.
 - **Assessment foundations** — the first real assessment work (item model,
   provenance workflow, scoring package). Blocked on O-002, O-003, O-006, and
   O-007; requires product-owner approval of the T-002 instrument/provenance

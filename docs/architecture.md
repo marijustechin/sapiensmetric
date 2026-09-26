@@ -214,6 +214,35 @@ actions. Migration `1781440000003-CreateRolesAndAdminAudit`; bootstrap command
 `pnpm --filter @sapiensmetric/api admin:promote -- --email <email> [--apply]`
 (see `docs/local-development.md`).
 
+## T-013 public website, educational content, and SEO
+
+T-013 (D-025) adds a bilingual public website before any assessment release. The
+locale surface is split into route groups: `app/[locale]/(site)/` (public pages
+and articles, rendered by `widgets/site-shell`) and `app/[locale]/(app)/` (auth,
+account, admin, rendered by `widgets/app-shell`). The locale root layout only
+provides i18n plus locale-preference sync; the public area needs no auth
+provider and works without the API.
+
+Content is repository-managed typed data under `apps/web/shared/content/`
+(no CMS), rendered by `shared/ui/content-page.tsx`. SEO is handled by
+`shared/content/seo.ts` (canonical production URLs, reciprocal EN/LT `hreflang`,
+Open Graph with absolute image URLs), with a generated `app/sitemap.ts`
+(public pages/articles only) and `app/robots.ts` (crawling allowed so `noindex`
+is readable). Auth/account/admin pages carry `noindex, nofollow`. A static 404
+is provided. No analytics/tracking is loaded (T-014 plan in D-025). Claims
+screening is split into `PRODUCT_COPY_RULES` and `EDUCATIONAL_CONTENT_RULES`
+(`shared/lib/claims-rules.ts`). The three articles have an **Articles index** at
+`apps/web/app/[locale]/(site)/articles/page.tsx` (with individual pages under
+`articles/[slug]`), are listed in the primary navigation, and each article shows
+a summary, review date, sources, and related links; the Assessment guide remains
+a separate evergreen overview that links to the articles. next-intl resolves the locale for server-rendered links from the request
+context; with no proxy/middleware the request locale is not derived from the URL,
+so it fell back to the default and LT pages linked to EN. The fix builds hrefs
+from the route `locale` param via `localeHref` (`shared/lib/locale-links.ts`),
+and the shell threads the locale to header/footer; the export checks reject any
+cross-locale public anchor. See `docs/content.md` for
+authoring.
+
 ## T-007 Google OpenID Connect sign-in (implemented, approved, archived)
 
 T-007 adds optional Google OIDC sign-in (authorization-code flow with PKCE)
