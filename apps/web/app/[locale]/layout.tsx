@@ -5,7 +5,9 @@ import { getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { AuthProvider } from '../_components/auth-provider';
 import { AuthNav } from '../_components/auth-nav';
+import { LocalePreferenceSync } from '../_components/locale-preference-sync';
 import { routing } from '../../i18n/routing';
+import { BRANDING } from '../../lib/branding';
 import '../globals.css';
 
 /**
@@ -33,6 +35,8 @@ export async function generateMetadata({
   return {
     title: t('title'),
     description: t('description'),
+    // Supplied favicon asset, registered from its stable public path.
+    icons: [{ url: BRANDING.favicon, type: 'image/webp' }],
   };
 }
 
@@ -53,6 +57,8 @@ export default async function LocaleLayout({
   return (
     <html lang={locale}>
       <body>
+        {/* Entering a locale-prefixed page remembers that locale (D-022). */}
+        <LocalePreferenceSync locale={locale} />
         <NextIntlClientProvider locale={locale} messages={messages}>
           <AuthProvider>
             <div className="min-h-screen">

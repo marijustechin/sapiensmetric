@@ -5,7 +5,7 @@ import { sanitizeReturnTo } from './auth-navigation.ts';
 import type { Locale } from './auth-types.ts';
 
 const LOCALES: Locale[] = ['lt', 'en'];
-const WEB_ORIGIN = 'http://localhost:3001';
+const WEB_ORIGIN = 'http://localhost:3333';
 const API_BASE = 'http://localhost:3334';
 
 test('googleStartUrl targets the API start endpoint with the locale', () => {

@@ -36,16 +36,13 @@ function lookup(catalogue: Catalogue, dotted: string): unknown {
 
 /**
  * Critical UI keys that every locale catalogue must expose. These cover the
- * chooser, home, navigation, auth forms/titles, registration feedback, account
- * state, and the Google button.
+ * home, navigation, auth forms/titles, registration feedback, account state,
+ * and the Google button. (The root `/` route is a redirect, not a chooser, so
+ * there are no chooser keys.)
  */
 const CRITICAL_KEYS = [
   'Metadata.title',
   'Metadata.description',
-  'Chooser.prompt',
-  'Chooser.lithuanian',
-  'Chooser.english',
-  'Chooser.note',
   'Home.description',
   'Nav.home',
   'Nav.login',

@@ -19,6 +19,32 @@ The database binds to `127.0.0.1:3307` only. It uses `utf8mb4` and collation
 `utf8mb4_0900_ai_ci`, and creates a non-root application user and database
 from `.env`.
 
+## Unified local port profile
+
+`.env.example` defines one local profile; use it as the single source of truth:
+
+| Service | Local URL | Source |
+| --- | --- | --- |
+| Web (`pnpm --filter @sapiensmetric/web dev`) | `http://localhost:3333` | web `dev` script (`next dev -p 3333`) |
+| API (Nest listener) | `http://localhost:3334` | `API_PORT` |
+| MySQL (Docker Compose) | `127.0.0.1:3307` | `DB_PORT` |
+
+Derived values (must stay consistent with the profile):
+
+- `CORS_ORIGIN` = `PUBLIC_APP_URL` = the web origin (`http://localhost:3333`).
+  The API rejects a mismatch after canonicalisation, and web content is
+  served/built at this origin.
+- `NEXT_PUBLIC_API_BASE_URL` = the API origin (`http://localhost:3334`); the
+  static web build fails closed if it is missing or invalid.
+- `GOOGLE_REDIRECT_URI` (optional) = `http://localhost:3334/auth/google/callback`
+  — the callback is served by the API listener, so it uses the API port.
+
+The web dev server is pinned to `3333` by the web package `dev` script, so
+`pnpm --filter @sapiensmetric/web dev` needs no extra CLI argument. The API port
+is deliberately `3334`, not `3333`, so it does not collide with the web dev
+server. Production may sit behind a reverse proxy, so the public API URL port
+need not equal `API_PORT`.
+
 ## Common commands
 
 ```bash

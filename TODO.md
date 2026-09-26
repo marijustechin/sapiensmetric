@@ -6,26 +6,43 @@ authorises work, and only one task is active at a time.
 
 ## Now
 
-- **T-009 (next-intl bilingual frontend refactor for the LT/EN UI) is active**
-  in `tasks/current.md`; it is implemented and awaiting human review. It adds
-  `next-intl` as the UI i18n layer (D-019).
+- **No task is active.** T-009 and T-010 are complete, approved, and archived in
+  `tasks/done/`. The next task number is **T-011**; only `tasks/current.md` with
+  explicit human approval authorises work.
+- **T-010 (static-export directory routes, local config/test isolation, and a
+  public-UI claims guard)** is approved (2026-09-26) and archived at
+  `tasks/done/2026-09-26-static-export-routes-config-isolation-claims-guard.md`.
+  It corrected the flat deep-route `.html` export, the local port profile,
+  `.env` handling in tests, and the missing public-claims guard, and it added
+  the approved branding assets (D-021) and the remembered-language root redirect
+  (D-022).
+- **T-009 (next-intl bilingual frontend refactor, LT/EN UI)** is approved
+  (2026-09-26) and archived at
+  `tasks/done/2026-09-21-next-intl-bilingual-frontend-refactor.md`; delivered in
+  commit `52fe481`.
+- T-008 (classical authentication frontend) is approved and archived in
+  `tasks/done/`.
 - T-007 (Google OAuth 2.0 / OpenID Connect sign-in) is approved and archived in
   `tasks/done/`.
-- T-008 (classical authentication frontend, LT/EN browser journey) is approved
-  and archived in `tasks/done/`.
-- T-006 (email verification and password-reset delivery through generic SMTP)
-  is approved and archived in `tasks/done/`.
+- T-006 (email verification and password-reset delivery through generic SMTP) is
+  approved and archived in `tasks/done/`.
 - T-005 (TypeORM persistence and credentials authentication core) is complete
   and archived.
 
 ## Next (not yet authorised)
 
+- **Assessment foundations** — the first real assessment work (item model,
+  provenance workflow, scoring package). Blocked on O-002, O-003, O-006, and
+  O-007; requires product-owner approval of the T-002 instrument/provenance
+  proposals. This is the next strategic step.
 - vHosts Node-to-MySQL feasibility (later, separate infrastructure task).
 
 ## Blocked
 
 - Product-owner approval of the T-002 instrument/provenance proposals is
   required before any item authoring.
+- O-002 (item/content sourcing policy) — gates the assessment foundations.
+- O-003 (norming & validation roadmap) — gates the assessment foundations.
 - O-006 privacy review is required before any data collection, including any
   real use of the T-006 email flows.
 - O-007 IP review is required before relying on third-party material.

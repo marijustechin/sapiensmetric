@@ -36,6 +36,12 @@ test('default locale is supported and otherLocale flips it', () => {
   assert.equal(otherLocale('en'), 'lt');
 });
 
+test('fallback default locale matches the API authentication default (en)', () => {
+  // The API defaults register and verification/reset requests to `en` and the
+  // Google start endpoint resolves anything other than `lt` to `en`.
+  assert.equal(DEFAULT_LOCALE, 'en');
+});
+
 test('localizePath switches the locale and preserves query/fragment', () => {
   assert.equal(localizePath('/lt/account', 'en'), '/en/account');
   assert.equal(

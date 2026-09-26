@@ -3,12 +3,6 @@
     "title": "Sapiens Metric",
     "description": "Sapiens Metric — serious cognitive-ability and knowledge-assessment platform (foundation scaffold)."
   },
-  "Chooser": {
-    "prompt": "Choose a language / Pasirinkite kalbą",
-    "lithuanian": "Lietuvių",
-    "english": "English",
-    "note": "Local development authentication frontend. No assessment is offered yet."
-  },
   "Home": {
     "description": "Local authentication test frontend. No assessment is offered yet."
   },

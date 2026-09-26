@@ -42,7 +42,7 @@ const stubActionTokenStore: ActionTokenStore = {
 
 const stubTransport: MailTransport = { send: () => Promise.resolve() };
 
-const ORIGIN = 'http://localhost:3001';
+const ORIGIN = 'http://localhost:3333';
 const TEST_SECRET = 'test-secret-that-is-definitely-long-enough-123456';
 
 function testConfig(): AppConfig {

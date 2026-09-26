@@ -49,6 +49,15 @@ function resolvePublicApiBaseUrl() {
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'export',
+  /**
+   * Directory-style static routes: every page is emitted as its own
+   * `<route>/index.html`. Production is plain shared static hosting with no
+   * Next server, middleware, proxy, or rewrite rules, so a clean URL such as
+   * `/lt/auth/login/` must resolve to a real file without hosting config.
+   * A trailing slash is therefore part of the contract; the export invariant
+   * in `scripts/verify-static-export.sh` enforces it.
+   */
+  trailingSlash: true,
   env: {
     NEXT_PUBLIC_API_BASE_URL: resolvePublicApiBaseUrl(),
   },

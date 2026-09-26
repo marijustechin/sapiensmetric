@@ -10,11 +10,12 @@
 # Invariants checked:
 #   1. Core docs (including docs/email-verification.md), the six T-001
 #      discovery documents, and the four T-002 documents exist.
-#   2. The T-001, T-002, T-003, T-004, T-005, and T-006 task archives exist.
-#   3. The archived T-006, T-007, and T-008 records contain their exact titles
-#      and final approved statuses; the archived T-006 record contains the
-#      required definition sections, the six exact browser routes, and the
-#      access-gate markers; tasks/current.md declares T-009 active.
+#   2. The T-001, T-002, T-003, T-004, T-005, and T-006 task archives exist
+#      (T-007..T-010 are asserted in invariant 3).
+#   3. The archived T-006..T-010 records contain their exact titles and final
+#      approved statuses; the archived T-006 record contains the required
+#      definition sections, the six exact browser routes, and the access-gate
+#      markers; tasks/current.md declares that no task is active.
 #   4. docs/decisions.md contains D-016 (heading, and section-scoped date /
 #      O-006 note / verification access gate / review-correction markers),
 #      D-017 (conventional registration), D-018 (Google OIDC), and D-019
@@ -32,6 +33,14 @@
 #  12. The T-007 Google sign-in outputs exist.
 #  13. The T-009 next-intl i18n outputs exist (config, catalogues, consolidated
 #      locale routes, pure locale helpers and their tests).
+#  14. The T-010 corrective outputs exist (trailing-slash static-export config,
+#      the static-export invariant script, the claims guard, the aligned local
+#      profile, and the env-file isolation behaviour); the approved branding
+#      WebP assets exist and are referenced from their stable paths; the root
+#      route is a static-export default-locale redirect, not a chooser; and
+#      D-020, D-021, and D-022 are recorded. The static-export route structure,
+#      the exported branding assets, and the exported root redirect are verified
+#      separately by scripts/verify-static-export.sh after a build.
 #
 # Exit code 0 = all invariants hold; non-zero = at least one failed.
 
@@ -104,9 +113,9 @@ for a in "${archives[@]}"; do
   fi
 done
 
-# --- Invariant 3: T-006, T-007, T-008 archived; no active task -----------
+# --- Invariant 3: T-006..T-010 archived; no active task -----------------
 # The archived records' exact headings and final statuses are asserted
-# literally, and tasks/current.md must declare that no task is active.
+# literally; tasks/current.md must declare that no task is active.
 
 t006_archive='tasks/done/2026-09-21-email-verification-and-password-reset-delivery.md'
 t006_heading='# T-006 — Email verification and password-reset delivery through generic SMTP (archived)'
@@ -156,16 +165,42 @@ else
   note_fail "T-007 archive does not contain the final approved status"
 fi
 
-if grep -qxF -- '# T-009 — next-intl bilingual frontend refactor (LT/EN UI) (active)' tasks/current.md; then
+t009_archive='tasks/done/2026-09-21-next-intl-bilingual-frontend-refactor.md'
+t009_heading='# T-009 — next-intl bilingual frontend refactor (LT/EN UI) (archived)'
+t009_status='- **Final status:** Approved (human review granted)'
+
+if grep -qxF -- "$t009_heading" "$t009_archive"; then
   note_pass
 else
-  note_fail "tasks/current.md does not declare T-009 as the active task"
+  note_fail "T-009 archive does not contain the exact archived heading"
 fi
 
-if grep -qF 'next-intl' tasks/current.md; then
+if grep -qxF -- "$t009_status" "$t009_archive"; then
   note_pass
 else
-  note_fail "tasks/current.md does not scope the next-intl work"
+  note_fail "T-009 archive does not contain the final approved status"
+fi
+
+t010_archive='tasks/done/2026-09-26-static-export-routes-config-isolation-claims-guard.md'
+t010_heading='# T-010 — Static-export directory routes, config/test isolation, and claims guard (archived)'
+t010_status='- **Final status:** Approved (human review granted)'
+
+if grep -qxF -- "$t010_heading" "$t010_archive"; then
+  note_pass
+else
+  note_fail "T-010 archive does not contain the exact archived heading"
+fi
+
+if grep -qxF -- "$t010_status" "$t010_archive"; then
+  note_pass
+else
+  note_fail "T-010 archive does not contain the final approved status"
+fi
+
+if grep -qF 'No task is active' tasks/current.md; then
+  note_pass
+else
+  note_fail "tasks/current.md does not declare that no task is active"
 fi
 
 t007_sections=(
@@ -513,7 +548,7 @@ t003_outputs=(
   pnpm-lock.yaml
   apps/web/package.json
   apps/web/next.config.mjs
-  "apps/web/app/(chooser)/page.tsx"
+  "apps/web/app/(root)/page.tsx"
   "apps/web/app/[locale]/layout.tsx"
   apps/api/package.json
   apps/api/src/main.ts
@@ -575,7 +610,7 @@ fi
 
 # --- Invariant 11: T-008 authentication frontend outputs exist ----------
 # T-009 consolidated the LT/EN route duplication into the `app/[locale]` and
-# `app/(chooser)` structure; the shared lib/components remain.
+# `app/(root)` structure; the shared lib/components remain.
 
 t008_outputs=(
   apps/api/src/modules/auth/registration.controller.spec.ts
@@ -589,8 +624,8 @@ t008_outputs=(
   apps/web/app/_components/auth-nav.tsx
   apps/web/app/_components/auth-forms.tsx
   apps/web/app/_components/account-view.tsx
-  "apps/web/app/(chooser)/layout.tsx"
-  "apps/web/app/(chooser)/page.tsx"
+  "apps/web/app/(root)/layout.tsx"
+  "apps/web/app/(root)/page.tsx"
   apps/web/app/[locale]/layout.tsx
   apps/web/app/[locale]/page.tsx
   apps/web/app/[locale]/auth/login/page.tsx
@@ -677,6 +712,131 @@ if grep -qF "createNextIntlPlugin" apps/web/next.config.mjs; then
   note_pass
 else
   note_fail "next.config.mjs does not wire the next-intl plugin"
+fi
+
+# --- Invariant 14: T-010 corrective outputs and D-020 --------------------
+
+t010_outputs=(
+  scripts/verify-static-export.sh
+  apps/web/lib/claims-guard.test.ts
+  apps/web/lib/locale-navigation.ts
+  apps/web/lib/locale-navigation.test.ts
+  apps/web/lib/branding.ts
+  apps/web/lib/locale-preference.ts
+  apps/web/lib/locale-preference.test.ts
+  apps/web/app/_components/brand-mark.tsx
+  apps/web/app/_components/locale-preference-sync.tsx
+  "apps/web/app/(root)/page.tsx"
+  apps/api/src/config/env.spec.ts
+)
+
+for out in "${t010_outputs[@]}"; do
+  if [ -e "$out" ]; then
+    note_pass
+  else
+    note_fail "T-010 output missing: $out"
+  fi
+done
+
+if grep -qF 'trailingSlash: true' apps/web/next.config.mjs; then
+  note_pass
+else
+  note_fail "apps/web/next.config.mjs does not enable trailingSlash (directory index.html routes)"
+fi
+
+if grep -qF 'verify-static-export.sh' package.json; then
+  note_pass
+else
+  note_fail "package.json does not run the static-export invariant script"
+fi
+
+d020_heading='### D-020 — Static-export directory routes, local profile, claims guard, and env-file isolation'
+
+if grep -qxF -- "$d020_heading" docs/decisions.md; then
+  note_pass
+else
+  note_fail "docs/decisions.md does not contain the exact D-020 heading"
+fi
+
+# Approved branding asset interface (stable filenames and public paths).
+branding_assets=(
+  apps/web/public/branding/sapiens-metric-logo-dark.webp
+  apps/web/public/branding/sapiens-metric-logo-light.webp
+  apps/web/public/branding/sapiens-metric-logo-middle.webp
+  apps/web/public/branding/sapiens-metric-logo-favicon.webp
+)
+
+for asset in "${branding_assets[@]}"; do
+  if [ -f "$asset" ]; then
+    note_pass
+  else
+    note_fail "approved branding asset missing: $asset"
+  fi
+done
+
+branding_markers=(
+  'sapiens-metric-logo-dark.webp'
+  'sapiens-metric-logo-light.webp'
+  'sapiens-metric-logo-middle.webp'
+  'sapiens-metric-logo-favicon.webp'
+)
+
+for marker in "${branding_markers[@]}"; do
+  if grep -qF "$marker" apps/web/lib/branding.ts; then
+    note_pass
+  else
+    note_fail "apps/web/lib/branding.ts is missing the stable asset path: $marker"
+  fi
+done
+
+if grep -qF 'BRANDING.favicon' "apps/web/app/[locale]/layout.tsx" &&
+  grep -qF 'BRANDING.favicon' "apps/web/app/(root)/layout.tsx"; then
+  note_pass
+else
+  note_fail "the supplied favicon is not registered in both root layouts"
+fi
+
+d021_heading='### D-021 — Branding asset interface (stable WebP filenames and public paths)'
+
+if grep -qxF -- "$d021_heading" docs/decisions.md; then
+  note_pass
+else
+  note_fail "docs/decisions.md does not contain the exact D-021 heading"
+fi
+
+# Root route is a static-export default-locale redirect, never a chooser (D-022).
+d022_heading='### D-022 — Root route: remembered-language redirect (no chooser)'
+
+if grep -qxF -- "$d022_heading" docs/decisions.md; then
+  note_pass
+else
+  note_fail "docs/decisions.md does not contain the exact D-022 heading"
+fi
+
+if grep -qF 'role="status"' "apps/web/app/(root)/page.tsx" &&
+  grep -qF 'animate-spin' "apps/web/app/(root)/page.tsx" &&
+  grep -qF 'resolveRootTargetFromStorage' "apps/web/app/(root)/page.tsx"; then
+  note_pass
+else
+  note_fail "the root page is not a centred loading state with a preference-based redirect"
+fi
+
+if grep -qiE 'http-equiv|httpEquiv' "apps/web/app/(root)/page.tsx"; then
+  note_fail "the root page still uses a meta refresh (it would defeat a remembered lt preference)"
+else
+  note_pass
+fi
+
+if grep -qiE 'Pasirinkite kalb|Choose a language|Redirecting' "apps/web/app/(root)/page.tsx"; then
+  note_fail "the root page still presents chooser/placeholder copy"
+else
+  note_pass
+fi
+
+if grep -qF 'LocalePreferenceSync' "apps/web/app/[locale]/layout.tsx"; then
+  note_pass
+else
+  note_fail "the locale layout does not persist the locale preference on entry"
 fi
 
 # --- Summary -----------------------------------------------------------

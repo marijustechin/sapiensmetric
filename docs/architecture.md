@@ -132,7 +132,10 @@ the exact route matrix, and all auth/OAuth security behaviour unchanged.
 - Message catalogues: `apps/web/messages/lt.json`, `apps/web/messages/en.json`.
 - Routes: `apps/web/app/[locale]/...` — one implementation per route, generated
   for both locales via `generateStaticParams` in the `[locale]` root layout —
-  plus `apps/web/app/(chooser)/` for the static bilingual `/` language chooser.
+  plus `apps/web/app/(root)/` for `/`, which redirects to the remembered local
+  language preference (`lt`/`en`, localStorage) or to `/en/` by default (D-022;
+  there is no interactive chooser). The locale layout persists the preference on
+  entry via `LocalePreferenceSync`.
   The `[locale]` layout is a root layout so `<html lang>` follows the active
   locale; the build has no `app/layout.tsx`.
 - Pure helpers: `apps/web/lib/locale-navigation.ts` (locale validation,
@@ -144,7 +147,31 @@ the exact route matrix, and all auth/OAuth security behaviour unchanged.
 - Assessment-item translations are intentionally **not** in the UI catalogues;
   they belong in the API/database model (D-019).
 
-## T-007 Google OpenID Connect sign-in (implemented, in review)
+## T-010 static-export routes, local profile, and claims guard
+
+T-010 is a corrective task (D-020) that removes audit findings without changing
+auth, API, database, SMTP, or OAuth behaviour:
+
+- The static export is **directory-style**: `apps/web/next.config.mjs` sets
+  `trailingSlash: true`, so every route is emitted as `<route>/index.html`
+  (`/lt/`, `/lt/auth/login/`, `/en/account/`, …). Production is plain shared
+  static hosting with no Next server, middleware, proxy, or rewrite rules, so a
+  clean URL must resolve from the filesystem alone. `scripts/verify-static-export.sh`
+  enforces this in the `pnpm verify` chain.
+- The single documented local profile is web `http://localhost:3333`, API
+  `http://localhost:3334` (`API_PORT`), MySQL `127.0.0.1:3307`; `.env.example`
+  and `docs/local-development.md` agree.
+- `loadAppConfig()` reads the root `.env` only when no explicit environment
+  object is supplied, so tests stay `.env`-free and do not mutate `process.env`.
+- The UI fallback locale is `en`, aligned with the API authentication default.
+- `apps/web/lib/claims-guard.test.ts` guards public UI copy against
+  `docs/claims-ladder.md`; future report/result templates must register with it.
+- The approved branding WebP assets are used as supplied from the stable
+  `/branding/...` public paths (D-021); `apps/web/lib/branding.ts` centralises
+  the paths, `apps/web/app/_components/brand-mark.tsx` renders the light-shell
+  (`dark`) variant, and the supplied favicon is registered in both root layouts.
+
+## T-007 Google OpenID Connect sign-in (implemented, approved, archived)
 
 T-007 adds optional Google OIDC sign-in (authorization-code flow with PKCE)
 over the existing auth API, per D-018.
@@ -162,7 +189,7 @@ over the existing auth API, per D-018.
 
 ## Explicitly deferred beyond T-003
 
-- Google OAuth is T-007 (implemented, in review).
+- Google OAuth is T-007 (implemented, approved, archived).
 - Product UI features and public marketing/site content beyond the minimal
   development page.
 - shadcn component installation (unless a real UI need arises).

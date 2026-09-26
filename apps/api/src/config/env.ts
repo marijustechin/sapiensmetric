@@ -174,12 +174,23 @@ function findRootEnv(): string | undefined {
   return undefined;
 }
 
-export function loadAppConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
-  const envPath = findRootEnv();
-  if (envPath) {
-    loadDotenv({ path: envPath });
+/**
+ * Load and validate the application configuration.
+ *
+ * Called without an argument (the application path), the single root `.env`
+ * file is loaded first so `process.env` sees its values. When a caller supplies
+ * an explicit `env` object (tests), the root `.env` is not read and
+ * `process.env` is not mutated, so tests remain `.env`-free and isolated.
+ */
+export function loadAppConfig(env?: NodeJS.ProcessEnv): AppConfig {
+  const provided = env ?? process.env;
+  if (env === undefined) {
+    const envPath = findRootEnv();
+    if (envPath) {
+      loadDotenv({ path: envPath });
+    }
   }
-  const parsed = envSchema.parse(env);
+  const parsed = envSchema.parse(provided);
 
   // Binding public-origin policy: PUBLIC_APP_URL and CORS_ORIGIN must each be a
   // strict canonical HTTP(S) origin and must be equal after canonicalisation.

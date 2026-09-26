@@ -287,6 +287,8 @@ where noted. Update this file when a decision is made or changed.
 - Locale-prefixed URLs are preserved (`/lt/...`, `/en/...`); `/` remains the
   existing static bilingual language chooser. No middleware/proxy and no
   runtime browser-language detection are added.
+  (Superseded by D-022: `/` now redirects to the default locale; there is no
+  chooser.)
 - UI copy lives in checked-in message catalogues: `apps/web/messages/lt.json`
   and `apps/web/messages/en.json`.
 - This decision covers **UI** translation only. Translation/localisation of
@@ -296,6 +298,99 @@ where noted. Update this file when a decision is made or changed.
 - Russian (or any locale other than `lt`/`en`) is not added.
 - Date: 2026-09-21.
 - Status: decided. Authorises only the explicitly scoped T-009 work.
+
+### D-020 — Static-export directory routes, local profile, claims guard, and env-file isolation
+- The public web app (`apps/web`) is a Next.js App Router static export
+  (`output: 'export'`) with **`trailingSlash: true`**. Production is plain shared
+  static hosting with no Next server, middleware, proxy, or rewrite rules, so
+  every public route must be emitted as `<route>/index.html`. Clean URLs such as
+  `/lt/auth/login/` and `/en/account/` therefore resolve from the filesystem
+  alone. The earlier flat `route.html` export is a regression and is rejected by
+  `scripts/verify-static-export.sh`, which is part of the `pnpm verify` chain.
+- The single local development profile is: web (`next dev`) on
+  `http://localhost:3333`, API listener on `http://localhost:3334` (`API_PORT`),
+  and MySQL on `127.0.0.1:3307`. `.env.example` is the source of truth.
+  `CORS_ORIGIN` equals `PUBLIC_APP_URL` (the web origin) and
+  `NEXT_PUBLIC_API_BASE_URL` is the API origin. The web `dev` script pins the
+  Next.js dev server to `3333` (no manual CLI argument), and the API port is
+  `3334`, not `3333`, so the two do not collide.
+- The UI fallback locale (`apps/web/lib/locale-navigation.ts` `DEFAULT_LOCALE`)
+  is `en`, deliberately matching the API authentication default (`en` when
+  `locale` is omitted) and the Google start default. The `[locale]` layout still
+  rejects unsupported locales and `/` remains the bilingual chooser.
+  (Superseded by D-022: `/` now redirects to the default locale.)
+- `loadAppConfig()` loads the single root `.env` only when called without an
+  explicit environment object. A supplied `env` object (tests) neither reads the
+  root `.env` nor mutates `process.env`.
+- A proportional automated **claims guard** covers public user-facing UI text
+  (`apps/web/messages/*.json`), enforcing the boundaries of
+  `docs/claims-ladder.md`. Future report/result templates must register their
+  text sources with the guard; it intentionally does not scan documentation,
+  task records, or tests.
+- This decision is corrective engineering. It does not change auth behaviour,
+  API contracts, the database, SMTP/OAuth, or any assessment claim.
+- Date: 2026-09-26.
+- Status: decided. Authorises only the explicitly scoped T-010 corrective work.
+
+### D-021 — Branding asset interface (stable WebP filenames and public paths)
+- The approved brand assets are used **exactly as supplied**: no conversion,
+  recolouring, renaming, or recreation. They live under the stable public path
+  `apps/web/public/branding/` and are referenced as `/branding/<filename>`:
+  - `sapiens-metric-logo-dark.webp` — dark strokes, for light backgrounds
+    (the current app shell).
+  - `sapiens-metric-logo-light.webp` — light strokes, for dark backgrounds
+    (reserved).
+  - `sapiens-metric-logo-middle.webp` — mid-gray strokes, for mid-tone
+    backgrounds (reserved).
+  - `sapiens-metric-logo-favicon.webp` — the supplied favicon mark.
+- The filenames and paths are a **stable interface**: future visual tone
+  adjustments may replace file contents, but must preserve these exact
+  filenames and paths. Paths are centralised in `apps/web/lib/branding.ts`.
+- The variant is chosen for the actual background it sits on; the current shell
+  is light, so `logo-dark` is used and the supplied favicon is registered as the
+  web app icon in both root layouts.
+- This supersedes the T-009 "do not reference `apps/web/public/`" bootstrap
+  restriction for these four assets only; it was explicitly approved by Marijus.
+- `scripts/verify.sh` asserts the assets exist and are referenced, and
+  `scripts/verify-static-export.sh` asserts they reach the export and that the
+  favicon is registered in the generated HTML.
+- Date: 2026-09-26.
+- Status: decided. Authorises only the branding-asset wiring within the active
+  T-010 work.
+
+### D-022 — Root route: remembered-language redirect (no chooser)
+- The root route `/` is **not** an interactive language chooser. It redirects to
+  the user's remembered local language preference, or to the default locale
+  (`en`) when there is none.
+- **Local preference (localStorage only):** the selected locale is persisted in
+  browser localStorage under `sapiensmetric.locale` whenever a locale-prefixed
+  page is entered (so a direct visit to `/lt/` counts as selecting Lithuanian),
+  and read by `/` to choose the target. No cookies, server state, SSR,
+  middleware, proxy, or tracking.
+- **Resolution:** stored `lt` -> `/lt/`; stored `en` -> `/en/`; no or an
+  unsupported stored value -> `/en/`. The redirect is a client-side
+  `window.location.replace` (no back-button entry).
+- **No meta refresh:** a zero-delay meta refresh is deliberately not used as the
+  normal mechanism because it would always win with `/en/` and defeat a
+  remembered `lt` preference.
+- **JS-disabled fallback:** a documented English fallback link to `/en/` inside
+  `<noscript>`; the remembered-language behaviour is not compromised to force an
+  automatic no-JS redirect.
+- **Loading state:** `/` renders a full-page, centred, unobtrusive spinner with
+  an accessible loading status (`role="status"`, `aria-live="polite"`,
+  `aria-busy="true"`, visually hidden "Loading") and no visible placeholder or
+  chooser copy.
+- The bilingual chooser screen and its `Chooser` message namespace are removed;
+  the `(chooser)` route group is renamed `(root)`. This supersedes the `/`
+  handling in D-019 and D-020.
+- `apps/web/lib/locale-preference.ts` holds the storage key, targets, and
+  resolution; `locale-preference.test.ts` covers no-preference/`lt`/`en`/
+  unsupported cases, persistence, storage failures, and the root page's loading
+  state; `scripts/verify-static-export.sh` asserts the exported root renders the
+  loading state, has no meta refresh, offers the English fallback, and presents
+  no chooser.
+- Date: 2026-09-26.
+- Status: decided. Authorises only the explicitly scoped root-route change.
 
 ## Open decisions
 

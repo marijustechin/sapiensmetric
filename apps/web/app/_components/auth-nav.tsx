@@ -3,6 +3,7 @@
 import { Link, usePathname, useRouter } from '../../i18n/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useAuth } from './auth-provider';
+import { BrandMark } from './brand-mark';
 import {
   otherLocale,
   switchLocaleTarget,
@@ -38,6 +39,8 @@ export function AuthNav() {
 
   return (
     <nav className="flex flex-wrap items-center gap-4 border-b border-gray-200 px-8 py-3 text-sm">
+      {/* Supplied brand mark; the shell background is light, so the dark variant. */}
+      <BrandMark />
       <Link href="/">{t('home')}</Link>
       <Link href="/auth/login">{t('login')}</Link>
       <Link href="/auth/register">{t('register')}</Link>

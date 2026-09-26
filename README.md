@@ -6,19 +6,19 @@ A serious cognitive-ability and knowledge-assessment platform.
 - Domain: **sapiensmetric.eu**
 - Languages: Lithuanian and English
 - Status: **Foundation + local MySQL + credentials auth + email flows + auth
-  frontend.** A buildable pnpm monorepo with a static web app (Next.js App
-  Router, static export), a NestJS/Fastify API (health + `/auth/*`), shared Zod
-  contracts, and a local MySQL 8.0.46 environment. No assessment items,
-  scoring, or production deployment yet.
+  frontend + static-export directory routes.** A buildable pnpm monorepo with a
+  static web app (Next.js App Router, static export as `<route>/index.html`), a
+  NestJS/Fastify API (health + `/auth/*`), shared Zod contracts, and a local
+  MySQL 8.0.46 environment. No assessment items, scoring, norming, or production
+  deployment yet.
 
-The documentation and discovery baseline (T-001), the initial-instrument and
-item-provenance decision proposal (T-002), the application foundation scaffold
-(T-003), the local MySQL development environment (T-004), the credentials
-authentication core (T-005), email verification/password-reset delivery through
-generic SMTP (T-006), Google OpenID Connect sign-in (T-007), and the classical
-LT/EN authentication frontend (T-008) are complete, approved, and archived in
-`tasks/done/`. T-009 (next-intl bilingual UI refactor) is active in
-`tasks/current.md` and not yet reviewed or archived.
+T-001..T-010 are complete, approved, and archived in `tasks/done/` (T-009 and
+T-010 were approved on 2026-09-26). **No task is currently active**; the next
+task number is T-011. T-009 delivered the next-intl LT/EN frontend (commit
+`52fe481`). T-010 corrected the static-export format, unified the local profile,
+isolated `.env` handling in tests, added the public-UI claims guard, wired the
+approved branding assets (D-021), and replaced the `/` chooser with a
+remembered-language redirect (D-022).
 
 T-006 (email verification and password-reset delivery through generic SMTP) is
 implemented, approved, and archived. See
@@ -51,12 +51,38 @@ configured; password authentication is unaffected.
 T-005 uses a single environment-file strategy: the Nest API loads only the
 root local `.env` (see below); no second API-specific env file is created.
 
+## Current project state (T-010)
+
+- **Static export is directory-style by contract.** `apps/web/next.config.mjs`
+  sets `trailingSlash: true`, so every public route is emitted as
+  `<route>/index.html` (`/lt/`, `/lt/auth/login/`, `/en/account/`, …).
+  Production is plain shared static hosting with no Next server, middleware,
+  proxy, or rewrite rules, so a clean URL resolves from the filesystem alone.
+  `bash scripts/verify-static-export.sh` (part of `pnpm verify`) enforces this.
+- **T-010 fixed the audit findings:** the flat deep-route `.html` export format,
+  an inconsistent local port profile, `.env` handling in tests, and the absence
+  of an automated guard on public claims wording.
+- **Local profile:** web `http://localhost:3333`, API `http://localhost:3334`,
+  MySQL `127.0.0.1:3307` (see `docs/local-development.md`).
+- **Assessment core is not started.** `packages/assessment` is a deliberate pure
+  TypeScript placeholder: no items, scoring, norming, or claims. It is blocked on
+  O-002 (item sourcing), O-003 (validation/norming), O-006 (data-protection/
+  governance), and O-007 (copyright/IP provenance), plus product-owner approval
+  of the T-002 instrument/provenance proposals.
+- **Next strategic step:** an assessment-foundations task, gated on O-002,
+  O-003, O-006, and O-007 — not yet authorised.
+
 ## Repository layout
 
-- `apps/web` (`@sapiensmetric/web`) — Next.js App Router, static export,
-  Tailwind baseline, and the next-intl bilingual LT/EN authentication frontend
+- `apps/web` (`@sapiensmetric/web`) — Next.js App Router, static export as
+  directory-style `<route>/index.html` (`trailingSlash: true`), Tailwind
+  baseline, and the next-intl bilingual LT/EN authentication frontend
   (`app/[locale]`, message catalogues in `messages/`: login, registration,
-  email verification, password reset, account).
+  email verification, password reset, account). The approved branding WebP
+  assets are served from the stable `/branding/...` paths and the supplied
+  favicon is registered (D-021). The root `/` redirects to the remembered local
+  language preference (`localStorage`, `lt`/`en`) or to `/en/` by default
+  (D-022; no interactive language chooser).
 - `apps/api` (`@sapiensmetric/api`) — NestJS + Fastify, `GET /health` plus
   `/auth/*` credentials auth core (see `docs/authentication.md`).
 - `packages/contracts` (`@sapiensmetric/contracts`) — shared Zod contracts.
@@ -67,7 +93,10 @@ root local `.env` (see below); no second API-specific env file is created.
 - `TODO.md` — planning index (never authorises work).
 - `scripts/verify.sh` — dependency-free documentation-harness checks
   (including the archived task records, the T-008 frontend outputs, the T-007
-  Google sign-in outputs, and the completed T-003/T-004/T-005/T-006 outputs).
+  Google sign-in outputs, the T-010 corrective outputs, and the completed
+  T-003/T-004/T-005/T-006 outputs).
+- `scripts/verify-static-export.sh` — dependency-free static-export route
+  invariant (run after `pnpm build`; part of `pnpm verify`).
 
 ## Local setup
 
@@ -98,6 +127,9 @@ pnpm lint                # ESLint
 pnpm typecheck           # TypeScript type checking
 pnpm test                # unit tests (Docker-free, .env-free)
 pnpm build               # production builds (web static export, API build)
+bash scripts/verify-static-export.sh   # static-export route invariant (after build)
+# or the whole chain:
+pnpm verify              # lint + typecheck + test + build + export invariant + harness
 
 # migrations + real-MySQL integration (see docs/authentication.md)
 pnpm --filter @sapiensmetric/api migration:run

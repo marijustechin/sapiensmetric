@@ -28,7 +28,9 @@ documentation-harness invariants only:
 - the T-001, T-002, T-003, T-004, T-005, and T-006 task archives exist under
   `tasks/done/`;
 - the archived T-006, T-007, and T-008 records exist with their final approved
-  statuses, and `tasks/current.md` declares that no task is active;
+  statuses, and `tasks/current.md` declares T-010 active and preserves the
+  delivered-but-unarchived T-009 record (T-009 is committed `52fe481` and pushed
+  to `origin/main`, but not human-reviewed or archived);
 - the T-007 Google sign-in outputs exist (identity entity/store/module, OAuth
   transaction service, JWKS/ID-token verification, token client, account
   resolution, controller, migration, and the web Google button);
@@ -48,8 +50,18 @@ documentation-harness invariants only:
   `docs/local-development.md`) exist and `.gitignore` contains an exact `.env`
   ignore rule;
 - the T-003 implementation source outputs and `pnpm-lock.yaml` exist;
+- the T-009 i18n outputs exist (config, catalogues, consolidated locale routes,
+  pure locale helpers and their tests);
+- the T-010 corrective outputs exist (trailing-slash static-export config, the
+  static-export invariant script, the claims guard, the aligned local profile,
+  and the env-file isolation behaviour) and D-020 is recorded;
 - local markdown references do not point to missing files (where reasonably
   checkable).
+
+The **static-export route structure itself** is verified separately by
+`scripts/verify-static-export.sh`, which must run after `pnpm build` (it is part
+of the `pnpm verify` chain and can be run directly with
+`pnpm verify:static-export`).
 
 It uses common shell utilities (`bash`, `grep`, `sed`, `test`), requires no
 Node or external dependencies, is runnable with `bash scripts/verify.sh`, and
@@ -217,14 +229,65 @@ for the new i18n layer:
   values), locale-specific default account destinations, same-route language
   switching, and safe `returnTo` remapping/dropping.
 - `apps/web/lib/register-feedback.test.ts` — outcome flags and message keys.
+- `apps/web/lib/locale-preference.test.ts` — the remembered-language root
+  redirect: no stored preference -> `/en/`, stored `lt` -> `/lt/`, stored `en`
+  -> `/en/`, unsupported values fall back to `/en/`, persistence on locale entry,
+  tolerance of storage failures, the root page's centred loading state (and no
+  meta refresh / chooser / placeholder copy), and that the locale layout wires
+  the preference sync.
 - `apps/web/lib/google-auth.test.ts` — Google start URL, default LT/EN account
   destinations, and login-query `returnTo` propagation/rejection (no network).
 
 The full route matrix is verified by the static web build (`pnpm build`), which
 must emit `/`, both locale homes, both locales of every auth page, and both
-account pages. `<html lang>` and localized copy are checked by inspecting the
-static output. No SMTP, live OAuth, deployment, migration, or external call is
+account pages. No SMTP, live OAuth, deployment, migration, or external call is
 performed.
+
+## T-010 static-export route invariant
+
+Production is plain shared static hosting with no Next server, middleware,
+proxy, or rewrite rules, so the export must resolve clean URLs from the
+filesystem. `apps/web/next.config.mjs` sets `trailingSlash: true`, and
+`scripts/verify-static-export.sh` (dependency-free bash; runs after `pnpm build`,
+wired into `pnpm verify`) enforces it against `apps/web/out`:
+
+- every expected public route has a non-empty `<route>/index.html` (the `/`
+  root redirect, `/lt/`, `/en/`, both locales of register/login/verify-email/
+  forgot-password/reset-password, and both account pages);
+- each localized page declares the matching `<html lang="lt">`/`"en">`;
+- the previous flat deep-route `.html` format (e.g. `lt/auth/login.html`,
+  `lt.html`) is absent — its return is a regression.
+
+It also asserts the approved branding assets (D-021) reach the export under
+`branding/`, that the supplied favicon is referenced in the generated HTML, and
+that the light-shell brand mark (dark variant) is referenced. For the root route
+(D-022) it asserts that the exported `index.html` renders the accessible centred
+loading state, contains no meta refresh, offers the JavaScript-disabled English
+fallback link, and presents no chooser or placeholder copy.
+
+The RSC `.txt` payloads Next.js emits next to an `index.html` are not secret
+leakage, but a directory listing must never stand in for a page; the invariant
+checks the `index.html` file itself. A local static HTTP smoke test (e.g.
+`python3 -m http.server` over `apps/web/out`) can additionally load the deep
+routes with a trailing slash; it is a manual check, not part of the automated
+suite.
+
+## T-010 claims guard
+
+`apps/web/lib/claims-guard.test.ts` runs with the web unit tests
+(`node --test lib/*.test.ts`) and enforces the boundaries of
+`docs/claims-ladder.md` on **public user-facing UI text**
+(`apps/web/messages/*.json`). It rejects IQ, percentile/norm-referenced
+comparisons, predictive framing, construct-measurement claims, diagnostic
+claims, hiring-recommendation claims, and validation claims, while allowing
+negated Tier-0 disclaimers (e.g. "not scientifically validated"). It includes a
+self-check so the patterns cannot silently become inert.
+
+Scope boundary: the guard checks product copy only. It does **not** scan
+documentation, task records, or tests, where discussing forbidden claims is
+legitimate. When report/result templates or any other user-visible text
+locations are added, they MUST be registered in the guard's
+`PUBLIC_UI_TEXT_SOURCES` list so they are covered.
 
 ## Workflow expectations
 

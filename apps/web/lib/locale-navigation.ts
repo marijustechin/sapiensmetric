@@ -13,7 +13,16 @@
 
 export const LOCALES = ['lt', 'en'] as const;
 export type AppLocale = (typeof LOCALES)[number];
-export const DEFAULT_LOCALE: AppLocale = 'lt';
+/**
+ * Fallback UI locale for an unrecognised locale value (`i18n/request.ts`).
+ * It is intentionally `en`, matching the API authentication defaults: register
+ * and the verification/reset request endpoints default to `en` when `locale`
+ * is omitted, and the Google start endpoint resolves anything other than `lt`
+ * to `en`. The `[locale]` layout still rejects unsupported locales with
+ * `notFound()`, and `/` redirects to the remembered/default locale (see
+ * `locale-preference.ts`).
+ */
+export const DEFAULT_LOCALE: AppLocale = 'en';
 
 /** True only for the supported UI locales (`lt`, `en`). */
 export function isLocale(value: unknown): value is AppLocale {
