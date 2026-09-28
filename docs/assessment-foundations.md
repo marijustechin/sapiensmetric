@@ -326,22 +326,25 @@ one may at most triage gross ambiguity and technical faults; one **cannot**
 establish item difficulty calibration, discrimination, reliability, equivalence,
 or norms. Those require designed samples and specialist analysis.
 
-## 7. Proposed next task — versioned scoring core (bounded; not started or authorised)
+## 7. Scoring core and bounded next slices
 
-**Proposed next task (not started or authorised): the pure versioned scoring
-core**, gated on the remaining prerequisites (§9.2) and on O-002/O-007 for item
-approval. This is the recommended next slice; it is recorded as a proposal only.
+**Implemented under T-016 (deliverable for human review):** the pure versioned
+scoring core in `@sapiensmetric/assessment` — versioned form snapshots,
+validation, deterministic scoring for single-answer, multiple-select, ordering,
+and numeric items (inclusive absolute tolerance), and a browser-safe projection.
+See `docs/assessment-scoring.md`. It is not a psychometric result and does not
+validate any assessment content; the draft items remain unreviewed.
 
-1. **Pure scoring core** in `@sapiensmetric/assessment`: versioned types for
-   items/forms/scoring rules and a deterministic scorer for the pilot's
-   single-answer, ordering, multiple-select, and numeric items, with unit tests.
-   No UI, DB, or network. (This is the only slice close to code.)
-2. **Item review pipeline** (documentation/process first): the two-role review
+**Proposed next slice (not started or authorised)**, gated on the remaining
+prerequisites (§9.2) and on O-002/O-007 for item approval:
+
+1. **Item review pipeline** (documentation/process first): the two-role review
    (author + independent reviewer) required by the provenance policy, applied to
    the draft items before any are eligible for a form.
-3. **Pilot delivery design** (documentation): the attempt lifecycle, server-side
-   key handling, data-minimisation fields, and feedback templates, ready for a
-   future API task.
+2. **Session-form assembly and pilot delivery design** (documentation): the
+   presentation order/objective blueprint assembly, the attempt lifecycle,
+   server-side key handling, data-minimisation fields, and feedback templates,
+   ready for a future API task.
 
 It deliberately excludes: runtime UI, database migrations, endpoints, adaptive
 testing, speed measurement, and any ability/IQ construct. API deployment remains a

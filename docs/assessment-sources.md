@@ -136,6 +136,20 @@ subject-mastery claim.
 - **Limitations:** secondary summary of S-009; science communication, not a
   psychometric or curriculum source.
 
+## S-014 — NASA Science, "Top Moon Questions"
+
+- **Source:** NASA Science, Earth's Moon — Top Moon Questions.
+- **URL:** https://science.nasa.gov/moon/top-moon-questions/
+  (page content: the Moon is a **natural satellite** and **Earth's** natural
+  satellite; it orbits Earth in ~27.3 days; "both Earth and the Moon are moving
+  around the Sun"; the Moon does not make its own light — moonlight is reflected
+  sunlight).
+- **Supports in T-015/T-016:** the corrected AST-A4-004 (moon/satellite vs
+  planet) wording and the precise statement that the Earth–Moon system orbits the
+  Sun together.
+- **Limitations:** science communication, not a psychometric, curriculum, or
+  validation source; the definitional exclusion of satellites rests on S-009.
+
 ## Note on unused sources
 
 No marketing pages, generic blogs, AI-generated assertions, or unsupported

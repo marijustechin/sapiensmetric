@@ -6,8 +6,14 @@ authorises work, and only one task is active at a time.
 
 ## Now
 
-- **No active task.** **T-015 (Assessment foundations and first knowledge-pilot
-  specification)** was approved and archived on 2026-09-28 (record:
+- **No active task.** **T-016 (Versioned assessment scoring core)** was approved
+  and archived on 2026-09-28 (record:
+  `tasks/done/2026-09-28-versioned-assessment-scoring-core.md`): the pure,
+  deterministic scoring core in `@sapiensmetric/assessment` (single-answer,
+  multiple-select, ordering, numeric; versioned form snapshots; validation;
+  submitted-only scoring) — see `docs/assessment-scoring.md`.
+- **T-015 (Assessment foundations and first knowledge-pilot specification)** was
+  approved and archived on 2026-09-28 (record:
   `tasks/done/2026-09-28-assessment-foundations-and-knowledge-pilot.md`). It
   recorded the owner-approved content-selection principle and approved the
   **astronomy** first pilot (adults-only; a proposed 25-item form whose final
@@ -67,14 +73,14 @@ authorises work, and only one task is active at a time.
 
 ## Next (not yet authorised)
 
-- **Proposed next task (not started or authorised): versioned scoring core.** A
-  pure `@sapiensmetric/assessment` scorer (versioned item/form/scoring-rule types;
-  single-answer, ordering, multiple-select, numeric) with unit tests, plus the
-  two-role item review pipeline and pilot delivery/data design — see
-  `docs/assessment-foundations.md` §7. Gated on the remaining prerequisites
-  (`docs/assessment-foundations.md` §9.2) and on O-002 (sourcing) and O-007 (IP
-  review); O-003 (norming) and O-006 (data protection) stay open. Independent
-  content/language review before any item publication is **pending**.
+- **Proposed next slice (not started or authorised): item review pipeline, form
+  assembly, and pilot delivery/data design.** The two-role item review pipeline,
+  session-form assembly, and the attempt-lifecycle/data-minimisation design — see
+  `docs/assessment-foundations.md` §7 and `docs/assessment-scoring.md` §8. Gated on
+  the remaining prerequisites (`docs/assessment-foundations.md` §9.2) and on O-002
+  (sourcing) and O-007 (IP review); O-003 (norming) and O-006 (data protection)
+  stay open. Independent content/language review before any item publication is
+  **pending**. (The scoring core itself was implemented under T-016.)
 - vHosts Node-to-MySQL feasibility (later, separate infrastructure task).
 
 ## Blocked

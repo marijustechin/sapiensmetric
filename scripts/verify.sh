@@ -15,8 +15,8 @@
 #   3. The archived T-006..T-011 records contain their exact titles and final
 #      approved statuses; the archived T-006 record contains the required
 #      definition sections, the six exact browser routes, and the access-gate
-#      markers; the T-014 and T-015 archives exist with their headings/statuses;
-#      and tasks/current.md declares that no task is active.
+#      markers; the T-014, T-015, and T-016 archives exist with their
+#      headings/statuses; and tasks/current.md declares that no task is active.
 #   4. docs/decisions.md contains D-016 (heading, and section-scoped date /
 #      O-006 note / verification access gate / review-correction markers),
 #      D-017 (conventional registration), D-018 (Google OIDC), and D-019
@@ -51,8 +51,11 @@
 #  17. The T-013 public-site/SEO outputs exist and D-025 is recorded.
 #  18. The T-014 frontend-only release/analytics/deployment outputs exist,
 #      D-026/D-027 are recorded, and the WebDAV/TLS controls hold.
-#  19. The T-015 assessment-foundations documents exist, are linked from the
-#      active task, and the pilot item drafts stay out of the web build inputs.
+#  19. The T-015 assessment-foundations documents exist, are referenced by the
+#      T-015 archive, and the pilot item drafts stay out of the web build inputs.
+#  20. The T-016 assessment scoring-core outputs exist, the root test chain runs
+#      the assessment tests, the build excludes specs, and the keyed assessment
+#      package is not imported into the web app.
 #
 # Exit code 0 = all invariants hold; non-zero = at least one failed.
 
@@ -125,7 +128,7 @@ for a in "${archives[@]}"; do
   fi
 done
 
-# --- Invariant 3: T-006..T-015 archived; no active task -----------------
+# --- Invariant 3: T-006..T-016 archived; no active task -----------------
 # The archived records' exact headings and final statuses are asserted
 # literally; tasks/current.md must declare that no task is active.
 
@@ -287,6 +290,22 @@ if grep -qxF -- "$t015_status" "$t015_archive"; then
   note_pass
 else
   note_fail "T-015 archive does not contain the final approved status"
+fi
+
+t016_archive='tasks/done/2026-09-28-versioned-assessment-scoring-core.md'
+t016_heading='# T-016 — Versioned assessment scoring core (archived)'
+t016_status='- **Final status:** Approved (human review granted)'
+
+if grep -qxF -- "$t016_heading" "$t016_archive"; then
+  note_pass
+else
+  note_fail "T-016 archive does not contain the exact archived heading"
+fi
+
+if grep -qxF -- "$t016_status" "$t016_archive"; then
+  note_pass
+else
+  note_fail "T-016 archive does not contain the final approved status"
 fi
 
 if grep -qxF '# No active task' tasks/current.md; then
@@ -1254,6 +1273,51 @@ fi
 if grep -rl --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=out \
   --exclude-dir=dist 'AST-A1-001' apps/web 2>/dev/null | grep -q .; then
   note_fail "a pilot item draft leaked into the web build inputs (apps/web)"
+else
+  note_pass
+fi
+
+# --- Invariant 20: T-016 assessment scoring-core outputs ----------------
+# Pure scoring core: outputs exist, the root test chain runs the assessment
+# tests, the build excludes spec files, and the keyed assessment package must
+# not be imported into the web (browser) app.
+
+t016_outputs=(
+  packages/assessment/src/types.ts
+  packages/assessment/src/errors.ts
+  packages/assessment/src/scoring.ts
+  packages/assessment/src/public-form.ts
+  packages/assessment/src/index.ts
+  packages/assessment/src/scoring.spec.ts
+  packages/assessment/src/worked-example.spec.ts
+  packages/assessment/tsconfig.build.json
+  docs/assessment-scoring.md
+)
+
+for out in "${t016_outputs[@]}"; do
+  if [ -e "$out" ]; then
+    note_pass
+  else
+    note_fail "T-016 output missing: $out"
+  fi
+done
+
+if grep -qF '@sapiensmetric/assessment test' package.json; then
+  note_pass
+else
+  note_fail "root test chain does not run the assessment tests"
+fi
+
+if grep -qF 'tsconfig.build.json' packages/assessment/package.json; then
+  note_pass
+else
+  note_fail "assessment build does not use tsconfig.build.json (specs would ship)"
+fi
+
+# The keyed assessment package must never be imported into the browser app.
+if grep -rq --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=out \
+  --exclude-dir=dist '@sapiensmetric/assessment' apps/web 2>/dev/null; then
+  note_fail "the keyed assessment package is imported into apps/web"
 else
   note_pass
 fi

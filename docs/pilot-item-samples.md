@@ -123,39 +123,47 @@ Sources are those in `docs/assessment-sources.md`.
 
 ## ITEM AST-A4-004
 
-- **Draft ID / revision:** AST-A4-004 / r1 (revised to remove overlap with AST-A4-005)
+- **Draft ID / revision:** AST-A4-004 / **r2 (T-016 correction: removes the
+  misleading "orbits a planet, not the Sun" implication)**
 - **Objective:** A4 — Object classification
 - **Why this matters:** the everyday word "planet" is a defined category with
   conditions (orbit the Sun; roughly round; cleared neighbourhood) and explicit
-  exclusions (satellites); knowing why the Moon is not a planet clarifies how
-  scientific categories are built.
+  exclusions (satellites); knowing why the Moon is a natural satellite clarifies
+  how scientific categories are built.
 - **Item type:** Single-answer (application of a definition)
 - **Language scope:** `en`, `lt`
-- **Prompt (EN):** The Moon is large and roughly round. Under the IAU definition,
-  why is it **not** classified as a planet?
-  - A. It orbits a planet (Earth) rather than the Sun.
+- **Prompt (EN):** The Moon is Earth's natural satellite and is roughly round.
+  Under the IAU definition, why is the Moon classified as a **moon (natural
+  satellite)** rather than a planet?
+  - A. It is a natural satellite that orbits Earth, and the definition of a planet excludes satellites.
   - B. It is not large enough to be roughly round.
   - C. It has no atmosphere.
-  - D. It does not orbit in the same direction as the planets.
-- **Prompt (LT):** Mėnulis yra didelis ir beveik rutulio formos. Pagal IAU
-  apibrėžimą, kodėl jis **nėra** priskiriamas planetoms?
-  - A. Jis skrieja aplink planetą (Žemę), o ne aplink Saulę.
+  - D. It produces its own light.
+- **Prompt (LT):** Mėnulis yra natūralus Žemės palydovas ir yra beveik rutulio
+  formos. Pagal IAU apibrėžimą, kodėl Mėnulis priskiriamas **mėnuliui (natūraliam
+  palydovui)**, o ne planetai?
+  - A. Jis yra natūralus palydovas, skriejantis aplink Žemę, o planetos apibrėžimas neapima palydovų.
   - B. Jis nėra pakankamai didelis, kad būtų beveik rutulio formos.
   - C. Jis neturi atmosferos.
-  - D. Jis neskrieja ta pačia kryptimi kaip planetos.
+  - D. Jis skleidžia savo pačio šviesą.
 - **Correct answer:** A.
-- **Explanation:** A planet must orbit the Sun; the definition explicitly excludes
-  satellites. The Moon orbits Earth, so it is a natural satellite, not a planet
-  (S-009; S-013). B is false (the Moon is roughly round); C and D are not
-  criteria.
+- **Explanation:** The IAU defines a planet as a body that orbits the Sun and
+  explicitly **excludes satellites**; the Moon is Earth's natural satellite, so it
+  is a moon, not a planet (S-009; S-013; S-014). Note precisely: the Earth and the
+  Moon **together orbit the Sun** — the reason the Moon is not a planet is that it
+  is gravitationally bound to Earth as its satellite, not that it never travels
+  around the Sun. B is false (the Moon is roughly round); C is not a criterion; D
+  is false (the Moon reflects sunlight).
 - **Distractor rationale:** B inverts the roundness fact; C introduces an
-  irrelevant property; D is a false orbital claim.
-- **Source:** S-009 (IAU Resolution B5), S-013 (NASA, "What is a Planet?").
+  irrelevant property; D repeats the "makes its own light" misconception.
+- **Source:** S-009 (IAU Resolution B5), S-013 (NASA, "What is a Planet?"),
+  S-014 (NASA, "Top Moon Questions").
 - **Provenance/rights:** original, AI-drafted.
 - **Intended difficulty:** comprehension/application *(uncalibrated).*
-- **Concerns:** deliberately avoids the "cleared the neighbourhood" concept that
-  AST-A4-005 tests, so the two items do not duplicate knowledge or cue each
-  other's answer; LT terms need reviewer confirmation.
+- **Concerns:** r2 removes the earlier misleading option wording; it deliberately
+  avoids the "cleared the neighbourhood" concept that AST-A4-005 tests, so the two
+  items do not duplicate knowledge or cue each other. LT terms need reviewer
+  confirmation. **Not independently reviewed.**
 - **Review status:** `draft — not reviewed`.
 
 ## ITEM AST-A4-005

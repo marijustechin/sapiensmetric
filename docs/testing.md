@@ -417,6 +417,25 @@ development users are preserved.
   query string or fragment. Owner-confirmed Tag Assistant, GTM publication, and
   GA4 Realtime views are recorded in `docs/publication-status.md`.
 
+## T-016 assessment scoring-core checks
+
+`packages/assessment` is tested with vitest (`pnpm --filter @sapiensmetric/assessment
+test`, part of the root `test` chain). Tests use **small synthetic fixtures**, not
+the draft astronomy bank, and cover: each supported scoring rule (correct,
+incorrect, skipped); multiple-select order independence plus rejection of
+duplicated selections; ordering completeness/uniqueness; numeric tolerance
+boundaries (inclusive), zero, and non-finite values; definition and response
+validation failures; submitted-versus-unfinished behaviour; full-denominator
+scoring and aggregate consistency (`correct + incorrect + skipped === totalItems`);
+objective totals; deterministic repeated evaluation with no input mutation;
+unsupported scoring-rule-version rejection; and that results and the public-form
+projection **do not leak answer keys or internal item definitions**. A compact
+worked example establishes the full flow with hand-derived expected outcomes.
+
+Scoring tests establish **engine behaviour only**; they do **not** validate
+assessment content, item quality, reliability, validity, or any psychometric
+property. See `docs/assessment-scoring.md`.
+
 ## Workflow expectations
 
 - Every task must state how its work is verified (tests, script, or manual

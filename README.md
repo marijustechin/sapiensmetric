@@ -28,8 +28,12 @@ see `docs/assessment-foundations.md` (entry point),
 `docs/knowledge-pilot-spec.md`, `docs/pilot-item-samples.md`, and
 `docs/assessment-sources.md`. The draft items are **unreviewed**; independent
 subject-matter and EN/LT language review are **pending** prerequisites before
-publication. Open decisions O-002/O-003/O-006/O-007 remain open. There is **no
-active task**.
+publication. Open decisions O-002/O-003/O-006/O-007 remain open. **T-016 —
+Versioned assessment scoring core** (archived 2026-09-28) added a pure,
+deterministic scoring core in `@sapiensmetric/assessment` (four item types,
+versioned form snapshots, validation, submitted-only scoring; see
+`docs/assessment-scoring.md`) and corrected the live AST-A4-004 Moon wording.
+There is **no active task**.
 T-013
 (D-025/D-026) added a bilingual public website
 with original educational content about assessments, SEO metadata, a generated
@@ -89,18 +93,21 @@ root local `.env` (see below); no second API-specific env file is created.
   of an automated guard on public claims wording.
 - **Local profile:** web `http://localhost:3333`, API `http://localhost:3334`,
   MySQL `127.0.0.1:3307` (see `docs/local-development.md`).
-- **Assessment core is not started.** `packages/assessment` is a deliberate pure
-  TypeScript placeholder: no items, scoring, norming, or claims. It is blocked on
+- **Assessment content is not started; the scoring core is (T-016).**
+  `packages/assessment` now contains the pure, deterministic versioned scoring
+  core (no items, norming, or claims). Content work is blocked on
   O-002 (item sourcing), O-003 (validation/norming), O-006 (data-protection/
   governance), and O-007 (copyright/IP provenance), plus product-owner approval
   of the T-002 instrument/provenance proposals.
 - **Assessment foundations (T-015, archived):** the approved astronomy pilot and
   methodology are in `docs/assessment-foundations.md` (entry point),
   `docs/knowledge-pilot-spec.md`, `docs/pilot-item-samples.md`, and
-  `docs/assessment-sources.md`. The **proposed next task** (not started or
-  authorised) is the pure versioned scoring core in `@sapiensmetric/assessment`;
-  it is gated on the remaining prerequisites and on O-002/O-003/O-006/O-007.
-  Independent content/language review is **pending** before any item publication.
+  `docs/assessment-sources.md`. The versioned scoring core is implemented under
+  **T-016** (archived) in `@sapiensmetric/assessment`
+  (`docs/assessment-scoring.md`); a proposed next slice (item review pipeline,
+  form assembly, delivery/data design) is **not started** and is gated on the
+  remaining prerequisites and on O-002/O-003/O-006/O-007. Independent
+  content/language review is **pending** before any item publication.
 
 ## Repository layout
 
@@ -118,8 +125,8 @@ root local `.env` (see below); no second API-specific env file is created.
 - `apps/api` (`@sapiensmetric/api`) — NestJS + Fastify, `GET /health` plus
   `/auth/*` credentials auth core (see `docs/authentication.md`).
 - `packages/contracts` (`@sapiensmetric/contracts`) — shared Zod contracts.
-- `packages/assessment` (`@sapiensmetric/assessment`) — pure TypeScript
-  placeholder (no items, scoring, or claims yet).
+- `packages/assessment` (`@sapiensmetric/assessment`) — pure TypeScript package
+  with the T-016 versioned scoring core (no items or claims yet).
 - `docs/` — product, assessment, architecture, testing, and decision docs.
   Current publication state: `docs/publication-status.md` (release, hosting,
   redirects/SEO, Google services, deployment).

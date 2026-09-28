@@ -27,8 +27,10 @@ database dependency.
     - `apps/api/src/modules/auth/` — authentication feature;
     - `apps/api/src/modules/auth/sessions/` — refresh-session persistence.
 - `packages/assessment` → **@sapiensmetric/assessment** — independent, pure
-  TypeScript package. Items, tests, scoring rules, results (none implemented
-  yet). No UI, framework, or DB dependencies.
+  TypeScript package. T-016 implements a versioned, deterministic **scoring core**
+  (form snapshots, validation, results) with tests (see
+  `docs/assessment-scoring.md`, T-016). No UI, framework, DB, network, or clock
+  dependencies.
 - `packages/contracts` → **@sapiensmetric/contracts** — Zod schemas shared
   between web and API. Currently the health-response contract.
 
@@ -262,6 +264,20 @@ eligibility, URL sanitisation, the idempotent GTM loader, and page-view dedupe;
 settings; the GTM container configuration is in `docs/gtm/`. GTM is loaded only
 after explicit consent (Basic Consent Mode), on the production host and eligible
 public routes; advertising consent stays denied.
+
+## T-016 versioned assessment scoring core
+
+T-016 implements the pure scoring core in `@sapiensmetric/assessment`
+(`docs/assessment-scoring.md`). It scores **one submitted attempt** against one
+**exact keyed form snapshot** and supports four item types (single answer, multiple
+select, ordering, numeric with inclusive absolute tolerance), each worth one
+point. `scoreAttempt` is deterministic and mutates nothing; `KeyedFormSnapshot` is
+internal/confidential and `toPublicForm` produces a browser-safe projection with
+no answer keys. Validation and unsupported rule versions throw coded
+`AssessmentError`s; only `status: 'submitted'` attempts receive a final score over
+the **full form** denominator (missing responses count as skipped). The package
+has no UI/HTTP/DB/auth/env/network/clock dependency, and the engine hardcodes no
+astronomy content, item count, or objectives. No API, database, or web change.
 
 ## T-007 Google OpenID Connect sign-in (implemented, approved, archived)
 
