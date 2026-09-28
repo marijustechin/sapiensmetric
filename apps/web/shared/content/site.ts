@@ -17,6 +17,12 @@ export const PROJECT_NAME = 'Sapiens Metric';
  */
 export const PUBLIC_CONTACT_EMAIL = 'info@sapiensmetric.eu';
 
+/**
+ * Website operator (D-026). Name only: no business registration number,
+ * postal address, or legal status is asserted or published.
+ */
+export const OPERATOR_NAME = 'Marijus Šmiginas';
+
 export function mailtoHref(email: string = PUBLIC_CONTACT_EMAIL): string {
   return `mailto:${email}`;
 }
@@ -37,12 +43,12 @@ export const AVAILABILITY_NOTE: Record<'en' | 'lt', string> = {
  */
 export const PRE_PUBLICATION_INPUTS: Record<'en' | 'lt', string[]> = {
   en: [
-    'Operator identity and legal/registration details.',
-    'Data-retention and consent specifics for account data (see Privacy).',
+    'Operator legal/registration details (the operator name is published; no registration number, address, or legal status is asserted).',
+    'Data-retention and consent specifics for the application account data (not part of this public release).',
   ],
   lt: [
-    'Operatoriaus tapatybė ir teisinė registracijos informacija.',
-    'Duomenų saugojimo ir sutikimo detalės paskyros duomenims (žr. Privatumą).',
+    'Operatoriaus teisinė/registracijos informacija (operatoriaus vardas skelbiamas; registracijos numeris, adresas ar teisinis statusas neteigiami).',
+    'Duomenų saugojimo ir sutikimo detalės programos paskyros duomenims (nepriklauso šiam viešam leidimui).',
   ],
 };
 
@@ -132,7 +138,7 @@ export const UI_STRINGS: Record<
     privacy: 'Privacy',
     emailUs: 'Email us',
     footerIdentity:
-      'SapiensMetric — a developing assessment project. No assessments are released yet.',
+      'SapiensMetric — a developing assessment project operated by Marijus Šmiginas. No assessments are released yet.',
     articles: 'Articles',
     articlesTitle: 'Articles',
     articlesDescription:
@@ -154,7 +160,7 @@ export const UI_STRINGS: Record<
     privacy: 'Privatumas',
     emailUs: 'Rašykite mums',
     footerIdentity:
-      'SapiensMetric — besivystantis vertinimo projektas. Vertinimai dar nepaleisti.',
+      'SapiensMetric — besivystantis vertinimo projektas, kurį valdo Marijus Šmiginas. Vertinimai dar nepaleisti.',
     articles: 'Straipsniai',
     articlesTitle: 'Straipsniai',
     articlesDescription:

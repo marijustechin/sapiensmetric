@@ -188,6 +188,12 @@ const en: Record<PageKey, PageContent> = {
         ],
       },
       {
+        heading: 'Website operator',
+        paragraphs: [
+          'This website is operated by Marijus Šmiginas. No business registration details, postal address, or legal status are asserted here.',
+        ],
+      },
+      {
         heading: 'Transparent limits',
         paragraphs: [
           'We do not claim that these tasks measure intelligence, provide a clinical diagnosis, or should inform hiring decisions. Until validation and representative norming exist, results are described as task performance only.',
@@ -232,7 +238,15 @@ const en: Record<PageKey, PageContent> = {
       {
         heading: 'Public browsing',
         paragraphs: [
-          'Browsing the public pages requires no account and sets no analytics or advertising cookies. The site does not load analytics or tracking scripts, and it does not sell or share browsing data.',
+          'Browsing the public pages requires no account. This site loads Google Analytics only after you accept it; before consent, no analytics or tag-manager requests are made and no analytics cookies are set. Advertising is not used.',
+        ],
+      },
+      {
+        heading: 'Analytics and your choice',
+        paragraphs: [
+          'Analytics runs through Google Tag Manager (container GTM-WRBRTKRT) and Google Analytics 4 (G-0CR4C3KPH3), loaded only after you accept analytics. Consent is stored in your browser for up to 180 days and is separate from your language choice. You can change or withdraw it any time via "Cookie settings" in the footer; withdrawing stops further collection, removes analytics cookies where accessible, and reloads the page.',
+          'Advertising consent stays denied; there are no advertising tags, remarketing, or Google Signals. Page measurement is limited to the page path and title — no query strings, fragments, credentials, email addresses, tokens, form values, user IDs, or assessment data.',
+          'This page describes the current repository implementation. The deployed website may not include this change until the operator deploys it.',
         ],
       },
       {
@@ -242,9 +256,9 @@ const en: Record<PageKey, PageContent> = {
         ],
       },
       {
-        heading: 'Accounts',
+        heading: 'No accounts in this release',
         paragraphs: [
-          'Account features exist and are separate from public browsing. Creating an account stores your email address, a securely hashed password (never the password itself), a record of email verification, the account role and status, and session records used to keep you signed in. Verification and password-reset links use single-use tokens that are stored only as hashes.',
+          'This public release offers informational pages and articles only. It does not offer accounts, registration, or sign-in, and it collects no personal data. Account and administration features exist in the wider application, which is not part of this public release and is documented separately.',
         ],
       },
       {
@@ -428,6 +442,12 @@ const lt: Record<PageKey, PageContent> = {
         ],
       },
       {
+        heading: 'Svetainės operatorius',
+        paragraphs: [
+          'Šią svetainę valdo Marijus Šmiginas. Čia neteigiami jokie verslo registracijos duomenys, adresas ar teisinis statusas.',
+        ],
+      },
+      {
         heading: 'Skaidrios ribos',
         paragraphs: [
           'Neteigiame, kad šios užduotys matuoja intelektą, teikia klinikinę diagnozę ar turėtų lemti įdarbinimo sprendimus. Kol nėra validavimo ir reprezentatyvaus normavimo, rezultatai apibūdinami tik kaip užduočių atlikimas.',
@@ -472,7 +492,15 @@ const lt: Record<PageKey, PageContent> = {
       {
         heading: 'Viešas naršymas',
         paragraphs: [
-          'Viešiems puslapiams naršyti paskyros nereikia ir nustatomi jokie analitikos ar reklamos slapukai. Svetainė nekrauna analitikos ar sekimo scenarijų ir neparduoda bei neperduoda naršymo duomenų.',
+          'Viešiems puslapiams naršyti paskyros nereikia. Ši svetainė „Google Analytics“ įkelia tik jums sutikus; iki sutikimo jokios analitikos ar žymenų tvarkyklės užklausos nesiunčiamos ir analitikos slapukai nenustatomi. Reklama nenaudojama.',
+        ],
+      },
+      {
+        heading: 'Analitika ir jūsų pasirinkimas',
+        paragraphs: [
+          'Analitika veikia per „Google Tag Manager“ (konteineris GTM-WRBRTKRT) ir „Google Analytics 4“ (G-0CR4C3KPH3), įkeliamus tik jums sutikus su analitika. Sutikimas saugomas jūsų naršyklėje iki 180 dienų ir yra atskiras nuo kalbos pasirinkimo. Jį bet kada galite pakeisti ar atšaukti per „Slapukų nustatymai“ poraštėje; atšaukimas sustabdo tolesnį rinkimą, pašalina analitikos slapukus, kai tai įmanoma, ir įkelia puslapį iš naujo.',
+          'Sutikimas reklamai lieka atmestas; nėra reklamos žymenų, pakartotinės rinkodaros ar „Google Signals“. Puslapio matavimas apsiriboja puslapio keliu ir pavadinimu — be užklausų eilučių, fragmentų, prisijungimo duomenų, el. pašto adresų, žymenų, formų reikšmių, naudotojo ID ar vertinimo duomenų.',
+          'Šis puslapis aprašo dabartinę saugyklos įgyvendinimo būseną. Paskelbtoje svetainėje šio pakeitimo gali dar nebūti, kol operatorius jo nepaskelbs.',
         ],
       },
       {
@@ -482,9 +510,9 @@ const lt: Record<PageKey, PageContent> = {
         ],
       },
       {
-        heading: 'Paskyros',
+        heading: 'Šiame leidime paskyrų nėra',
         paragraphs: [
-          'Paskyros funkcijos egzistuoja ir yra atskiros nuo viešo naršymo. Susikūrus paskyrą saugomas el. pašto adresas, saugiai su maišos funkcija apsaugotas slaptažodis (niekada ne pats slaptažodis), el. pašto patvirtinimo žymė, paskyros vaidmuo ir būsena bei sesijų įrašai, reikalingi prisijungimui palaikyti. Patvirtinimo ir slaptažodžio atkūrimo nuorodos naudoja vienkartinius žymenis, saugomus tik kaip maišos reikšmės.',
+          'Šis viešas leidimas siūlo tik informacinius puslapius ir straipsnius. Jis nesiūlo paskyrų, registracijos ar prisijungimo ir nerenka asmens duomenų. Paskyros ir administravimo funkcijos egzistuoja platesnėje programoje, kuri nepriklauso šiam viešam leidimui ir dokumentuojama atskirai.',
         ],
       },
       {

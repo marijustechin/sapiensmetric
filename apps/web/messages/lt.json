@@ -152,5 +152,14 @@
       "title": "Audito istorija",
       "empty": "Nėra audito įrašų."
     }
+  },
+  "Consent": {
+    "title": "Analitikos sutikimas",
+    "body": "Ši svetainė norėtų naudoti „Google Analytics“, kad suprastų, kurie puslapiai lankomi. Jis įkeliamas tik jums sutikus. Kol nepasirinksite, jokios analitikos ar žymenų tvarkyklės užklausos nesiunčiamos.",
+    "grantedNote": "Analitika šiuo metu leidžiama. Pasirinkus „Atmesti“ ji bus atšaukta ir analitikos slapukai pašalinti.",
+    "accept": "Sutikti su analitika",
+    "reject": "Atmesti analitiką",
+    "privacy": "Privatumas",
+    "settings": "Slapukų nustatymai"
   }
 }

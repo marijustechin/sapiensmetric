@@ -7,6 +7,7 @@ import {
   mailtoHref,
 } from '../../shared/content/site';
 import { localeHref } from '../../shared/lib/locale-links';
+import { ConsentSettingsButton } from '../../features/analytics/consent-settings-button';
 import type { AppLocale } from '../../shared/lib/locale-navigation';
 
 /**
@@ -43,6 +44,7 @@ export function SiteFooter({ locale }: { locale: AppLocale }) {
           >
             {PUBLIC_CONTACT_EMAIL}
           </a>
+          <ConsentSettingsButton />
         </nav>
         <p className="max-w-md text-slate-600">{strings.footerIdentity}</p>
       </div>

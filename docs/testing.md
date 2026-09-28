@@ -363,6 +363,60 @@ development users are preserved.
   statement, `sitemap.xml` (production URLs, no auth/account/admin),
   `robots.txt`, `noindex` on auth/account/admin, and the static 404.
 
+## T-014 frontend-only release checks
+
+- `pnpm build:public` builds `dist/public-site/` (public pages/articles,
+  branding, `_next`, 404, robots, sitemap; auth/account/admin excluded).
+- `scripts/verify-public-release.sh` checks the actual release directory:
+  required files, all public EN/LT routes and articles, absence of the
+  auth/account/admin directories and route HTML, canonical/hreflang, no
+  localhost, sitemap/robots, the static 404, the confirmed contact `mailto`,
+  locale-preserving links, and that public HTML references no application API
+  endpoints.
+- Serving `dist/public-site/` over a static server was checked for representative
+  deep routes (public pages 200; `/en/auth/login/`, `/lt/account/`, `/en/admin/`
+  return 404 and serve no application content).
+- Browser runtime (absence of API/analytics requests) was not observed because no
+  desktop browser is connected; that remains a manual check (see
+  `docs/release-hosting.md`).
+
+### Consent-controlled analytics checks (T-014 extension, D-027)
+
+- `apps/web/shared/lib/consent.test.ts` covers persistence, version/expiry
+  handling, withdrawal/clear, safe storage failure, and separation from the
+  language key.
+- `apps/web/shared/lib/analytics.test.ts` covers production-host and route
+  eligibility, URL sanitisation (no query/fragment/trailing slash), page-view
+  de-duplication across remounts, and the idempotent GTM load gate.
+- `scripts/verify-static-export.sh` and `scripts/verify-public-release.sh` assert
+  the initial HTML contains **no** GTM/GA4 references (no pre-consent requests),
+  no GTM `<noscript>` iframe, and that the EN/LT consent UI is present.
+- Headless-browser network assertion (Chromium via CDP, host
+  `sapiensmetric.eu` mapped to `127.0.0.1` with the release served on `:4322`,
+  Google endpoints **blocked** so no traffic reaches production): on a fresh
+  visit there were **0** Google requests, **0** analytics cookies, and an empty
+  `dataLayer`; after Reject, still 0 requests; after Accept, one attempted
+  (blocked) `googletagmanager.com/gtm.js` request, and `dataLayer` ordered
+  consent default → consent update (`analytics_storage` granted) →
+  sanitized page context → `gtm.js` → exactly one `spa_page_view` with
+  `page_location` free of query strings and an empty cross-origin referrer;
+  withdrawal persisted `denied` and reloaded.
+- This headless run uses **blocked** Google endpoints; it does **not** validate
+  the real imported GTM container. Validating the actual container remains a
+  separate **GTM Preview** acceptance step (owner). See `docs/gtm/README.md` for
+  the exact local procedure (production hostname gate + blocked Google URLs).
+- **Consent-command format fix (2026-09-28).** The first production integration
+  pushed consent commands as plain Arrays, which GTM silently ignores
+  (`google_tag_data.ics.usedDefault === false`). `analytics.ts` now builds
+  consent commands via `createGtagLayerPush` (Arguments objects), covered by
+  `analytics.test.ts` and the real-runtime check
+  `scripts/verify-consent-gtm-runtime.mjs` (`pnpm verify:consent-runtime`).
+  Production re-verification (headless Chromium, fresh profile) observed exactly
+  one `page_view` per accept → Articles → article → locale → reload, with
+  `tid=G-0CR4C3KPH3`, slash-less `page_location`/`page_path`, and no
+  query string or fragment. Owner-confirmed Tag Assistant, GTM publication, and
+  GA4 Realtime views are recorded in `docs/publication-status.md`.
+
 ## Workflow expectations
 
 - Every task must state how its work is verified (tests, script, or manual

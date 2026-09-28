@@ -1,38 +1,134 @@
-# Publication-input checklist (T-013)
+# Publication checklist — SapiensMetric public site
 
-Inputs that must be resolved by a human before the public site is treated as
-published. Nothing here is invented in the codebase.
+Remaining human/owner actions and reconciled state. **Current-state entry point:
+`docs/publication-status.md`.** Detailed instructions: `docs/release-hosting.md`,
+`docs/deployment-webdav.md`, `docs/gtm/README.md`. Nothing here is invented.
 
 ## Content and legal
-- [x] Public contact address `info@sapiensmetric.eu` (owner-confirmed mailbox;
-      published as a `mailto:` link on the Contact and Privacy pages and in the
-      public footer). Transactional email separately uses `SMTP_FROM`
-      (`website@sapiensmetric.eu`); SMTP configuration is unchanged.
-- [ ] Operator identity and legal/registration details (About/Privacy).
-- [ ] Retention, consent, and access-control specifics for account data.
-- [ ] Review of the Privacy page against the actually deployed behaviour.
+- [x] Public contact `info@sapiensmetric.eu` (owner-confirmed; `mailto` on
+      Contact/Privacy + footer). Transactional sender stays
+      `website@sapiensmetric.eu`.
+- [x] Website operator **Marijus Šmiginas** (About + footer; name only).
+- [ ] Operator legal/registration details (no registration number, address, or
+      legal status asserted).
+- [ ] Retention/consent specifics for the application account data (not part of
+      the public release).
+- [ ] Review the Privacy page against the actually deployed behaviour.
+
+## Release artifact
+- [x] Reproducible build `pnpm build:public` → `dist/public-site/` (public
+      pages/articles only; auth/account/admin excluded).
+- [x] Owner manually published the informational frontend (owner-reported; earlier
+      revision).
+- [x] **Deployed 2026-09-28 21:13–21:17 EEST** (18:13–18:17 UTC): artifact id
+      `64c4941cba87d08c` (159 files; 4 create / 155 overwrite), operation
+      `mulkgfk6-0768754a1976`, destination `https://sapiensmetric.eu:2078/`,
+      baseline `dist/deploy-baseline/mulkgfk6-0768754a1976/`. (Supersedes the
+      20:28–20:34 EEST deployment of `fcbbf30a7645982a` / `muliubrg-822e9fdae477`,
+      which contained the pre-fix consent shape.)
+- [x] T-014 approved, archived, committed, and pushed (2026-09-28). The deployed
+      **artifact id** `64c4941cba87d08c` is a content identity, **not** a commit
+      hash, and was **not** rebuilt from the finalisation commit (do not relabel
+      it).
 
 ## Hosting and transport
-- [ ] Production hosting for the static export with directory-style routes.
-- [ ] HTTPS certificate and canonical-origin enforcement (`https://sapiensmetric.eu`).
-- [ ] Confirm staging/preview builds carry `noindex` (D-025) and are not publicly
-      indexable.
-- [ ] Confirm no localhost/preview URL is present in production metadata.
+- [x] Provider confirmed: **vHost**, cPanel, Apache, no SSH (owner-reported).
+- [x] HTTPS + canonical non-www redirects verified 2026-09-27 (HTTP apex/HTTP www/
+      HTTPS www → 301; HTTPS apex → 200); `.htaccess` block preserved
+      (see `docs/release-hosting.md`).
+- [x] `sitemap.xml` served 200 `application/xml` with 20 HTTPS non-www URLs;
+      `robots.txt` allows crawling and references it (checked 2026-09-27).
+- [ ] `public_html` is shared with the legacy main domain `skygym.lt` (owner no
+      longer owns it; provider cannot change the main domain) — owner-reported.
+- [ ] Bacloud migration timing and final control-panel/document-root config
+      (unconfirmed); cache/purge step unknown.
 
-## Public release scope (auth/API/admin)
-- [ ] Decide the public scope of auth, account, admin, and the API; direct routes
-      remain reachable regardless of navigation visibility.
-- [ ] Confirm API authorisation (unchanged) is the control, not hidden links.
+## SEO / Search Console
+- [x] Canonicals, hreflang, `noindex` on non-public routes, sitemap/robots
+      implemented and verified in the export and (per external checks) live.
+- [ ] Search Console Domain property DNS-verified (owner-reported); sitemap
+      submission still returned **"Could not read sitemap"** with **zero
+      discovered pages** — ingestion/indexing **NOT confirmed**; recheck / use
+      live URL inspection.
 
-## Analytics and consent (T-014)
-- [ ] Search Console domain verification and sitemap submission.
-- [ ] GA4 delivered through a single GTM container (no duplicate tracking).
-- [ ] Analytics loaded only after consent, with rejection and withdrawal paths.
-- [ ] Cookie settings matching the actually deployed services.
-- [ ] Exclusion of credentials, email addresses, tokens, admin data, and
-      assessment answers from analytics.
-- [ ] No nonfunctional consent banner or Cookie settings control is published.
+## Analytics and consent (T-014 extension; D-027)
+Repository readiness (implemented; **activated 2026-09-28**):
+- [x] Basic Consent Mode: GTM `GTM-WRBRTKRT` loaded only after explicit consent;
+      no pre-consent requests or `<noscript>` iframe.
+- [x] GA4 `G-0CR4C3KPH3` through the single GTM container (no separate gtag.js).
+- [x] Accessible EN/LT consent UI + footer "Cookie settings"; versioned
+      preference (180-day expiry, safe storage); advertising consent denied.
+- [x] Eligible public routes only; one sanitized `page_view` per page; no
+      collection on root redirect/auth/account/admin; local/preview sends nothing.
+- [x] Consent commands use the gtag **Arguments** shape GTM processes (plain
+      Arrays are silently ignored); default denies all four signals, update grants
+      `analytics_storage` only, advertising stays denied. Regression:
+      `analytics.test.ts` + `pnpm verify:consent-runtime` (real runtime,
+      `ics.usedDefault`). Verified 2026-09-28.
 
-## SEO
-- [ ] Confirm canonicals/hreflang and sitemap after the production domain is live.
-- [ ] Confirm only public pages are listed in `sitemap.xml`.
+Owner actions:
+- [x] Import the corrected GTM container into **SM-Workspace** and review both tags
+      (owner-confirmed, 2026-09-28).
+- [x] **Redeployed the frontend** with the Consent Mode command-format fix
+      (2026-09-28; artifact `64c4941cba87d08c`, operation `mulkgfk6-0768754a1976`).
+      Production browser check: fresh/Reject → no Google requests; Accept +
+      restored consent → recognised defaults, `analytics_storage` granted,
+      advertising denied. No GTM container change required.
+- [x] **Owner Tag Assistant consent confirmation** (2026-09-28): at
+      `spa_page_view`, all four defaults denied, then `analytics_storage` granted
+      while `ad_storage`/`ad_user_data`/`ad_personalization` stayed denied.
+- [x] **Published the GTM container** (2026-09-28), version name
+      "GA4 – consent-gated public site" (numerical version ID not supplied).
+- [x] **GA4 Realtime collection** owner-confirmed after publication (incognito,
+      outside Preview): EN/LT page and article views received.
+- [x] **GA4 Enhanced Measurement**: owner disabled and saved **"Page changes based
+      on browser history events"**. Other Enhanced Measurement options **remained
+      enabled** — do not document all Enhanced Measurement as disabled.
+- [x] **Controlled production collection check** (2026-09-28): exactly one
+      `page_view` per accept → Articles → article → locale → reload;
+      `tid=G-0CR4C3KPH3`; consistent slash-less `page_location`/`page_path`; no
+      query string or fragment.
+- [ ] **GA4 settings review** (pending): decide the remaining Enhanced Measurement
+      options and Google Signals / advertising-personalisation settings.
+- [ ] **Realtime trailing-slash duplicate** (pending, cause not established):
+      `/en/assessment-guide` and `/en/assessment-guide/` both appeared; the current
+      controlled check did **not** reproduce it — do not infer duplication from
+      aggregate counts.
+- [ ] **GA4 report-level verification** beyond the owner's Realtime view (pending).
+
+## WebDAV deployment automation
+- [x] Endpoint `https://sapiensmetric.eu:2078/`, account `webdav@sapiensmetric.eu`,
+      scope `public_html` (owner-reported).
+- [x] Credentials migrated to the git-ignored `.env.deploy.local`; standard
+      `pnpm deploy:check` works (2026-09-27).
+- [x] Connectivity + mapping verified 2026-09-27 (TLS on, auth OK, chrooted to
+      `public_html`; base = URL root; `sitemap.xml` confirmed via WebDAV + site).
+- [x] Read-only `pnpm deploy:plan` completed: content-based artifact id
+      `e01bae832f1abcf5`, 159 files (8 create / 151 overwrite),
+      `.htaccess`/`.well-known` preserved; `plan` created no baseline.
+- [x] Corrected identity/rollback model: artifact identity (sorted paths +
+      content hashes) is separate from **operation identity** (fresh id per
+      deployment, own baseline at `dist/deploy-baseline/<operationId>/` with
+      `manifest.json` + `files/`); retries resume with `--operation <id>` and
+      verify contents + destination; backups/manifest persisted atomically before
+      overwrite; restore via `pnpm deploy:rollback -- --operation <id> --confirm`;
+      created paths retained.
+- [x] Focused tests `pnpm test:deploy` (6): same-size content change changes
+      artifact identity; retry preserves the original baseline; a new deployment
+      of the same artifact gets a new operation/baseline; resume verification.
+- [x] **Production deployment performed 2026-09-28** (owner-authorised): operation
+      `muliubrg-822e9fdae477`; `.htaccess`, `.well-known/**`, unrelated remote files,
+      and previous hashed assets preserved (no mirror/delete). Post-deploy
+      `pnpm deploy:verify` all ok.
+- [x] Rollback available (restores the operation baseline):
+      `pnpm deploy:rollback -- --operation muliubrg-822e9fdae477 --confirm`.
+- [x] **Corrective production deployment 2026-09-28 21:13–21:17 EEST**
+      (consent-command fix; owner-authorised): new operation
+      `mulkgfk6-0768754a1976`, artifact `64c4941cba87d08c`, new baseline
+      `dist/deploy-baseline/mulkgfk6-0768754a1976/`; remote content matched the
+      artifact **159/159**. Rollback:
+      `pnpm deploy:rollback -- --operation mulkgfk6-0768754a1976 --confirm`.
+- [x] Tooling gap fixed during deploy: missing parent WebDAV collections are now
+      created idempotently on HTTP `409` (cPanel rejected `PUT` into a new
+      directory); the same operation was resumed to completion.
+- [ ] Optional future: GitHub Actions deployment (not started).

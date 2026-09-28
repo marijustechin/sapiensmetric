@@ -6,15 +6,20 @@ A serious cognitive-ability and knowledge-assessment platform.
 - Domain: **sapiensmetric.eu**
 - Languages: Lithuanian and English
 - Status: **Foundation + local MySQL + credentials auth + email flows + auth
-  frontend + static-export directory routes.** A buildable pnpm monorepo with a
-  static web app (Next.js App Router, static export as `<route>/index.html`), a
-  NestJS/Fastify API (health + `/auth/*`), shared Zod contracts, and a local
-  MySQL 8.0.46 environment. No assessment items, scoring, norming, or production
-  deployment yet.
+  frontend + static-export directory routes + a deployed public website.** A
+  buildable pnpm monorepo with a static web app (Next.js App Router, static
+  export as `<route>/index.html`), a NestJS/Fastify API (health + `/auth/*`),
+  shared Zod contracts, and a local MySQL 8.0.46 environment. No assessment items,
+  scoring, or norming yet. The **frontend-only public site is deployed** to
+  `https://sapiensmetric.eu`; the API is not deployed.
 
-T-001..T-013 are complete, approved, and archived in `tasks/done/`. **No task is
-currently active**; the owner-approved next task is T-014 (frontend-only
-publication preparation). T-013 (D-025/D-026) added a bilingual public website
+T-001..T-014 are complete, approved, and archived in `tasks/done/`. **T-014 —
+Frontend-only publication preparation** (archived 2026-09-28) delivered the
+reproducible public release (`pnpm build:public` → `dist/public-site/`), the
+consent-gated GTM→GA4 integration (D-027), and the WebDAV deployment tooling,
+and deployed it to production (release state: `docs/publication-status.md`).
+T-013
+(D-025/D-026) added a bilingual public website
 with original educational content about assessments, SEO metadata, a generated
 sitemap/robots, no analytics, the confirmed public contact
 `info@sapiensmetric.eu`, and a locale-link fix. T-012 (D-024) added
@@ -99,12 +104,15 @@ root local `.env` (see below); no second API-specific env file is created.
 - `packages/assessment` (`@sapiensmetric/assessment`) — pure TypeScript
   placeholder (no items, scoring, or claims yet).
 - `docs/` — product, assessment, architecture, testing, and decision docs.
+  Current publication state: `docs/publication-status.md` (release, hosting,
+  redirects/SEO, Google services, deployment).
 - `tasks/` — current task and archived tasks.
 - `TODO.md` — planning index (never authorises work).
 - `scripts/verify.sh` — dependency-free documentation-harness checks
-  (including the archived task records, the T-008 frontend outputs, the T-007
-  Google sign-in outputs, the T-010 corrective outputs, and the completed
-  T-003/T-004/T-005/T-006 outputs).
+  (including the archived task records through T-014, the T-008 frontend outputs,
+  the T-007 Google sign-in outputs, the T-010 corrective outputs, the T-014
+  release/analytics/deployment outputs, and the completed T-003/T-004/T-005/T-006
+  outputs).
 - `scripts/verify-static-export.sh` — dependency-free static-export route
   invariant (run after `pnpm build`; part of `pnpm verify`).
 

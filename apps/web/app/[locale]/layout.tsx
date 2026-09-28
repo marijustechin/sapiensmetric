@@ -4,6 +4,7 @@ import { NextIntlClientProvider, hasLocale } from 'next-intl';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { LocalePreferenceSync } from '../../features/locale-preference/locale-preference-sync';
+import { ConsentProvider } from '../../features/analytics/consent-provider';
 import { routing } from '../../shared/i18n/routing';
 import { BRANDING } from '../../shared/branding/branding';
 import { SITE_ORIGIN } from '../../shared/content/site';
@@ -63,7 +64,7 @@ export default async function LocaleLayout({
         {/* Entering a locale-prefixed page remembers that locale (D-022). */}
         <LocalePreferenceSync locale={locale} />
         <NextIntlClientProvider locale={locale} messages={messages}>
-          {children}
+          <ConsentProvider>{children}</ConsentProvider>
         </NextIntlClientProvider>
       </body>
     </html>

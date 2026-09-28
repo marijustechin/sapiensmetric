@@ -15,7 +15,8 @@
 #   3. The archived T-006..T-011 records contain their exact titles and final
 #      approved statuses; the archived T-006 record contains the required
 #      definition sections, the six exact browser routes, and the access-gate
-#      markers; tasks/current.md declares that no task is active.
+#      markers; the T-014 archive exists with its heading/status; and
+#      tasks/current.md declares that no task is active.
 #   4. docs/decisions.md contains D-016 (heading, and section-scoped date /
 #      O-006 note / verification access gate / review-correction markers),
 #      D-017 (conventional registration), D-018 (Google OIDC), and D-019
@@ -119,7 +120,7 @@ for a in "${archives[@]}"; do
   fi
 done
 
-# --- Invariant 3: T-006..T-013 archived; no active task -----------------
+# --- Invariant 3: T-006..T-014 archived; no active task -----------------
 # The archived records' exact headings and final statuses are asserted
 # literally; tasks/current.md must declare that no task is active.
 
@@ -251,7 +252,23 @@ else
   note_fail "T-013 archive does not contain the final approved status"
 fi
 
-if grep -qF 'No task is active' tasks/current.md; then
+t014_archive='tasks/done/2026-09-26-frontend-only-publication-preparation.md'
+t014_heading='# T-014 — Frontend-only publication preparation (archived)'
+t014_status='- **Final status:** Approved (human review granted)'
+
+if grep -qxF -- "$t014_heading" "$t014_archive"; then
+  note_pass
+else
+  note_fail "T-014 archive does not contain the exact archived heading"
+fi
+
+if grep -qxF -- "$t014_status" "$t014_archive"; then
+  note_pass
+else
+  note_fail "T-014 archive does not contain the final approved status"
+fi
+
+if grep -qxF '# No active task' tasks/current.md; then
   note_pass
 else
   note_fail "tasks/current.md does not declare that no task is active"
@@ -1075,6 +1092,108 @@ if grep -qF 'admin:promote' docs/local-development.md; then
   note_pass
 else
   note_fail "docs/local-development.md lost the admin:promote command"
+fi
+
+# --- Invariant 18: T-014 frontend-only release outputs -------------------
+
+t014_outputs=(
+  scripts/build-public-release.sh
+  scripts/verify-public-release.sh
+  docs/release-hosting.md
+  apps/web/shared/lib/consent.ts
+  apps/web/shared/lib/consent.test.ts
+  apps/web/shared/lib/analytics.ts
+  apps/web/shared/lib/analytics.test.ts
+  apps/web/features/analytics/consent-provider.tsx
+  apps/web/features/analytics/consent-banner.tsx
+  apps/web/features/analytics/consent-settings-button.tsx
+  docs/gtm/container-GTM-WRBRTKRT.json
+  docs/gtm/README.md
+  scripts/deploy-webdav.mjs
+  scripts/deploy-webdav.test.mjs
+  scripts/verify-gtm-container.mjs
+  scripts/verify-consent-gtm-runtime.mjs
+  docs/deployment-webdav.md
+  docs/publication-status.md
+  .env.deploy.local.example
+)
+
+for out in "${t014_outputs[@]}"; do
+  if [ -e "$out" ]; then
+    note_pass
+  else
+    note_fail "T-014 output missing: $out"
+  fi
+done
+
+if grep -qF 'build:public' package.json && grep -qF 'verify:public-release' package.json; then
+  note_pass
+else
+  note_fail "package.json is missing the build:public / verify:public-release scripts"
+fi
+
+d026_heading='### D-026 — Release decisions: operator, contact, hosting, and first release scope'
+
+if grep -qxF -- "$d026_heading" docs/decisions.md; then
+  note_pass
+else
+  note_fail "docs/decisions.md does not contain the exact D-026 heading"
+fi
+
+if grep -qF 'api.sapiensmetric.eu' docs/decisions.md; then
+  note_pass
+else
+  note_fail "docs/decisions.md does not record the future API origin"
+fi
+
+d027_heading='### D-027 — Consent-controlled GTM → GA4 (analytics authorised)'
+
+if grep -qxF -- "$d027_heading" docs/decisions.md; then
+  note_pass
+else
+  note_fail "docs/decisions.md does not contain the exact D-027 heading"
+fi
+
+if grep -qF 'GTM-WRBRTKRT' docs/gtm/README.md && grep -qF 'G-0CR4C3KPH3' docs/gtm/README.md; then
+  note_pass
+else
+  note_fail "docs/gtm/README.md does not record the container/measurement ids"
+fi
+
+if grep -qF '"googtag"' docs/gtm/container-GTM-WRBRTKRT.json &&
+  grep -qF '"gaawe"' docs/gtm/container-GTM-WRBRTKRT.json &&
+  grep -qF 'page_referrer' docs/gtm/container-GTM-WRBRTKRT.json; then
+  note_pass
+else
+  note_fail "GTM container JSON does not use the current Google tag template with referrer sanitisation"
+fi
+
+if grep -qF 'sanitizeReferrer' apps/web/shared/lib/analytics.ts &&
+  grep -qF 'gtmBootstrapPushes' apps/web/shared/lib/analytics.ts; then
+  note_pass
+else
+  note_fail "analytics module is missing referrer sanitisation or the consent-first bootstrap"
+fi
+
+if grep -qxF '.env.deploy.local' .gitignore; then
+  note_pass
+else
+  note_fail ".gitignore does not ignore .env.deploy.local"
+fi
+
+if grep -qF 'WEBDAV_URL' .env.deploy.local.example &&
+  grep -qF 'WEBDAV_USERNAME' .env.deploy.local.example &&
+  grep -qF 'WEBDAV_PASSWORD=' .env.deploy.local.example; then
+  note_pass
+else
+  note_fail ".env.deploy.local.example is missing the WebDAV variables"
+fi
+
+if grep -qF 'deploy:check' package.json && grep -qF 'deploy:apply' package.json &&
+  grep -qF 'NODE_TLS_REJECT_UNAUTHORIZED' scripts/deploy-webdav.mjs; then
+  note_pass
+else
+  note_fail "deployment scripts are missing or TLS verification is not enforced"
 fi
 
 # --- Summary -----------------------------------------------------------

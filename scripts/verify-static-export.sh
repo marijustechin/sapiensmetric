@@ -391,6 +391,30 @@ else
   note_pass
 fi
 
+# Consent-controlled analytics (T-014 extension): the exported HTML must not
+# reference or preload GTM/GA4 before consent. The GTM/GA4 ids live only in the
+# client bundle, not in the initial HTML.
+# A pre-consent request/preload would use the Google URLs or a gtag call; the
+# container/measurement ids may legitimately appear in privacy copy.
+if grep -r --include='*.html' -qiE 'https://www\.googletagmanager\.com|https://www\.google-analytics\.com|googletagmanager\.com/gtm\.js|gtag\(' "$OUT_DIR/en" "$OUT_DIR/lt" "$OUT_DIR/index.html" 2>/dev/null; then
+  note_fail "public HTML references or preloads GTM/GA4 before consent"
+else
+  note_pass
+fi
+
+if grep -r --include='*.html' -qiE '<noscript[^>]*>[^<]*<iframe[^>]*googletagmanager' "$OUT_DIR" 2>/dev/null; then
+  note_fail "public HTML contains the unconditional GTM noscript iframe"
+else
+  note_pass
+fi
+
+if grep -q 'Accept analytics' "$OUT_DIR/en/index.html" &&
+  grep -q 'Sutikti su analitika' "$OUT_DIR/lt/index.html"; then
+  note_pass
+else
+  note_fail "consent UI is missing from the exported public pages"
+fi
+
 printf '\nverify-static-export.sh: %d passed, %d failed\n' "$passes" "$failures"
 if [ "$failures" -eq 0 ]; then
   printf 'All static-export route invariants hold.\n'

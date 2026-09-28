@@ -152,5 +152,14 @@
       "title": "Audit history",
       "empty": "No audit entries."
     }
+  },
+  "Consent": {
+    "title": "Analytics consent",
+    "body": "This site would like to use Google Analytics to understand which pages are visited. It loads only if you accept. No analytics or tag-manager requests are made before you choose.",
+    "grantedNote": "Analytics is currently allowed. Choosing Reject withdraws it and removes analytics cookies.",
+    "accept": "Accept analytics",
+    "reject": "Reject analytics",
+    "privacy": "Privacy",
+    "settings": "Cookie settings"
   }
 }

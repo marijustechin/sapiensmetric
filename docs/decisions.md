@@ -500,6 +500,41 @@ where noted. Update this file when a decision is made or changed.
 - Status: decided. Authorises the T-013 finalisation and the T-014 release
   preparation.
 
+### D-027 — Consent-controlled GTM → GA4 (analytics authorised)
+- Analytics was deferred in D-025/D-026; the owner has now explicitly authorised
+  it as an extension of T-014. This records the scope change.
+- **Basic Consent Mode with GTM blocked until explicit analytics consent**: the
+  GTM script is injected only after the visitor accepts analytics. Before consent
+  or after rejection there are **no** Google tag-manager/analytics requests
+  (including cookieless pings) and no analytics cookies. No unconditional GTM
+  `<noscript>` iframe, preloads, or preconnects.
+- Configuration: canonical origin `https://sapiensmetric.eu`, GTM container
+  `GTM-WRBRTKRT`, GA4 measurement ID `G-0CR4C3KPH3`. GTM is the single GA4
+  installation path; no separate `gtag.js`.
+- Consent preference is versioned, persisted (localStorage, distinct from the
+  language preference), with a documented expiry (180 days); storage failures
+  are handled safely. A footer "Cookie settings" entry reopens settings and
+  allows withdrawal; withdrawal persists rejection, removes this integration's
+  analytics cookies where accessible, and performs a controlled reload. Repeats,
+  remounts, and withdrawal-while-loading are handled idempotently.
+- Advertising consent stays **denied**; no advertising tags, remarketing, Google
+  Signals, or user-provided data.
+- Collection is enabled only on the production host and eligible public routes
+  (locale home, assessment guide, understanding results, about, contact, privacy,
+  articles, article pages). No collection on the root redirect, auth, account,
+  admin, or unavailable routes; local development/previews send nothing to
+  production. Exactly one `page_view` per eligible page after consent, including
+  locale switching; pre-consent browsing is not replayed; duplicates and
+  duplicate GTM insertion are prevented; payloads exclude query strings,
+  fragments, credentials, emails, tokens, form values, user IDs, and assessment
+  data.
+- The GTM container is delivered as an importable JSON artefact plus
+  documentation; the owner imports, previews, and publishes it separately —
+  preparing the configuration does **not** activate collection.
+- Date: 2026-09-27.
+- Status: decided. Authorises only the explicitly scoped analytics work within
+  T-014.
+
 ## Open decisions
 
 > T-001 note (2026-09-09): the discovery baseline (`docs/measurement-model.md`,

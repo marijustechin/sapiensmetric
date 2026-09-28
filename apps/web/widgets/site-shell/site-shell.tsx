@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { SiteHeader } from '../site-header/site-header';
 import { SiteFooter } from '../site-footer/site-footer';
+import { ConsentBanner } from '../../features/analytics/consent-banner';
 import type { AppLocale } from '../../shared/lib/locale-navigation';
 
 /** Public site shell (widget): header, readable content column, footer. */
@@ -16,6 +17,7 @@ export function SiteShell({
       <SiteHeader locale={locale} />
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-10 sm:px-6">{children}</main>
       <SiteFooter locale={locale} />
+      <ConsentBanner />
     </div>
   );
 }

@@ -243,6 +243,26 @@ and the shell threads the locale to header/footer; the export checks reject any
 cross-locale public anchor. See `docs/content.md` for
 authoring.
 
+## T-014 frontend-only public release
+
+T-014 (D-026) prepares a reproducible frontend-only release without changing the
+application. `scripts/build-public-release.sh` (`pnpm build:public`) builds the
+static export and assembles `dist/public-site/`, deterministically excluding the
+`/{lt,en}/{auth,account,admin}` route directories; `_next` is the shared
+content-hashed bundle. Public pages live in the `(site)` route group, which has
+no auth provider and makes no API requests, so the release needs no API/DB/SMTP/
+OAuth secrets. `scripts/verify-public-release.sh` checks the assembled
+directory, and `docs/release-hosting.md` documents upload/rollback, HTTPS,
+canonical hostname, deep links/404, indexing, and Search Console preparation.
+
+Analytics extension (D-027): consent-controlled GTM → GA4. `shared/lib/consent.ts`
+holds the versioned preference; `shared/lib/analytics.ts` holds host/path
+eligibility, URL sanitisation, the idempotent GTM loader, and page-view dedupe;
+`features/analytics/*` provides the consent provider, banner, and footer
+settings; the GTM container configuration is in `docs/gtm/`. GTM is loaded only
+after explicit consent (Basic Consent Mode), on the production host and eligible
+public routes; advertising consent stays denied.
+
 ## T-007 Google OpenID Connect sign-in (implemented, approved, archived)
 
 T-007 adds optional Google OIDC sign-in (authorization-code flow with PKCE)

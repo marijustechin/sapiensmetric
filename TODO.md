@@ -6,9 +6,18 @@ authorises work, and only one task is active at a time.
 
 ## Now
 
-- **No task is active.** T-013 is approved and archived; T-001..T-013 are
-  complete/archived in `tasks/done/`. Only `tasks/current.md` with explicit human
-  approval authorises work.
+- **No active task.** T-014 was approved and archived on 2026-09-28 (record:
+  `tasks/done/2026-09-26-frontend-only-publication-preparation.md`): the
+  reproducible frontend-only public release (`pnpm build:public` →
+  `dist/public-site/`), the consent-gated GTM→GA4 integration (D-027), and the
+  WebDAV deployment tooling are complete, committed, and pushed, and the release
+  is deployed to `https://sapiensmetric.eu` (artifact `64c4941cba87d08c`).
+- **Current publication state: `docs/publication-status.md`.** Remaining
+  operational follow-ups are tracked there and in
+  `docs/publication-checklist.md`: GA4 settings review (remaining Enhanced
+  Measurement options, Signals/advertising), Search Console sitemap ingestion
+  (not confirmed), the unresolved Realtime `/en/assessment-guide` vs
+  `/en/assessment-guide/` duplicate, and GA4 report-level verification.
 - **T-013 (Public website, educational content, and SEO foundation)** is
   approved (2026-09-26) and archived at
   `tasks/done/2026-09-26-public-website-educational-content-seo.md`
@@ -46,9 +55,6 @@ authorises work, and only one task is active at a time.
 
 ## Next (not yet authorised)
 
-- **T-014 — frontend-only publication preparation.** Owner-approved next task:
-  public release build, runtime cleanup, publication content, hosting and
-  Search Console preparation. To be scoped in `tasks/current.md` before work.
 - **Assessment foundations** — the first real assessment work (item model,
   provenance workflow, scoring package). Blocked on O-002, O-003, O-006, and
   O-007; requires product-owner approval of the T-002 instrument/provenance

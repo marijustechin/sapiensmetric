@@ -1,25 +1,32 @@
-# tasks/current.md — no active task
+# No active task
 
-- **Status:** No task is active. T-013 is approved and archived; T-001..T-013
-  are complete/archived in `tasks/done/`.
-- Only a task explicitly scoped here (with human approval) authorises work; see
-  `AGENTS.md`. This file is a planning pointer, not an authorisation.
+No task is currently authorised. `TODO.md` is the planning index and never
+authorises work; a task must be scoped in this file and approved by a human
+before any work starts.
 
-## Recently completed (archived)
+## Recently completed
 
-- **T-013 — Public website, educational content, and SEO foundation.** Approved
-  2026-09-26 and archived at
-  `tasks/done/2026-09-26-public-website-educational-content-seo.md`.
-- **T-012 — User roles and admin dashboard.** Approved 2026-09-26 and archived
-  at `tasks/done/2026-09-26-user-roles-and-admin-dashboard.md`.
-- **T-011 — FSD light frontend structure.** Approved 2026-09-26 and archived at
-  `tasks/done/2026-09-26-fsd-light-frontend-structure.md`.
-- T-010, T-009, T-008, T-007, T-006, T-005, and T-001..T-004 are
-  approved/complete and archived in `tasks/done/`.
+- **T-014 — Frontend-only publication preparation** was approved and archived on
+  **2026-09-28**. Record:
+  `tasks/done/2026-09-26-frontend-only-publication-preparation.md`. It delivered
+  the reproducible frontend-only public release (`pnpm build:public` →
+  `dist/public-site/`), the consent-gated GTM→GA4 integration (D-027), and the
+  WebDAV deployment tooling. The production release is the artifact
+  `64c4941cba87d08c` (operation `mulkgfk6-0768754a1976`).
+
+## Remaining operational follow-ups (owned outside a task)
+
+These are tracked in `docs/publication-checklist.md` and
+`docs/publication-status.md`:
+
+- GA4 settings review (remaining Enhanced Measurement options, Signals/advertising).
+- Search Console sitemap ingestion (not confirmed).
+- The Realtime `/en/assessment-guide` vs `/en/assessment-guide/` duplicate (cause
+  not established).
+- GA4 report-level verification beyond the owner's Realtime view.
 
 ## Next (not yet authorised)
 
-- **T-014 — frontend-only publication preparation** is the owner-approved next
-  task (public release build, runtime cleanup, publication content, hosting and
-  Search Console preparation). It must be explicitly scoped here before work
-  starts.
+- **Assessment foundations** — first real assessment work (item model, provenance
+  workflow, scoring package). Blocked on O-002, O-003, O-006, O-007 and
+  product-owner approval of the T-002 proposals; to be scoped here before work.
