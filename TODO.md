@@ -6,7 +6,19 @@ authorises work, and only one task is active at a time.
 
 ## Now
 
-- **No active task.** T-014 was approved and archived on 2026-09-28 (record:
+- **No active task.** **T-015 (Assessment foundations and first knowledge-pilot
+  specification)** was approved and archived on 2026-09-28 (record:
+  `tasks/done/2026-09-28-assessment-foundations-and-knowledge-pilot.md`). It
+  recorded the owner-approved content-selection principle and approved the
+  **astronomy** first pilot (adults-only; a proposed 25-item form whose final
+  composition remains subject to content review), the learning/feedback/exposure/
+  retake policy, the future assessment contract, the evidence required for future
+  ability scores, and 8 bilingual review-draft items — see
+  `docs/assessment-foundations.md` (entry point), `docs/knowledge-pilot-spec.md`,
+  `docs/pilot-item-samples.md`, and `docs/assessment-sources.md`. Draft items are
+  **unreviewed**; independent subject/language review is **pending**. O-002/O-003/
+  O-006/O-007 remain open; no runtime, database, API, or UI is implemented.
+- **T-014** was approved and archived on 2026-09-28 (record:
   `tasks/done/2026-09-26-frontend-only-publication-preparation.md`): the
   reproducible frontend-only public release (`pnpm build:public` →
   `dist/public-site/`), the consent-gated GTM→GA4 integration (D-027), and the
@@ -55,10 +67,14 @@ authorises work, and only one task is active at a time.
 
 ## Next (not yet authorised)
 
-- **Assessment foundations** — the first real assessment work (item model,
-  provenance workflow, scoring package). Blocked on O-002, O-003, O-006, and
-  O-007; requires product-owner approval of the T-002 instrument/provenance
-  proposals.
+- **Proposed next task (not started or authorised): versioned scoring core.** A
+  pure `@sapiensmetric/assessment` scorer (versioned item/form/scoring-rule types;
+  single-answer, ordering, multiple-select, numeric) with unit tests, plus the
+  two-role item review pipeline and pilot delivery/data design — see
+  `docs/assessment-foundations.md` §7. Gated on the remaining prerequisites
+  (`docs/assessment-foundations.md` §9.2) and on O-002 (sourcing) and O-007 (IP
+  review); O-003 (norming) and O-006 (data protection) stay open. Independent
+  content/language review before any item publication is **pending**.
 - vHosts Node-to-MySQL feasibility (later, separate infrastructure task).
 
 ## Blocked

@@ -15,8 +15,8 @@
 #   3. The archived T-006..T-011 records contain their exact titles and final
 #      approved statuses; the archived T-006 record contains the required
 #      definition sections, the six exact browser routes, and the access-gate
-#      markers; the T-014 archive exists with its heading/status; and
-#      tasks/current.md declares that no task is active.
+#      markers; the T-014 and T-015 archives exist with their headings/statuses;
+#      and tasks/current.md declares that no task is active.
 #   4. docs/decisions.md contains D-016 (heading, and section-scoped date /
 #      O-006 note / verification access gate / review-correction markers),
 #      D-017 (conventional registration), D-018 (Google OIDC), and D-019
@@ -48,6 +48,11 @@
 #  16. The T-012 roles/admin outputs exist (contracts, migration, the admin
 #      module, the bootstrap CLI, entities/user, the admin feature/widget/route)
 #      and D-024 is recorded.
+#  17. The T-013 public-site/SEO outputs exist and D-025 is recorded.
+#  18. The T-014 frontend-only release/analytics/deployment outputs exist,
+#      D-026/D-027 are recorded, and the WebDAV/TLS controls hold.
+#  19. The T-015 assessment-foundations documents exist, are linked from the
+#      active task, and the pilot item drafts stay out of the web build inputs.
 #
 # Exit code 0 = all invariants hold; non-zero = at least one failed.
 
@@ -120,7 +125,7 @@ for a in "${archives[@]}"; do
   fi
 done
 
-# --- Invariant 3: T-006..T-014 archived; no active task -----------------
+# --- Invariant 3: T-006..T-015 archived; no active task -----------------
 # The archived records' exact headings and final statuses are asserted
 # literally; tasks/current.md must declare that no task is active.
 
@@ -266,6 +271,22 @@ if grep -qxF -- "$t014_status" "$t014_archive"; then
   note_pass
 else
   note_fail "T-014 archive does not contain the final approved status"
+fi
+
+t015_archive='tasks/done/2026-09-28-assessment-foundations-and-knowledge-pilot.md'
+t015_heading='# T-015 — Assessment foundations and first knowledge-pilot specification (archived)'
+t015_status='- **Final status:** Approved (human review granted)'
+
+if grep -qxF -- "$t015_heading" "$t015_archive"; then
+  note_pass
+else
+  note_fail "T-015 archive does not contain the exact archived heading"
+fi
+
+if grep -qxF -- "$t015_status" "$t015_archive"; then
+  note_pass
+else
+  note_fail "T-015 archive does not contain the final approved status"
 fi
 
 if grep -qxF '# No active task' tasks/current.md; then
@@ -1194,6 +1215,47 @@ if grep -qF 'deploy:check' package.json && grep -qF 'deploy:apply' package.json 
   note_pass
 else
   note_fail "deployment scripts are missing or TLS verification is not enforced"
+fi
+
+# --- Invariant 19: T-015 assessment-foundations outputs -----------------
+# Documentation-only task: the methodology/pilot/item/source documents must
+# exist, be referenced by the T-015 archive, and the item drafts must stay OUT
+# of the web build inputs (public content, assets, and static export).
+
+t015_outputs=(
+  docs/assessment-foundations.md
+  docs/knowledge-pilot-spec.md
+  docs/pilot-item-samples.md
+  docs/assessment-sources.md
+)
+
+for out in "${t015_outputs[@]}"; do
+  if [ -e "$out" ]; then
+    note_pass
+  else
+    note_fail "T-015 output missing: $out"
+  fi
+done
+
+if grep -qF 'docs/assessment-foundations.md' "$t015_archive"; then
+  note_pass
+else
+  note_fail "the T-015 archive does not reference the assessment-foundations document"
+fi
+
+if grep -qF 'docs/knowledge-pilot-spec.md' "$t015_archive" &&
+  grep -qF 'docs/pilot-item-samples.md' "$t015_archive"; then
+  note_pass
+else
+  note_fail "the T-015 archive does not reference the pilot specification / item samples"
+fi
+
+# Draft pilot items must not leak into any web build input.
+if grep -rl --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=out \
+  --exclude-dir=dist 'AST-A1-001' apps/web 2>/dev/null | grep -q .; then
+  note_fail "a pilot item draft leaked into the web build inputs (apps/web)"
+else
+  note_pass
 fi
 
 # --- Summary -----------------------------------------------------------

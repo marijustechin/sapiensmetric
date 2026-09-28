@@ -18,6 +18,18 @@ Frontend-only publication preparation** (archived 2026-09-28) delivered the
 reproducible public release (`pnpm build:public` → `dist/public-site/`), the
 consent-gated GTM→GA4 integration (D-027), and the WebDAV deployment tooling,
 and deployed it to production (release state: `docs/publication-status.md`).
+**T-015 — Assessment foundations and first knowledge-pilot specification**
+(archived 2026-09-28) recorded the owner-approved content-selection principle and
+approved the **astronomy** first knowledge pilot (adults-only; a proposed 25-item
+form whose final composition remains subject to content review), together with the
+learning/feedback/exposure/retake policy, the future assessment contract, the
+evidence required for future ability scores, and 8 bilingual review-draft items —
+see `docs/assessment-foundations.md` (entry point),
+`docs/knowledge-pilot-spec.md`, `docs/pilot-item-samples.md`, and
+`docs/assessment-sources.md`. The draft items are **unreviewed**; independent
+subject-matter and EN/LT language review are **pending** prerequisites before
+publication. Open decisions O-002/O-003/O-006/O-007 remain open. There is **no
+active task**.
 T-013
 (D-025/D-026) added a bilingual public website
 with original educational content about assessments, SEO metadata, a generated
@@ -82,8 +94,13 @@ root local `.env` (see below); no second API-specific env file is created.
   O-002 (item sourcing), O-003 (validation/norming), O-006 (data-protection/
   governance), and O-007 (copyright/IP provenance), plus product-owner approval
   of the T-002 instrument/provenance proposals.
-- **Next strategic step:** an assessment-foundations task, gated on O-002,
-  O-003, O-006, and O-007 — not yet authorised.
+- **Assessment foundations (T-015, archived):** the approved astronomy pilot and
+  methodology are in `docs/assessment-foundations.md` (entry point),
+  `docs/knowledge-pilot-spec.md`, `docs/pilot-item-samples.md`, and
+  `docs/assessment-sources.md`. The **proposed next task** (not started or
+  authorised) is the pure versioned scoring core in `@sapiensmetric/assessment`;
+  it is gated on the remaining prerequisites and on O-002/O-003/O-006/O-007.
+  Independent content/language review is **pending** before any item publication.
 
 ## Repository layout
 
