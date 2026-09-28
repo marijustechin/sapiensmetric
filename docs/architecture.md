@@ -279,6 +279,23 @@ the **full form** denominator (missing responses count as skipped). The package
 has no UI/HTTP/DB/auth/env/network/clock dependency, and the engine hardcodes no
 astronomy content, item count, or objectives. No API, database, or web change.
 
+## T-017 persisted assessment attempts (synthetic, local/test only)
+
+T-017 (`docs/assessments.md`) adds the first authenticated assessment vertical
+slice on the API: start, save, resume, submit, list, and retrieve an attempt.
+`apps/api/src/modules/assessment/` holds the entity, store, service, controller,
+and a **server-side synthetic fixture** (`synthetic-form.ts`, prefixed
+`synthetic-`). Migration `1781440000004-CreateAssessmentAttempts` adds
+`assessment_attempts`, which stores the **exact keyed form snapshot** chosen at
+start plus answers/result JSON, `status` (`in_progress`|`finalised`), and a
+`revision` counter. Scoring reuses `@sapiensmetric/assessment` (no second
+algorithm); submission is idempotent and transactionally finalises exactly once.
+Concurrency uses a pessimistic row lock plus the optimistic revision. All routes
+sit behind `AccessTokenGuard` and enforce ownership from `request.userId`; client
+DTOs (`packages/contracts/src/assessment.ts`) never include answer keys. Synthetic
+content is OFF by default (`ASSESSMENT_SYNTHETIC_ENABLED`) and the config refuses to
+enable it in production. No web UI; the API is not deployed.
+
 ## T-007 Google OpenID Connect sign-in (implemented, approved, archived)
 
 T-007 adds optional Google OIDC sign-in (authorization-code flow with PKCE)

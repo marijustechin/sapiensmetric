@@ -5,10 +5,12 @@ import { AuthSession } from '../modules/auth/sessions/auth-session.entity.js';
 import { EmailActionToken } from '../modules/auth/action-tokens/email-action-token.entity.js';
 import { UserIdentity } from '../modules/auth/identities/user-identity.entity.js';
 import { AdminAuditLog } from '../modules/admin/admin-audit.entity.js';
+import { AssessmentAttempt } from '../modules/assessment/assessment-attempt.entity.js';
 import { CreateAuthTables1781440000000 } from './migrations/1781440000000-CreateAuthTables.js';
 import { CreateEmailActionTokens1781440000001 } from './migrations/1781440000001-CreateEmailActionTokens.js';
 import { CreateUserIdentities1781440000002 } from './migrations/1781440000002-CreateUserIdentities.js';
 import { CreateRolesAndAdminAudit1781440000003 } from './migrations/1781440000003-CreateRolesAndAdminAudit.js';
+import { CreateAssessmentAttempts1781440000004 } from './migrations/1781440000004-CreateAssessmentAttempts.js';
 
 export function createDataSource(config: AppConfig): DataSource {
   return new DataSource({
@@ -20,12 +22,20 @@ export function createDataSource(config: AppConfig): DataSource {
     database: config.db.database,
     charset: 'utf8mb4',
     synchronize: false,
-    entities: [User, AuthSession, EmailActionToken, UserIdentity, AdminAuditLog],
+    entities: [
+      User,
+      AuthSession,
+      EmailActionToken,
+      UserIdentity,
+      AdminAuditLog,
+      AssessmentAttempt,
+    ],
     migrations: [
       CreateAuthTables1781440000000,
       CreateEmailActionTokens1781440000001,
       CreateUserIdentities1781440000002,
       CreateRolesAndAdminAudit1781440000003,
+      CreateAssessmentAttempts1781440000004,
     ],
     migrationsTableName: 'migrations',
   });

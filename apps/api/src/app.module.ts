@@ -6,6 +6,7 @@ import { loadAppConfig } from './config/env.js';
 import { AppConfigModule } from './config/config.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { AdminModule } from './modules/admin/admin.module.js';
+import { AssessmentModule } from './modules/assessment/assessment.module.js';
 import { UsersModule } from './modules/users/users.module.js';
 import { SessionsModule } from './modules/auth/sessions/sessions.module.js';
 
@@ -31,6 +32,7 @@ import { SessionsModule } from './modules/auth/sessions/sessions.module.js';
     }),
     AuthModule,
     AdminModule,
+    AssessmentModule,
     UsersModule,
     SessionsModule,
   ],

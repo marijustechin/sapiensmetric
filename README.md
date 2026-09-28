@@ -33,7 +33,11 @@ Versioned assessment scoring core** (archived 2026-09-28) added a pure,
 deterministic scoring core in `@sapiensmetric/assessment` (four item types,
 versioned form snapshots, validation, submitted-only scoring; see
 `docs/assessment-scoring.md`) and corrected the live AST-A4-004 Moon wording.
-There is **no active task**.
+**T-017 — Persisted assessment attempts with synthetic content** (archived
+2026-09-28) added an authenticated API/DB slice to start, save, resume, and submit
+an attempt (synthetic, local/test only; no UI; not publication-ready) — see
+`docs/assessments.md`. There is **no active task**; a minimal local
+synthetic-assessment UI is a **proposed** next task (not authorised).
 T-013
 (D-025/D-026) added a bilingual public website
 with original educational content about assessments, SEO metadata, a generated
@@ -104,10 +108,12 @@ root local `.env` (see below); no second API-specific env file is created.
   `docs/knowledge-pilot-spec.md`, `docs/pilot-item-samples.md`, and
   `docs/assessment-sources.md`. The versioned scoring core is implemented under
   **T-016** (archived) in `@sapiensmetric/assessment`
-  (`docs/assessment-scoring.md`); a proposed next slice (item review pipeline,
-  form assembly, delivery/data design) is **not started** and is gated on the
-  remaining prerequisites and on O-002/O-003/O-006/O-007. Independent
-  content/language review is **pending** before any item publication.
+  (`docs/assessment-scoring.md`); **T-017** (archived) added the synthetic
+  persisted-attempt API slice (`docs/assessments.md`, local/test only). Remaining
+  slices (minimal local synthetic UI, item review pipeline, feedback delivery,
+  exposure/retakes) are **not started** and gated on the remaining prerequisites
+  and on O-002/O-003/O-006/O-007. Independent content/language review is
+  **pending** before any item publication.
 
 ## Repository layout
 

@@ -58,6 +58,7 @@ function config(): AppConfig {
     },
     tokens: { verificationTtlSeconds: 86400, passwordResetTtlSeconds: 1800 },
     publicAppUrl: ORIGIN,
+    assessments: { syntheticEnabled: false },
     google: {
       clientId: CLIENT_ID,
       clientSecret: 'local-secret-value-0123456789abcdef',

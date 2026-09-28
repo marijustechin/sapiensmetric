@@ -73,6 +73,7 @@ function testConfig(): AppConfig {
       passwordResetTtlSeconds: 1800,
     },
     publicAppUrl: ORIGIN,
+    assessments: { syntheticEnabled: false },
     google: {
       clientId: null,
       clientSecret: null,

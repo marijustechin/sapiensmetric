@@ -111,6 +111,10 @@ const envSchema = z.object({
   // Public web configuration. Only NEXT_PUBLIC_API_BASE_URL is exposed to the
   // browser (by the web build); no secret may use the NEXT_PUBLIC_ prefix.
   PUBLIC_APP_URL: canonicalOriginSchema,
+
+  // T-017 — synthetic assessment content is a local/test-only feature. It is
+  // OFF by default and must never be enabled in production (enforced below).
+  ASSESSMENT_SYNTHETIC_ENABLED: z.enum(['true', 'false']).default('false'),
 });
 
 export interface AppConfig {
@@ -150,6 +154,10 @@ export interface AppConfig {
     passwordResetTtlSeconds: number;
   };
   publicAppUrl: string;
+  assessments: {
+    /** Local/test-only synthetic assessment content. Off unless explicitly enabled. */
+    syntheticEnabled: boolean;
+  };
   google: {
     clientId: string | null;
     clientSecret: string | null;
@@ -203,6 +211,17 @@ export function loadAppConfig(env?: NodeJS.ProcessEnv): AppConfig {
     );
   }
 
+  // T-017: synthetic assessment content is local/test-only and must never be
+  // enabled in production.
+  if (
+    parsed.ASSESSMENT_SYNTHETIC_ENABLED === 'true' &&
+    parsed.NODE_ENV === 'production'
+  ) {
+    throw new Error(
+      'ASSESSMENT_SYNTHETIC_ENABLED must not be enabled in production.',
+    );
+  }
+
   return {
     api: {
       port: parsed.API_PORT,
@@ -241,6 +260,9 @@ export function loadAppConfig(env?: NodeJS.ProcessEnv): AppConfig {
       passwordResetTtlSeconds: parsed.PASSWORD_RESET_TOKEN_TTL_SECONDS,
     },
     publicAppUrl: parsed.PUBLIC_APP_URL,
+    assessments: {
+      syntheticEnabled: parsed.ASSESSMENT_SYNTHETIC_ENABLED === 'true',
+    },
     google: {
       clientId: parsed.GOOGLE_CLIENT_ID ?? null,
       clientSecret: parsed.GOOGLE_CLIENT_SECRET ?? null,

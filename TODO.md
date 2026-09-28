@@ -6,8 +6,14 @@ authorises work, and only one task is active at a time.
 
 ## Now
 
-- **No active task.** **T-016 (Versioned assessment scoring core)** was approved
-  and archived on 2026-09-28 (record:
+- **No active task.** **T-017 (Persisted assessment attempts with synthetic
+  content)** was approved and archived on 2026-09-28 (record:
+  `tasks/done/2026-09-28-persisted-assessment-attempts-with-synthetic-content.md`):
+  the authenticated API/DB slice to start, save, resume, and submit an attempt
+  (synthetic content, local/test only and off by default; no web UI; not
+  publication-ready) — see `docs/assessments.md`.
+- **T-016 (Versioned assessment scoring core)** was approved and archived on
+  2026-09-28 (record:
   `tasks/done/2026-09-28-versioned-assessment-scoring-core.md`): the pure,
   deterministic scoring core in `@sapiensmetric/assessment` (single-answer,
   multiple-select, ordering, numeric; versioned form snapshots; validation;
@@ -73,6 +79,10 @@ authorises work, and only one task is active at a time.
 
 ## Next (not yet authorised)
 
+- **Minimal local synthetic-assessment UI** — a small browser surface over the
+  existing attempt endpoints for local/testing use only, clearly labelled
+  synthetic, with no effect on the deployed public site. **Not authorised or
+  started.**
 - **Proposed next slice (not started or authorised): item review pipeline, form
   assembly, and pilot delivery/data design.** The two-role item review pipeline,
   session-form assembly, and the attempt-lifecycle/data-minimisation design — see

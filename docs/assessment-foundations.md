@@ -75,10 +75,12 @@ no item is presented as reviewed or validated.
 
 ## 1. How T-015 relates to the open decisions and the T-002 proposals
 
-- **O-002 (item/content sourcing policy).** T-015 does **not** resolve it. It
-  drafts item samples under the *existing* `docs/item-provenance-policy-proposal.md`
-  rules and records provenance/rights notes per item, but the policy is still an
-  unapproved proposal and no IP review (O-007) has occurred.
+- **O-002 (item/content sourcing policy).** The owner **approved the policy
+  direction** in T-015 (D-T015-6): documented provenance, sources, and independent
+  content/language review **before publication**. This is **policy approval, not
+  review of individual items** — the draft items remain **unreviewed**, the
+  operational two-role review trail is not yet running, and no IP review (O-007)
+  has occurred.
 - **O-003 (norming & validation roadmap).** T-015 does **not** set a norming plan
   or sample size. It states what evidence would be required and what a specialist
   must design (`section 7`).

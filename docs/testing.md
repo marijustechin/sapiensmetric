@@ -436,6 +436,28 @@ Scoring tests establish **engine behaviour only**; they do **not** validate
 assessment content, item quality, reliability, validity, or any psychometric
 property. See `docs/assessment-scoring.md`.
 
+## T-017 assessment-attempt checks
+
+Unit tests (`pnpm --filter @sapiensmetric/api test`, part of the root `test`
+chain): `access-token.guard.spec.ts` (missing token, invalid token, revoked/
+expired session, suspended user, unverified user, and success);
+`assessment-view.spec.ts` (public projection excludes answer keys/internal
+definitions); `assessment.service.spec.ts` (synthetic availability gating,
+validation of malformed answers, finalised/revision conflicts, idempotent submit,
+ownership 404, unfinalised result rejection).
+
+Real-MySQL integration (`pnpm --filter @sapiensmetric/api test:integration`,
+run separately against the local Docker MySQL; not part of `pnpm verify`):
+`assessment.integration.spec.ts` covers snapshot persistence, ownership,
+partial saves with clearing via `skipped` and resume, stale-revision conflicts,
+rejection after finalisation, full-denominator scoring, idempotent and
+**concurrent** submission (one finalisation), the save-versus-submit race with
+consistent stored answers/result, transaction rollback on invalid persisted
+answers, snapshot independence from later fixture changes, and per-user history
+isolation. The migration `1781440000004-CreateAssessmentAttempts` is applied to
+the local DB with `migration:run`. These tests establish engine/persistence
+behaviour only; they do **not** validate assessment content or psychometrics.
+
 ## Workflow expectations
 
 - Every task must state how its work is verified (tests, script, or manual

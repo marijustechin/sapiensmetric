@@ -15,7 +15,7 @@
 #   3. The archived T-006..T-011 records contain their exact titles and final
 #      approved statuses; the archived T-006 record contains the required
 #      definition sections, the six exact browser routes, and the access-gate
-#      markers; the T-014, T-015, and T-016 archives exist with their
+#      markers; the T-014, T-015, T-016, and T-017 archives exist with their
 #      headings/statuses; and tasks/current.md declares that no task is active.
 #   4. docs/decisions.md contains D-016 (heading, and section-scoped date /
 #      O-006 note / verification access gate / review-correction markers),
@@ -56,6 +56,9 @@
 #  20. The T-016 assessment scoring-core outputs exist, the root test chain runs
 #      the assessment tests, the build excludes specs, and the keyed assessment
 #      package is not imported into the web app.
+#  21. The T-017 persisted-attempt outputs exist, the migration is registered,
+#      synthetic content is off by default (and refused in production), contracts
+#      export the attempt schemas, and the web app gains no attempt surface.
 #
 # Exit code 0 = all invariants hold; non-zero = at least one failed.
 
@@ -128,7 +131,7 @@ for a in "${archives[@]}"; do
   fi
 done
 
-# --- Invariant 3: T-006..T-016 archived; no active task -----------------
+# --- Invariant 3: T-006..T-017 archived; no active task -----------------
 # The archived records' exact headings and final statuses are asserted
 # literally; tasks/current.md must declare that no task is active.
 
@@ -306,6 +309,22 @@ if grep -qxF -- "$t016_status" "$t016_archive"; then
   note_pass
 else
   note_fail "T-016 archive does not contain the final approved status"
+fi
+
+t017_archive='tasks/done/2026-09-28-persisted-assessment-attempts-with-synthetic-content.md'
+t017_heading='# T-017 — Persisted assessment attempts with synthetic content (archived)'
+t017_status='- **Final status:** Approved (human review granted)'
+
+if grep -qxF -- "$t017_heading" "$t017_archive"; then
+  note_pass
+else
+  note_fail "T-017 archive does not contain the exact archived heading"
+fi
+
+if grep -qxF -- "$t017_status" "$t017_archive"; then
+  note_pass
+else
+  note_fail "T-017 archive does not contain the final approved status"
 fi
 
 if grep -qxF '# No active task' tasks/current.md; then
@@ -1318,6 +1337,66 @@ fi
 if grep -rq --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=out \
   --exclude-dir=dist '@sapiensmetric/assessment' apps/web 2>/dev/null; then
   note_fail "the keyed assessment package is imported into apps/web"
+else
+  note_pass
+fi
+
+# --- Invariant 21: T-017 persisted-attempt outputs ----------------------
+# Authenticated synthetic attempt slice: outputs exist, the migration is
+# registered, synthetic content is OFF by default (and refused in production),
+# contracts export the attempt schemas, and the web app gains no assessment
+# attempt surface (no UI in this task).
+
+t017_outputs=(
+  packages/contracts/src/assessment.ts
+  apps/api/src/modules/assessment/assessment-attempt.entity.ts
+  apps/api/src/modules/assessment/assessment-attempt.store.ts
+  apps/api/src/modules/assessment/assessment.service.ts
+  apps/api/src/modules/assessment/assessment.controller.ts
+  apps/api/src/modules/assessment/assessment.module.ts
+  apps/api/src/modules/assessment/assessment-view.ts
+  apps/api/src/modules/assessment/synthetic-form.ts
+  apps/api/src/modules/assessment/assessment.integration.spec.ts
+  apps/api/src/database/migrations/1781440000004-CreateAssessmentAttempts.ts
+  docs/assessments.md
+)
+
+for out in "${t017_outputs[@]}"; do
+  if [ -e "$out" ]; then
+    note_pass
+  else
+    note_fail "T-017 output missing: $out"
+  fi
+done
+
+if grep -qF 'CreateAssessmentAttempts1781440000004' apps/api/src/database/data-source.ts; then
+  note_pass
+else
+  note_fail "the assessment-attempts migration is not registered in data-source.ts"
+fi
+
+if grep -qF "ASSESSMENT_SYNTHETIC_ENABLED: z.enum(['true', 'false']).default('false')" apps/api/src/config/env.ts; then
+  note_pass
+else
+  note_fail "ASSESSMENT_SYNTHETIC_ENABLED is not default-disabled in env.ts"
+fi
+
+if grep -qF 'must not be enabled in production' apps/api/src/config/env.ts; then
+  note_pass
+else
+  note_fail "env.ts does not refuse enabling synthetic content in production"
+fi
+
+if grep -qF "export * from './assessment'" packages/contracts/src/index.ts; then
+  note_pass
+else
+  note_fail "contracts index does not export the assessment schemas"
+fi
+
+# No assessment-attempt surface in the web app (this task has no UI).
+if grep -rq --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=out \
+  --exclude-dir=dist -E '/assessments/attempts|assessment_attempts' apps/web 2>/dev/null; then
+  note_fail "the web app references the assessment-attempt API/schema (no UI in T-017)"
 else
   note_pass
 fi
