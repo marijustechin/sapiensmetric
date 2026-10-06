@@ -10,8 +10,9 @@ any work starts.
   Record: `tasks/done/2026-10-06-favicon-manifest-data.md`. It replaced the interim
   WebP favicon with the owner-supplied PNG/ICO icon set + `site.webmanifest`
   (served from `/branding/...`), declared in both root layouts and the 404 page,
-  while preserving the in-page WebP logos. Approved for publication; the
-  production deployment is recorded in `docs/publication-status.md`.
+  while preserving the in-page WebP logos. Deployed to production on **2026-10-06**
+  (artifact `97e89b25b1edd8a9`, operation `mux030hl-e8032efd1883`); see
+  `docs/publication-status.md`.
 
 ## Proposed next task (not started or authorised)
 

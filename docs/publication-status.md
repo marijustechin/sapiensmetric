@@ -1,6 +1,6 @@
 # Publication status — SapiensMetric public site
 
-As of **2026-09-28 (Europe/Vilnius)**. Single entry point for the publication,
+As of **2026-10-06 (Europe/Vilnius)**. Single entry point for the publication,
 SEO, Google-services, and deployment state of the public frontend.
 
 **Status labels** (used throughout): `implemented` (in the repository),
@@ -20,14 +20,15 @@ Search Console), `docs/deployment-webdav.md` (WebDAV automation),
 | --- | --- |
 | T-013 (public website/content/SEO) | `implemented`, archived; committed and pushed as **`5da3ac7`** (`re-checked`) |
 | T-014 (frontend-only release prep; analytics extension; WebDAV tooling; consent-command fix) | `implemented`, **approved and archived** at `tasks/done/2026-09-26-frontend-only-publication-preparation.md`; committed/pushed in the T-014 finalisation commit (see git log). Deployed artifact `64c4941cba87d08c` (`re-checked`) |
+| **T-018 (favicon/manifest)** | `implemented`, **approved and archived** 2026-10-06 (`tasks/done/2026-10-06-favicon-manifest-data.md`); committed/pushed as **`f1d0e69`** |
 | Release build | `pnpm build:public` → `dist/public-site/` (`implemented`; artifact present locally) |
 | Public release scope | informational pages + articles only; auth/account/admin and the API are **excluded** (`implemented`) |
-| **Deployed artifact (current)** | **artifact id `64c4941cba87d08c`** (159 files; 4 create / 155 overwrite), operation **`mulkgfk6-0768754a1976`**, deployed **2026-09-28 21:13–21:17 EEST** (18:13–18:17 UTC) (`re-checked`) — the consent-command fix |
+| **Deployed artifact (current)** | **artifact id `97e89b25b1edd8a9`** (166 files; 10 create / 156 overwrite), operation **`mux030hl-e8032efd1883`**, deployed **2026-10-06 21:16–21:21 EEST** (18:16–18:21 UTC) (`re-checked`) — the favicon/manifest update |
 | Deployment destination | **`https://sapiensmetric.eu:2078/`** (WebDAV URL root; account chrooted to `public_html`; do not append `/public_html/`) (`re-checked`) |
-| Deployment baseline (rollback source) | **`dist/deploy-baseline/mulkgfk6-0768754a1976/`** (155 backups + `manifest.json`) (`re-checked`) |
-| Rollback command | `pnpm deploy:rollback -- --operation mulkgfk6-0768754a1976 --confirm` |
-| Prior deployment (superseded) | artifact `fcbbf30a7645982a`, operation `muliubrg-822e9fdae477`, 2026-09-28 20:28–20:34 EEST — contained the pre-fix plain-array consent shape |
-| Source HEAD / repo-vs-deployed | source HEAD `5da3ac7`; deployed artifact id `64c4941cba87d08c` — **not** a commit hash; T-014 changes remain uncommitted |
+| Deployment baseline (rollback source) | **`dist/deploy-baseline/mux030hl-e8032efd1883/`** (156 backups + `manifest.json`) (`re-checked`) |
+| Rollback command | `pnpm deploy:rollback -- --operation mux030hl-e8032efd1883 --confirm` |
+| Prior deployment (superseded) | artifact `64c4941cba87d08c`, operation `mulkgfk6-0768754a1976`, 2026-09-28 21:13–21:17 EEST (consent-command fix); earlier `fcbbf30a7645982a` / `muliubrg-822e9fdae477` |
+| Source HEAD / repo-vs-deployed | source HEAD `f1d0e69`; deployed artifact id `97e89b25b1edd8a9` — **not** a commit hash |
 
 ## 2. Hosting (`owner-reported`)
 
@@ -63,6 +64,16 @@ HTTPS `www` return **301** to HTTPS apex; HTTPS apex returns **200**; a query
 string was retained (`/en/articles/?redirect_check=1`); `sitemap.xml` returns
 **200 `application/xml`**, parses, and contains **20** public EN/LT URLs, all
 HTTPS without `www`; `robots.txt` allows crawling and references that sitemap.
+
+**Owner SEO changes preserved (`re-checked`, 2026-10-06):** production
+`robots.txt` and `sitemap.xml` differ from the repository build — `robots.txt` no
+longer contains a `Host:` line, and `sitemap.xml` contains **21** URLs (now
+including `https://sapiensmetric.eu/`). These are owner/hosting changes and were
+**not** reverted: the T-018 favicon deployment used the **current production
+bytes** for both files (hashes matched production before and after the upload).
+The repository build still generates the earlier 20-URL sitemap; reconciling the
+generator with the owner's SEO policy is an **open follow-up** (the observation is
+not an instruction to change SEO policy).
 
 **PageSpeed** (`checked-2026-09-27`, historical lab, tested the then-current `www`
 URL; not a guarantee for later releases):
@@ -128,6 +139,19 @@ response compression, oversized displayed logo.
   Remote content matched the artifact **159/159**; `pnpm deploy:verify` all ok;
   `.htaccess`/`.well-known`/unrelated files/previous hashed assets preserved.
   Rollback: `pnpm deploy:rollback -- --operation mulkgfk6-0768754a1976 --confirm`.
+- **Favicon/manifest deployment done** (`re-checked`, 2026-10-06 21:16–21:21 EEST):
+  a **new operation `mux030hl-e8032efd1883`** deployed artifact
+  **`97e89b25b1edd8a9`** (166 files; 10 create / 156 overwrite), baseline
+  `dist/deploy-baseline/mux030hl-e8032efd1883/` (156 backups). Preflight: 24 HTML
+  files and 108 Next.js RSC `.txt` payloads changed for the new head links; 10
+  remote files were new (3 `_next` build manifests + 7 branding icon/manifest
+  files); **no unexpected non-HTML changes**. `robots.txt`/`sitemap.xml` were
+  reconciled to the current production bytes first, so the upload did not change
+  them (hashes matched before and after). Post-deploy `pnpm deploy:verify` all ok;
+  production serves the icon/manifest URLs (`/branding/*`) with correct types and
+  the `<head>` declares them, the in-page owl logo is still referenced, the old
+  WebP favicon is no longer referenced, and auth/account/admin remain 404.
+  Rollback: `pnpm deploy:rollback -- --operation mux030hl-e8032efd1883 --confirm`.
 - **Tooling gap found and fixed during deploy:** the first `apply` stopped with
   **HTTP 409** on `PUT _next/static/o_lQS7h7de0Z3kNMCfWnJ/_buildManifest.js` because
   the remote lacked that **new** collection and the tool never issued `MKCOL`. The
@@ -155,8 +179,18 @@ response compression, oversized displayed logo.
 4. **Future releases**: rebuild, then `pnpm deploy:plan` → `pnpm deploy:apply`
    (new operation) → `pnpm deploy:verify`. Rollback any release with
    `pnpm deploy:rollback -- --operation <operationId> --confirm`. The current
-   release's baseline is `dist/deploy-baseline/mulkgfk6-0768754a1976/`.
-5. Optional future: GitHub Actions deployment (not started).
+   release's baseline is `dist/deploy-baseline/mux030hl-e8032efd1883/`.
+5. **Manifest MIME mapping (owner/hosting, `pending`):** production serves
+   `/branding/site.webmanifest` **200 but with no `Content-Type` header** (Apache
+   has no `.webmanifest` mapping), which risks browsers rejecting the manifest.
+   Fix requires a hosting MIME mapping to `application/manifest+json` for
+   `.webmanifest` (cPanel MIME Types or an owner-managed `.htaccess` `AddType`);
+   the `.htaccess` is owner-managed and preserved by the tooling.
+6. **Custom 404 handling (hosting observation, `pending`):** unknown paths return
+   Apache's own 404 page and the ErrorDocument attempt also 404s; the generated
+   `/404.html` **is** deployed (200, with the icon links). This is pre-existing
+   hosting configuration, not caused by T-018.
+7. Optional future: GitHub Actions deployment (not started).
 
 > **Analytics status:** container published and Realtime views owner-confirmed;
 > Tag Assistant confirmed the consent states. Continued operation depends on the
@@ -181,6 +215,16 @@ response compression, oversized displayed logo.
   (one `page_view` per transition/reload, correct measurement ID, slash-less
   `page_location`/`page_path`, no query/fragment). The GTM runtime check
   (`scripts/verify-consent-gtm-runtime.mjs`) is supplementary evidence.
+- `re-checked` (2026-10-06): T-018 finalisation (commit **`f1d0e69`**); the
+  favicon/manifest deployment (artifact `97e89b25b1edd8a9`, operation
+  `mux030hl-e8032efd1883`, baseline `dist/deploy-baseline/mux030hl-e8032efd1883/`,
+  166 files); the pre-upload audit (`robots.txt`/`sitemap.xml` reconciled to the
+  current production bytes; 24 HTML + 108 RSC `.txt` payload changes; 10 new
+  files; no unexpected non-HTML changes); and post-deploy checks (icon/manifest
+  URLs + content types, `/branding/*` head links, in-page owl logo preserved,
+  auth/account/admin 404). **No browser visual check** of the rendered tab icon
+  (no browser in the session); the missing manifest `Content-Type` and the 404
+  ErrorDocument behaviour were observed on production.
 - `checked-2026-09-27` (external): redirect, query-retention, sitemap/robots, and
   PageSpeed results above.
 - `owner-reported`: hosting, provider, `skygym.lt`, Bacloud timing, Search Console

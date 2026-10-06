@@ -26,18 +26,36 @@ Remaining human/owner actions and reconciled state. **Current-state entry point:
       baseline `dist/deploy-baseline/mulkgfk6-0768754a1976/`. (Supersedes the
       20:28–20:34 EEST deployment of `fcbbf30a7645982a` / `muliubrg-822e9fdae477`,
       which contained the pre-fix consent shape.)
-- [x] T-014 approved, archived, committed, and pushed (2026-09-28). The deployed
-      **artifact id** `64c4941cba87d08c` is a content identity, **not** a commit
-      hash, and was **not** rebuilt from the finalisation commit (do not relabel
-      it).
+- [x] T-014 approved, archived, committed, and pushed (2026-09-28). A deployed
+      **artifact id** is a content identity, **not** a commit hash.
+- [x] **Deployed 2026-10-06 21:16–21:21 EEST** (18:16–18:21 UTC): artifact id
+      `97e89b25b1edd8a9` (166 files; 10 create / 156 overwrite), operation
+      `mux030hl-e8032efd1883`, destination `https://sapiensmetric.eu:2078/`,
+      baseline `dist/deploy-baseline/mux030hl-e8032efd1883/` — the T-018
+      favicon/manifest update (`robots.txt`/`sitemap.xml` reconciled to the
+      current production bytes). (Supersedes `64c4941cba87d08c` /
+      `mulkgfk6-0768754a1976`.)
 
 ## Hosting and transport
 - [x] Provider confirmed: **vHost**, cPanel, Apache, no SSH (owner-reported).
 - [x] HTTPS + canonical non-www redirects verified 2026-09-27 (HTTP apex/HTTP www/
       HTTPS www → 301; HTTPS apex → 200); `.htaccess` block preserved
       (see `docs/release-hosting.md`).
-- [x] `sitemap.xml` served 200 `application/xml` with 20 HTTPS non-www URLs;
-      `robots.txt` allows crawling and references it (checked 2026-09-27).
+- [x] `sitemap.xml` served 200 `application/xml`; `robots.txt` allows crawling and
+      references it (checked 2026-09-27: 20 URLs). **Owner SEO edits preserved
+      2026-10-06:** production `robots.txt` has no `Host:` line and
+      `sitemap.xml` has **21** URLs (incl. `/`); the favicon deployment reconciled
+      to these production bytes instead of reverting them (open follow-up:
+      reconcile the generator).
+- [x] Favicon/icon set + web manifest deployed 2026-10-06 (artifact
+      `97e89b25b1edd8a9`, operation `mux030hl-e8032efd1883`); `/branding/*` icon
+      URLs and `<head>` links verified; in-page owl logo preserved.
+- [ ] **Manifest MIME mapping (owner/hosting):** `/branding/site.webmanifest` is
+      served 200 with **no `Content-Type`**; mapping `.webmanifest` to
+      `application/manifest+json` is required (cPanel MIME Types or owner-managed
+      `.htaccess`).
+- [ ] **Custom 404 handling (hosting):** unknown paths return Apache's 404 (the
+      ErrorDocument attempt also 404s); the generated `/404.html` is deployed.
 - [ ] `public_html` is shared with the legacy main domain `skygym.lt` (owner no
       longer owns it; provider cannot change the main domain) — owner-reported.
 - [ ] Bacloud migration timing and final control-panel/document-root config

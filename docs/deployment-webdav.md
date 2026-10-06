@@ -4,9 +4,10 @@ Deploys the **frontend-only** public release (`dist/public-site/`, see
 `docs/release-hosting.md`) to the cPanel Web Disk (restricted to `public_html`,
 read/write) via WebDAV.
 
-> **Production deployment was explicitly authorised and performed on 2026-09-28**
-> (operation `muliubrg-822e9fdae477`, artifact `fcbbf30a7645982a`). Any further
-> upload requires the same explicit authorisation.
+> **Production deployments were explicitly authorised and performed on
+> 2026-09-28** (operations `muliubrg-822e9fdae477` and `mulkgfk6-0768754a1976`)
+> **and 2026-10-06** (operation `mux030hl-e8032efd1883`). Any further upload
+> requires the same explicit authorisation.
 
 ## Credentials (never printed/committed/bundled/uploaded)
 
@@ -181,6 +182,17 @@ backed up before overwrite; baseline
 **`dist/deploy-baseline/muliubrg-822e9fdae477/`** (`manifest.json` + 151 files).
 `.htaccess`, `.well-known/**`, unrelated remote files, and previous hashed assets
 were preserved. Post-deploy `pnpm deploy:verify` all ok.
+
+**Observed favicon/manifest deployment (2026-10-06, authorised):** preflight
+reconciled `robots.txt` and `sitemap.xml` to the **current production bytes**
+(owner SEO edits: `robots.txt` without a `Host:` line; `sitemap.xml` with 21 URLs
+including `/`) so the release did **not** revert them. Plan artifact id
+**`97e89b25b1edd8a9`** (166 files; 10 create / 156 overwrite) → fresh operation
+**`mux030hl-e8032efd1883`**; 166/166 uploaded on the first attempt. Baseline
+`dist/deploy-baseline/mux030hl-e8032efd1883/` (156 backups). Post-deploy
+`pnpm deploy:verify` all ok; production icon/manifest URLs and head links
+verified; `robots.txt`/`sitemap.xml` hashes unchanged. Rollback:
+`pnpm deploy:rollback -- --operation mux030hl-e8032efd1883 --confirm`.
 
 ### verify (post-deployment)
 
