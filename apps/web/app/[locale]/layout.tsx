@@ -6,7 +6,7 @@ import { notFound } from 'next/navigation';
 import { LocalePreferenceSync } from '../../features/locale-preference/locale-preference-sync';
 import { ConsentProvider } from '../../features/analytics/consent-provider';
 import { routing } from '../../shared/i18n/routing';
-import { BRANDING } from '../../shared/branding/branding';
+import { SITE_ICONS, SITE_MANIFEST } from '../../shared/branding/icon-metadata';
 import { SITE_ORIGIN } from '../../shared/content/site';
 import '../globals.css';
 
@@ -35,7 +35,8 @@ export async function generateMetadata({
     metadataBase: new URL(SITE_ORIGIN),
     title: t('title'),
     description: t('description'),
-    icons: [{ url: BRANDING.favicon, type: 'image/webp' }],
+    icons: SITE_ICONS,
+    manifest: SITE_MANIFEST,
   };
 }
 

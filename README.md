@@ -36,8 +36,11 @@ versioned form snapshots, validation, submitted-only scoring; see
 **T-017 — Persisted assessment attempts with synthetic content** (archived
 2026-09-28) added an authenticated API/DB slice to start, save, resume, and submit
 an attempt (synthetic, local/test only; no UI; not publication-ready) — see
-`docs/assessments.md`. There is **no active task**; a minimal local
-synthetic-assessment UI is a **proposed** next task (not authorised).
+`docs/assessments.md`. **T-018 — Favicon/manifest data** (archived 2026-10-06)
+replaced the interim WebP favicon with the owner-supplied PNG/ICO icon set +
+`site.webmanifest` (served from `/branding/...`) and kept the in-page WebP logos.
+There is **no active task**; a minimal local synthetic-assessment UI is a
+**proposed** next task (not authorised).
 T-013
 (D-025/D-026) added a bilingual public website
 with original educational content about assessments, SEO metadata, a generated
@@ -123,9 +126,10 @@ root local `.env` (see below); no second API-specific env file is created.
   (`app/[locale]`, message catalogues in `messages/`: login, registration,
   email verification, password reset, account). Layered as a **light FSD**
   structure (`app` / `widgets` / `features` / `shared`; see
-  `docs/fsd-light.md`, D-023). The approved branding WebP
-  assets are served from the stable `/branding/...` paths and the supplied
-  favicon is registered (D-021). The root `/` redirects to the remembered local
+  `docs/fsd-light.md`, D-023). The approved branding WebP logos are served from
+  the stable `/branding/...` paths; browser/device icons (PNG/ICO) and a web
+  manifest are served from the same prefix and declared by both root layouts
+  (D-021, T-018). The root `/` redirects to the remembered local
   language preference (`localStorage`, `lt`/`en`) or to `/en/` by default
   (D-022; no interactive language chooser).
 - `apps/api` (`@sapiensmetric/api`) — NestJS + Fastify, `GET /health` plus

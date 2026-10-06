@@ -58,6 +58,23 @@ for item in "${required[@]}"; do
   fi
 done
 
+# T-018: the supplied page/device icon set + manifest must reach the release.
+required_icons=(
+  branding/favicon.ico
+  branding/favicon-16x16.png
+  branding/favicon-32x32.png
+  branding/apple-touch-icon.png
+  branding/android-chrome-192x192.png
+  branding/android-chrome-512x512.png
+  branding/site.webmanifest
+)
+for item in "${required_icons[@]}"; do
+  if [ ! -e "$ARTIFACT/$item" ]; then
+    echo "FAIL: release is missing $item" >&2
+    failures=$((failures + 1))
+  fi
+done
+
 for locale in lt en; do
   for route in "${EXCLUDED_ROUTES[@]}"; do
     if [ -e "$ARTIFACT/$locale/$route" ]; then

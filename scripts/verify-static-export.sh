@@ -137,29 +137,100 @@ for flat in "$OUT_DIR/lt.html" "$OUT_DIR/en.html"; do
   fi
 done
 
-# --- Branding assets (approved WebP interface, used as supplied) ---------
-# The assets must reach the export from their stable `/branding/...` paths, the
-# supplied favicon must be registered in the generated HTML, and the light-shell
-# brand mark (dark variant) must be referenced.
+# --- Branding assets (WebP logos) and page/device icons (T-018) ----------
+# The WebP logos reach the export from their stable `/branding/...` paths and the
+# dark variant is the shell brand mark. The supplied PNG/ICO icon set and web
+# manifest likewise reach the export, are declared in the generated <head> with
+# `/branding/...` paths, the manifest icons resolve, and no page still declares
+# the interim WebP favicon.
 
-branding_favicon="$OUT_DIR/branding/sapiens-metric-logo-favicon.webp"
 branding_dark="$OUT_DIR/branding/sapiens-metric-logo-dark.webp"
+if [ -f "$branding_dark" ]; then
+  note_pass
+else
+  note_fail "branding asset missing from export: branding/sapiens-metric-logo-dark.webp"
+fi
 
-for asset in "$branding_favicon" "$branding_dark"; do
-  if [ -f "$asset" ]; then
+icon_files=(
+  favicon.ico
+  favicon-16x16.png
+  favicon-32x32.png
+  apple-touch-icon.png
+  android-chrome-192x192.png
+  android-chrome-512x512.png
+  site.webmanifest
+)
+for icon in "${icon_files[@]}"; do
+  if [ -f "$OUT_DIR/branding/$icon" ]; then
     note_pass
   else
-    note_fail "branding asset missing from export: branding/${asset##*/}"
+    note_fail "icon/manifest asset missing from export: branding/$icon"
   fi
 done
 
-for page in "$OUT_DIR/index.html" "$OUT_DIR/lt/index.html" "$OUT_DIR/en/index.html"; do
-  if [ -f "$page" ] && grep -q 'sapiens-metric-logo-favicon.webp' "$page"; then
+# Every generated page (root redirect, EN/LT public + app pages, 404) must
+# declare the icon set and manifest from `/branding/...`.
+check_icon_links() {
+  local page="$1" label="$2"
+  local missing=()
+  for needle in \
+    'rel="apple-touch-icon"' \
+    '/branding/apple-touch-icon.png' \
+    'rel="manifest"' \
+    '/branding/site.webmanifest' \
+    '/branding/favicon-32x32.png' \
+    '/branding/favicon-16x16.png' \
+    '/branding/favicon.ico' \
+    '/branding/android-chrome-192x192.png'; do
+    if ! grep -qF "$needle" "$page"; then
+      missing+=("$needle")
+    fi
+  done
+  if [ "${#missing[@]}" -eq 0 ]; then
     note_pass
   else
-    note_fail "supplied favicon not referenced in ${page#"$OUT_DIR"/}"
+    note_fail "missing icon/manifest links in $label: ${missing[*]}"
+  fi
+}
+
+page_404="$OUT_DIR/404.html"
+[ -f "$page_404" ] || page_404="$OUT_DIR/404/index.html"
+
+for page in \
+  "$OUT_DIR/index.html" \
+  "$OUT_DIR/lt/index.html" \
+  "$OUT_DIR/en/index.html" \
+  "$OUT_DIR/en/account/index.html" \
+  "$OUT_DIR/lt/account/index.html" \
+  "$page_404"; do
+  if [ -f "$page" ]; then
+    check_icon_links "$page" "${page#"$OUT_DIR"/}"
+  else
+    note_fail "expected page missing for icon check: ${page#"$OUT_DIR"/}"
   fi
 done
+
+# The interim WebP favicon must no longer be declared by any generated page.
+if grep -rl --include='*.html' 'sapiens-metric-logo-favicon.webp' "$OUT_DIR" 2>/dev/null | grep -q .; then
+  note_fail "a generated page still declares the interim WebP favicon"
+else
+  note_pass
+fi
+
+# Manifest icon URLs must resolve to included files.
+manifest="$OUT_DIR/branding/site.webmanifest"
+manifest_srcs="$(grep -oE '"/branding/[^"]+\.png"' "$manifest" 2>/dev/null | tr -d '"' | sort -u)"
+if [ -z "$manifest_srcs" ]; then
+  note_fail "site.webmanifest declares no /branding/ icon sources"
+else
+  for src in $manifest_srcs; do
+    if [ -f "$OUT_DIR$src" ]; then
+      note_pass
+    else
+      note_fail "manifest icon does not resolve in export: $src"
+    fi
+  done
+fi
 
 if [ -f "$OUT_DIR/lt/index.html" ] && grep -q 'sapiens-metric-logo-dark.webp' "$OUT_DIR/lt/index.html"; then
   note_pass

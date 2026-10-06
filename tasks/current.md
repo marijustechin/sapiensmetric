@@ -6,21 +6,21 @@ any work starts.
 
 ## Recently completed
 
-- **T-017 — Persisted assessment attempts with synthetic content** was approved
-  and archived on **2026-09-28**. Record:
-  `tasks/done/2026-09-28-persisted-assessment-attempts-with-synthetic-content.md`.
-  It added the authenticated API/DB slice to start, save, resume, and submit an
-  attempt (scored by the T-016 core; synthetic/local-test only; no UI) —
-  `docs/assessments.md`.
+- **T-018 — Favicon/manifest data** was approved and archived on **2026-10-06**.
+  Record: `tasks/done/2026-10-06-favicon-manifest-data.md`. It replaced the interim
+  WebP favicon with the owner-supplied PNG/ICO icon set + `site.webmanifest`
+  (served from `/branding/...`), declared in both root layouts and the 404 page,
+  while preserving the in-page WebP logos. Approved for publication; the
+  production deployment is recorded in `docs/publication-status.md`.
 
 ## Proposed next task (not started or authorised)
 
-- **Minimal local synthetic-assessment UI** — a small browser surface over the
-  existing attempt endpoints for local/testing use only, clearly labelled
-  synthetic, with no effect on the deployed public site. **Not authorised or
-  started.** Later assessment slices (feedback/answer-key explanations,
-  exposure tracking, retake policy) remain proposed and gated on the
-  prerequisites below.
+- **Minimal local synthetic-assessment UI** (T-019) — a small browser surface over
+  the T-017 attempt endpoints so the owner can test the full
+  start → answer → save → resume → submit → result → history journey. Synthetic
+  content only; local/testing use; not publication-ready.
+- Later assessment slices (feedback/answer-key explanations, exposure tracking,
+  retake policy) remain proposed and gated on the prerequisites below.
 
 ## Remaining prerequisites for a public assessment release
 
@@ -35,8 +35,4 @@ any work starts.
 ## Preserved follow-ups (owned outside a task)
 
 Publication/analytics items remain tracked in `docs/publication-status.md` and
-`docs/publication-checklist.md`: GA4 settings review, Search Console sitemap
-ingestion (not confirmed), the Realtime `/en/assessment-guide` vs
-`/en/assessment-guide/` duplicate (cause not established), and GA4 report-level
-verification. The deployed frontend artifact remains `64c4941cba87d08c`
-(operation `mulkgfk6-0768754a1976`).
+`docs/publication-checklist.md`.

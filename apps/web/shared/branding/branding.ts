@@ -19,3 +19,21 @@ export const BRANDING = {
   middle: '/branding/sapiens-metric-logo-middle.webp',
   favicon: '/branding/sapiens-metric-logo-favicon.webp',
 } as const;
+
+/**
+ * Browser/device icon set (T-018). These are the **page/device icons** (tab,
+ * bookmark, home-screen) and replace the interim WebP favicon in `metadata`.
+ * The `BRANDING` WebP entries above remain the **in-page logos**.
+ *
+ * The files are used exactly as supplied (no conversion or renaming) from the
+ * stable `/branding/...` public paths. `favicon.ico` carries 16/32/48 px.
+ */
+export const ICONS = {
+  faviconIco: '/branding/favicon.ico',
+  favicon16: '/branding/favicon-16x16.png',
+  favicon32: '/branding/favicon-32x32.png',
+  appleTouch: '/branding/apple-touch-icon.png',
+  android192: '/branding/android-chrome-192x192.png',
+  android512: '/branding/android-chrome-512x512.png',
+  manifest: '/branding/site.webmanifest',
+} as const;

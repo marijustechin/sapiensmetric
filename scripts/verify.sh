@@ -15,8 +15,8 @@
 #   3. The archived T-006..T-011 records contain their exact titles and final
 #      approved statuses; the archived T-006 record contains the required
 #      definition sections, the six exact browser routes, and the access-gate
-#      markers; the T-014, T-015, T-016, and T-017 archives exist with their
-#      headings/statuses; and tasks/current.md declares that no task is active.
+#      markers; the T-014..T-018 archives exist with their headings/statuses; and
+#      tasks/current.md declares that no task is active.
 #   4. docs/decisions.md contains D-016 (heading, and section-scoped date /
 #      O-006 note / verification access gate / review-correction markers),
 #      D-017 (conventional registration), D-018 (Google OIDC), and D-019
@@ -37,11 +37,13 @@
 #  14. The T-010 corrective outputs exist (trailing-slash static-export config,
 #      the static-export invariant script, the claims guard, the aligned local
 #      profile, and the env-file isolation behaviour); the approved branding
-#      WebP assets exist and are referenced from their stable paths; the root
-#      route is a remembered-language redirect, not a chooser; and D-020,
-#      D-021, and D-022 are recorded. The static-export route structure, the
-#      exported branding assets, and the exported root redirect are verified
-#      separately by scripts/verify-static-export.sh after a build.
+#      WebP assets exist and are referenced from their stable paths; the
+#      page/device icon set + web manifest exist and are declared by both root
+#      layouts (T-018); the root route is a remembered-language redirect, not a
+#      chooser; and D-020, D-021, and D-022 are recorded. The static-export route
+#      structure, the exported branding assets and icons, and the exported root
+#      redirect are verified separately by scripts/verify-static-export.sh after
+#      a build.
 #  15. The FSD light structure exists (docs/fsd-light.md, the boundary check
 #      script, the app/widgets/features/entities/shared layers, and no
 #      processes), D-023 is recorded, and the boundary check runs in pnpm verify.
@@ -131,7 +133,7 @@ for a in "${archives[@]}"; do
   fi
 done
 
-# --- Invariant 3: T-006..T-017 archived; no active task -----------------
+# --- Invariant 3: T-006..T-018 archived; no active task -----------------
 # The archived records' exact headings and final statuses are asserted
 # literally; tasks/current.md must declare that no task is active.
 
@@ -325,6 +327,22 @@ if grep -qxF -- "$t017_status" "$t017_archive"; then
   note_pass
 else
   note_fail "T-017 archive does not contain the final approved status"
+fi
+
+t018_archive='tasks/done/2026-10-06-favicon-manifest-data.md'
+t018_heading='# T-018 — Favicon/manifest data (archived)'
+t018_status='- **Final status:** Approved (human review granted)'
+
+if grep -qxF -- "$t018_heading" "$t018_archive"; then
+  note_pass
+else
+  note_fail "T-018 archive does not contain the exact archived heading"
+fi
+
+if grep -qxF -- "$t018_status" "$t018_archive"; then
+  note_pass
+else
+  note_fail "T-018 archive does not contain the final approved status"
 fi
 
 if grep -qxF '# No active task' tasks/current.md; then
@@ -925,11 +943,69 @@ for marker in "${branding_markers[@]}"; do
   fi
 done
 
-if grep -qF 'BRANDING.favicon' "apps/web/app/[locale]/layout.tsx" &&
-  grep -qF 'BRANDING.favicon' "apps/web/app/(root)/layout.tsx"; then
+# T-018 page/device icon set + manifest. The interim WebP favicon is no longer
+# used as the browser icon; the WebP logos remain in-page brand marks.
+icon_assets=(
+  apps/web/public/branding/favicon.ico
+  apps/web/public/branding/favicon-16x16.png
+  apps/web/public/branding/favicon-32x32.png
+  apps/web/public/branding/apple-touch-icon.png
+  apps/web/public/branding/android-chrome-192x192.png
+  apps/web/public/branding/android-chrome-512x512.png
+  apps/web/public/branding/site.webmanifest
+)
+
+for asset in "${icon_assets[@]}"; do
+  if [ -f "$asset" ]; then
+    note_pass
+  else
+    note_fail "T-018 icon/manifest asset missing: $asset"
+  fi
+done
+
+icon_markers=(
+  'favicon.ico'
+  'favicon-16x16.png'
+  'favicon-32x32.png'
+  'apple-touch-icon.png'
+  'android-chrome-192x192.png'
+  'android-chrome-512x512.png'
+  'site.webmanifest'
+)
+
+for marker in "${icon_markers[@]}"; do
+  if grep -qF "$marker" apps/web/shared/branding/branding.ts; then
+    note_pass
+  else
+    note_fail "branding.ts is missing the T-018 icon/manifest path: $marker"
+  fi
+done
+
+if grep -qF 'SITE_ICONS' "apps/web/app/[locale]/layout.tsx" &&
+  grep -qF 'SITE_MANIFEST' "apps/web/app/[locale]/layout.tsx" &&
+  grep -qF 'SITE_ICONS' "apps/web/app/(root)/layout.tsx" &&
+  grep -qF 'SITE_MANIFEST' "apps/web/app/(root)/layout.tsx"; then
   note_pass
 else
-  note_fail "the supplied favicon is not registered in both root layouts"
+  note_fail "the shared icon set/manifest is not declared in both root layouts"
+fi
+
+if grep -qF 'sapiens-metric-logo-favicon.webp' "apps/web/app/[locale]/layout.tsx" ||
+  grep -qF 'sapiens-metric-logo-favicon.webp' "apps/web/app/(root)/layout.tsx"; then
+  note_fail "a root layout still declares the interim WebP favicon"
+else
+  note_pass
+fi
+
+if grep -qF '"name": "SapiensMetric"' apps/web/public/branding/site.webmanifest &&
+  grep -qF '"short_name": "SapiensMetric"' apps/web/public/branding/site.webmanifest &&
+  grep -qF '/branding/android-chrome-192x192.png' apps/web/public/branding/site.webmanifest &&
+  grep -qF '/branding/android-chrome-512x512.png' apps/web/public/branding/site.webmanifest &&
+  grep -qF '"start_url": "/"' apps/web/public/branding/site.webmanifest &&
+  grep -qF '"scope": "/"' apps/web/public/branding/site.webmanifest; then
+  note_pass
+else
+  note_fail "site.webmanifest is missing the T-018 name/icons/start_url/scope"
 fi
 
 d021_heading='### D-021 — Branding asset interface (stable WebP filenames and public paths)'

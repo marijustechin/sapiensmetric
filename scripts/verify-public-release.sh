@@ -21,6 +21,35 @@ for item in index.html 404.html robots.txt sitemap.xml _next branding; do
   check "required release item missing: $item" "[ -e '$REL/$item' ]"
 done
 
+# T-018: the supplied page/device icon set + manifest must ship in the release.
+for icon in favicon.ico favicon-16x16.png favicon-32x32.png apple-touch-icon.png android-chrome-192x192.png android-chrome-512x512.png site.webmanifest; do
+  check "T-018 icon/manifest missing from release: branding/$icon" "[ -f '$REL/branding/$icon' ]"
+done
+
+# Generated head links use the correct /branding/ paths on the public pages and
+# the 404 page (auth/account/admin are excluded from the public release).
+for page in index.html lt/index.html en/index.html 404.html; do
+  for needle in 'rel="apple-touch-icon"' '/branding/apple-touch-icon.png' 'rel="manifest"' '/branding/site.webmanifest' '/branding/favicon-32x32.png' '/branding/favicon-16x16.png' '/branding/favicon.ico' '/branding/android-chrome-192x192.png'; do
+    check "missing icon/manifest link ($needle) in $page" "grep -qF '$needle' '$REL/$page'"
+  done
+done
+
+if grep -rl --include='*.html' 'sapiens-metric-logo-favicon.webp' "$REL" 2>/dev/null | grep -q .; then
+  note_fail "release still declares the interim WebP favicon"
+else
+  note_pass
+fi
+
+# Manifest icon URLs must resolve inside the release.
+manifest_srcs="$(grep -oE '"/branding/[^"]+\.png"' "$REL/branding/site.webmanifest" 2>/dev/null | tr -d '"' | sort -u)"
+if [ -z "$manifest_srcs" ]; then
+  note_fail "release site.webmanifest declares no /branding/ icon sources"
+else
+  for src in $manifest_srcs; do
+    check "manifest icon does not resolve in release: $src" "[ -f '$REL$src' ]"
+  done
+fi
+
 routes=(assessment-guide understanding-results about contact privacy articles)
 for locale in lt en; do
   check "missing $locale home" "[ -f '$REL/$locale/index.html' ]"

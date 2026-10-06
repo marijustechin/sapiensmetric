@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
-import { BRANDING } from '../../shared/branding/branding';
+import { SITE_ICONS, SITE_MANIFEST } from '../../shared/branding/icon-metadata';
 import '../globals.css';
 
 /**
@@ -13,8 +13,9 @@ import '../globals.css';
 export const metadata: Metadata = {
   title: 'Sapiens Metric',
   description: 'Sapiens Metric',
-  // Supplied favicon asset, registered from its stable public path.
-  icons: [{ url: BRANDING.favicon, type: 'image/webp' }],
+  // Browser/device icon set + manifest, from their stable public paths (T-018).
+  icons: SITE_ICONS,
+  manifest: SITE_MANIFEST,
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

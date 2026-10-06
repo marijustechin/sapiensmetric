@@ -347,13 +347,19 @@ where noted. Update this file when a decision is made or changed.
   adjustments may replace file contents, but must preserve these exact
   filenames and paths. Paths are centralised in `apps/web/shared/branding/branding.ts`.
 - The variant is chosen for the actual background it sits on; the current shell
-  is light, so `logo-dark` is used and the supplied favicon is registered as the
-  web app icon in both root layouts.
+  is light, so `logo-dark` is used.
+- **T-018 update (2026-10-06):** the browser/device icons are now the
+  owner-supplied PNG/ICO set plus `site.webmanifest` (task T-018), served from the
+  same stable `/branding/...` prefix and declared by both root layouts. The interim
+  `sapiens-metric-logo-favicon.webp` is **retained as a file** (stable interface)
+  but is **no longer used as the browser icon** — the owner found it too thin and
+  unreadable at 32×32. The four WebP entries above remain the **in-page logos**.
 - This supersedes the T-009 "do not reference `apps/web/public/`" bootstrap
   restriction for these four assets only; it was explicitly approved by Marijus.
-- `scripts/verify.sh` asserts the assets exist and are referenced, and
-  `scripts/verify-static-export.sh` asserts they reach the export and that the
-  favicon is registered in the generated HTML.
+- `scripts/verify.sh` asserts the WebP assets and the T-018 icon/manifest assets
+  exist and are declared; `scripts/verify-static-export.sh` and
+  `scripts/verify-public-release.sh` assert they reach the export and that the
+  generated `<head>` uses the `/branding/...` icon/manifest paths.
 - Date: 2026-09-26.
 - Status: decided. Authorises only the branding-asset wiring within the active
   T-010 work.

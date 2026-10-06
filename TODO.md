@@ -6,8 +6,12 @@ authorises work, and only one task is active at a time.
 
 ## Now
 
-- **No active task.** **T-017 (Persisted assessment attempts with synthetic
-  content)** was approved and archived on 2026-09-28 (record:
+- **No active task.** **T-018 (Favicon/manifest data)** was approved and archived
+  on 2026-10-06 (record: `tasks/done/2026-10-06-favicon-manifest-data.md`): the
+  owner-supplied PNG/ICO page/device icons + `site.webmanifest` (served from
+  `/branding/...`) replace the interim WebP favicon; in-page WebP logos unchanged.
+- **T-017 (Persisted assessment attempts with synthetic content)** was approved
+  and archived on 2026-09-28 (record:
   `tasks/done/2026-09-28-persisted-assessment-attempts-with-synthetic-content.md`):
   the authenticated API/DB slice to start, save, resume, and submit an attempt
   (synthetic content, local/test only and off by default; no web UI; not

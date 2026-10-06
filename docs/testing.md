@@ -258,9 +258,12 @@ wired into `pnpm verify`) enforces it against `apps/web/out`:
 - the previous flat deep-route `.html` format (e.g. `lt/auth/login.html`,
   `lt.html`) is absent — its return is a regression.
 
-It also asserts the approved branding assets (D-021) reach the export under
-`branding/`, that the supplied favicon is referenced in the generated HTML, and
-that the light-shell brand mark (dark variant) is referenced. For the root route
+It also asserts the approved branding WebP logos (D-021) reach the export under
+`branding/`, that the T-018 page/device icon set and `site.webmanifest` reach the
+export and are declared with `/branding/...` paths in the generated `<head>` of
+the root, EN/LT public and app pages, and the 404 page, that the manifest icon
+URLs resolve, that no page still declares the interim WebP favicon, and that the
+light-shell brand mark (dark variant) is referenced. For the root route
 (D-022) it asserts that the exported `index.html` renders the accessible centred
 loading state, contains no meta refresh, offers the JavaScript-disabled English
 fallback link, and presents no chooser or placeholder copy. Finally, it asserts

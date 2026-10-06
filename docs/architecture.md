@@ -173,11 +173,14 @@ auth, API, database, SMTP, or OAuth behaviour:
 - The UI fallback locale is `en`, aligned with the API authentication default.
 - `apps/web/shared/lib/claims-guard.test.ts` guards public UI copy against
   `docs/claims-ladder.md`; future report/result templates must register with it.
-- The approved branding WebP assets are used as supplied from the stable
+- The approved branding WebP logos are used as supplied from the stable
   `/branding/...` public paths (D-021); `apps/web/shared/branding/branding.ts`
-  centralises the paths, `apps/web/shared/ui/brand-mark.tsx` renders the
-  light-shell (`dark`) variant, and the supplied favicon is registered in both
-  root layouts.
+  centralises the paths and `apps/web/shared/ui/brand-mark.tsx` renders the
+  light-shell (`dark`) variant. **T-018** added the browser/device icon set
+  (PNG/ICO + `site.webmanifest`, also under `/branding/...`), shared through
+  `apps/web/shared/branding/icon-metadata.ts` and declared by both root layouts;
+  the interim WebP favicon is retained as a file but is no longer used as the
+  browser icon.
 
 ## T-011 FSD light web structure (behaviour-preserving)
 
