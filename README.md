@@ -39,8 +39,11 @@ an attempt (synthetic, local/test only; no UI; not publication-ready) — see
 `docs/assessments.md`. **T-018 — Favicon/manifest data** (archived 2026-10-06)
 replaced the interim WebP favicon with the owner-supplied PNG/ICO icon set +
 `site.webmanifest` (served from `/branding/...`) and kept the in-page WebP logos.
-There is **no active task**; a minimal local synthetic-assessment UI is a
-**proposed** next task (not authorised).
+**T-019 — Minimal local synthetic-assessment UI** (archived 2026-10-06) added the
+browser surface over the T-017 synthetic assessment API (start → answer → save →
+resume → submit → raw result → history), local/development only, `noindex` and
+excluded from the public release — see `docs/assessment-ui.md`. The owner
+confirmed it works as intended in the browser. There is **no active task**.
 T-013
 (D-025/D-026) added a bilingual public website
 with original educational content about assessments, SEO metadata, a generated

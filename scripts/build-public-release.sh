@@ -5,8 +5,9 @@
 # Builds the static web export and assembles a dedicated deployment directory
 # containing ONLY the public website: the root remembered-language entry, the
 # EN/LT public pages and articles, branding, shared static assets, 404.html,
-# robots.txt, and sitemap.xml. The auth/account/admin route directories are
-# excluded deterministically (by route, not by fragile filename matching).
+# robots.txt, and sitemap.xml. The auth/account/admin/assessment route
+# directories are excluded deterministically (by route, not by fragile filename
+# matching).
 #
 # Requires no API, DB, SMTP, or OAuth secrets. Run with `pnpm build:public`.
 set -euo pipefail
@@ -40,7 +41,7 @@ for entry in "$OUT_DIR"/*; do
 done
 shopt -u dotglob
 
-EXCLUDED_ROUTES=(auth account admin)
+EXCLUDED_ROUTES=(auth account admin assessment)
 for locale in lt en; do
   cp -R "$OUT_DIR/$locale" "$ARTIFACT/$locale"
   for route in "${EXCLUDED_ROUTES[@]}"; do
@@ -97,4 +98,4 @@ fi
 
 echo "==> Public release ready: $ARTIFACT"
 echo "    Included: ${ARTIFACT}/index.html (remembered-language entry), /lt, /en (public pages + articles), _next, branding, 404.html, robots.txt, sitemap.xml"
-echo "    Excluded: /lt|/en/{auth,account,admin}"
+echo "    Excluded: /lt|/en/{auth,account,admin,assessment}"

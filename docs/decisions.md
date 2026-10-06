@@ -495,8 +495,14 @@ where noted. Update this file when a decision is made or changed.
 - Current hosting: **vHost**. The provider has announced a migration to
   **Bacloud**; no assumption is made about a different control panel or server
   configuration.
+- Hosting plan clarified by the owner (**2026-10-06**): current frontend hosting
+  on **vHost** is **temporary**; the frontend is planned to migrate to **Bacloud**
+  in **approximately three months** (timing is **tentative**). The **Bacloud**
+  target has **no Node.js runtime** (static hosting only), so the **backend** will
+  run on a **separate Node.js-capable provider that is not yet selected**.
 - Future API origin: **https://api.sapiensmetric.eu** — planned, and NOT
-  deployed or activated in this release.
+  deployed or activated in this release. API deployment is **pending** and is not
+  authorised by T-019.
 - First release scope: **public informational pages and articles only**. Auth,
   account, and admin routes and the assessment itself are not part of the public
   release (they remain in the full application build).

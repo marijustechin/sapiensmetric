@@ -57,6 +57,7 @@ expected_routes=(
   "lt/auth/reset-password" "en/auth/reset-password"
   "lt/account" "en/account"
   "lt/admin" "en/admin"
+  "lt/assessment" "en/assessment"
   "lt/assessment-guide" "en/assessment-guide"
   "lt/understanding-results" "en/understanding-results"
   "lt/about" "en/about"
@@ -202,6 +203,8 @@ for page in \
   "$OUT_DIR/en/index.html" \
   "$OUT_DIR/en/account/index.html" \
   "$OUT_DIR/lt/account/index.html" \
+  "$OUT_DIR/en/assessment/index.html" \
+  "$OUT_DIR/lt/assessment/index.html" \
   "$page_404"; do
   if [ -f "$page" ]; then
     check_icon_links "$page" "${page#"$OUT_DIR"/}"
@@ -373,24 +376,43 @@ else
 fi
 
 if [ -f "$OUT_DIR/sitemap.xml" ] &&
-  grep -Eq '/(auth|account|admin)/' "$OUT_DIR/sitemap.xml"; then
-  note_fail "sitemap.xml includes a non-public auth/account/admin route"
+  grep -Eq '/(auth|account|admin|assessment)/' "$OUT_DIR/sitemap.xml"; then
+  note_fail "sitemap.xml includes a non-public auth/account/admin/assessment route"
 else
   note_pass
 fi
 
-if [ -f "$OUT_DIR/robots.txt" ] &&
-  grep -q 'Sitemap: https://sapiensmetric.eu/sitemap.xml' "$OUT_DIR/robots.txt"; then
+# robots.txt is generated from source (`app/robots.ts`): allow crawling, point at
+# the production sitemap, and do NOT emit a `Host` directive (Google no longer
+# supports it). A normal build must produce this without copying from production.
+# Directive names are case-insensitive (Next emits `User-Agent:`), so match the
+# first line case-insensitively and the rest exactly.
+robots_ok=1
+if [ -f "$OUT_DIR/robots.txt" ]; then
+  grep -qixF -- 'User-Agent: *' "$OUT_DIR/robots.txt" || robots_ok=0
+  grep -qxF -- 'Allow: /' "$OUT_DIR/robots.txt" || robots_ok=0
+  grep -qxF -- 'Sitemap: https://sapiensmetric.eu/sitemap.xml' "$OUT_DIR/robots.txt" || robots_ok=0
+else
+  robots_ok=0
+fi
+if [ "$robots_ok" -eq 1 ]; then
   note_pass
 else
-  note_fail "robots.txt is missing the production sitemap reference"
+  note_fail "robots.txt must contain (case-insensitive) 'User-Agent: *', 'Allow: /', and the production sitemap line"
 fi
 
-# noindex on auth/account/admin (both locales).
+if [ -f "$OUT_DIR/robots.txt" ] && ! grep -qiE '^[[:space:]]*Host[[:space:]]*:' "$OUT_DIR/robots.txt"; then
+  note_pass
+else
+  note_fail "robots.txt must not contain a Host directive"
+fi
+
+# noindex on auth/account/admin/assessment (both locales).
 for page in \
   "en/auth/login/index.html" "lt/auth/login/index.html" \
   "en/account/index.html" "lt/account/index.html" \
-  "en/admin/index.html" "lt/admin/index.html"; do
+  "en/admin/index.html" "lt/admin/index.html" \
+  "en/assessment/index.html" "lt/assessment/index.html"; do
   if [ -f "$OUT_DIR/$page" ] &&
     grep -qi 'name="robots"[^>]*noindex' "$OUT_DIR/$page"; then
     note_pass

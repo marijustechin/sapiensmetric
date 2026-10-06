@@ -21,6 +21,7 @@ Search Console), `docs/deployment-webdav.md` (WebDAV automation),
 | T-013 (public website/content/SEO) | `implemented`, archived; committed and pushed as **`5da3ac7`** (`re-checked`) |
 | T-014 (frontend-only release prep; analytics extension; WebDAV tooling; consent-command fix) | `implemented`, **approved and archived** at `tasks/done/2026-09-26-frontend-only-publication-preparation.md`; committed/pushed in the T-014 finalisation commit (see git log). Deployed artifact `64c4941cba87d08c` (`re-checked`) |
 | **T-018 (favicon/manifest)** | `implemented`, **approved and archived** 2026-10-06 (`tasks/done/2026-10-06-favicon-manifest-data.md`); committed/pushed as **`f1d0e69`** |
+| **T-019 (minimal local synthetic-assessment UI)** | `implemented`, **approved and archived** 2026-10-06 (`tasks/done/2026-10-06-minimal-local-synthetic-assessment-ui.md`); owner-confirmed in the browser. **Local/development only — not deployed, not publication-ready.** |
 | Release build | `pnpm build:public` → `dist/public-site/` (`implemented`; artifact present locally) |
 | Public release scope | informational pages + articles only; auth/account/admin and the API are **excluded** (`implemented`) |
 | **Deployed artifact (current)** | **artifact id `97e89b25b1edd8a9`** (166 files; 10 create / 156 overwrite), operation **`mux030hl-e8032efd1883`**, deployed **2026-10-06 21:16–21:21 EEST** (18:16–18:21 UTC) (`re-checked`) — the favicon/manifest update |
@@ -28,19 +29,23 @@ Search Console), `docs/deployment-webdav.md` (WebDAV automation),
 | Deployment baseline (rollback source) | **`dist/deploy-baseline/mux030hl-e8032efd1883/`** (156 backups + `manifest.json`) (`re-checked`) |
 | Rollback command | `pnpm deploy:rollback -- --operation mux030hl-e8032efd1883 --confirm` |
 | Prior deployment (superseded) | artifact `64c4941cba87d08c`, operation `mulkgfk6-0768754a1976`, 2026-09-28 21:13–21:17 EEST (consent-command fix); earlier `fcbbf30a7645982a` / `muliubrg-822e9fdae477` |
-| Source HEAD / repo-vs-deployed | source HEAD `f1d0e69`; deployed artifact id `97e89b25b1edd8a9` — **not** a commit hash |
+| Source HEAD / repo-vs-deployed | source HEAD `f1d0e69` (T-018) plus the T-019 finalisation commit (see git log); deployed artifact id `97e89b25b1edd8a9` — **not** a commit hash |
 
-## 2. Hosting (`owner-reported`)
+## 2. Hosting (`owner-reported`; plan `owner-confirmed` 2026-10-06)
 
-- Provider: **vHost**, cPanel, Apache. No SSH access.
+- Current frontend provider: **vHost**, cPanel, Apache, no SSH — **temporary**.
+- Owner-confirmed migration plan (2026-10-06): the frontend moves to **Bacloud**
+  in **approximately three months**; the timing is **tentative**.
+- The **Bacloud** target has **no Node.js runtime** (static hosting only). The
+  **backend** will therefore use a **separate Node.js-capable provider, not yet
+  selected**.
+- Planned public API origin remains **https://api.sapiensmetric.eu** — **not
+  deployed**. API deployment is **pending** and is **not authorised by T-019**.
 - `sapiensmetric.eu` uses **`public_html`**, shared with the account's legacy main
   domain **`skygym.lt`**; the owner no longer owns `skygym.lt` and the provider
   cannot currently change the account's main domain.
-- A future **Bacloud** move is expected; timing and final configuration
-  **unconfirmed**.
 - Public contact **info@sapiensmetric.eu** confirmed working; operator
   **Marijus Šmiginas**; transactional sender remains **website@sapiensmetric.eu**.
-- Future API origin **https://api.sapiensmetric.eu** — not deployed.
 
 ## 3. Redirects and SEO
 
@@ -65,15 +70,24 @@ string was retained (`/en/articles/?redirect_check=1`); `sitemap.xml` returns
 **200 `application/xml`**, parses, and contains **20** public EN/LT URLs, all
 HTTPS without `www`; `robots.txt` allows crawling and references that sitemap.
 
-**Owner SEO changes preserved (`re-checked`, 2026-10-06):** production
-`robots.txt` and `sitemap.xml` differ from the repository build — `robots.txt` no
-longer contains a `Host:` line, and `sitemap.xml` contains **21** URLs (now
-including `https://sapiensmetric.eu/`). These are owner/hosting changes and were
-**not** reverted: the T-018 favicon deployment used the **current production
-bytes** for both files (hashes matched production before and after the upload).
-The repository build still generates the earlier 20-URL sitemap; reconciling the
-generator with the owner's SEO policy is an **open follow-up** (the observation is
-not an instruction to change SEO policy).
+**`robots.txt` is source-generated and matches production (`re-checked`,
+2026-10-06):** `apps/web/app/robots.ts` now emits only the allow-all rule and the
+production sitemap line, and **no `Host` directive** (Google no longer supports
+`Host`). A normal `pnpm build:public` reproduces this file; no production copy is
+needed, and the earlier `Host:` mismatch is resolved at the source.
+
+**Sitemap source-vs-deployment discrepancy (open; `re-checked`, 2026-10-06):**
+the **deployed** `sitemap.xml` has **21** URLs including the apex
+`https://sapiensmetric.eu/`; the repository generator (`apps/web/app/sitemap.ts`)
+produces **20** URLs (the EN/LT homes, public pages, and articles) and does **not**
+list the apex root — the remembered-language redirect page. The URL-set diff is
+**exactly** that one entry. This is a **source/deployment discrepancy**, not a
+generator defect to fix silently: listing the apex root, or redirecting `/`
+permanently and listing a canonical locale home instead, is an SEO/canonical
+policy decision. The generator, the root redirect/canonical policy, and the
+production file are **unchanged** here; a future deployment built from the
+repository would drop the apex-root entry unless the generator is deliberately
+aligned first. Owner decision required (see Next actions).
 
 **PageSpeed** (`checked-2026-09-27`, historical lab, tested the then-current `www`
 URL; not a guarantee for later releases):
@@ -152,6 +166,10 @@ response compression, oversized displayed logo.
   the `<head>` declares them, the in-page owl logo is still referenced, the old
   WebP favicon is no longer referenced, and auth/account/admin remain 404.
   Rollback: `pnpm deploy:rollback -- --operation mux030hl-e8032efd1883 --confirm`.
+  **Post-note (2026-10-06):** `robots.txt` is now generated from
+  `apps/web/app/robots.ts` without a `Host` directive (matches production; no
+  production copy needed). The deployed `sitemap.xml` still lists the apex root
+  that the repository generator omits — see the sitemap discrepancy in §3.
 - **Tooling gap found and fixed during deploy:** the first `apply` stopped with
   **HTTP 409** on `PUT _next/static/o_lQS7h7de0Z3kNMCfWnJ/_buildManifest.js` because
   the remote lacked that **new** collection and the tool never issued `MKCOL`. The
@@ -190,7 +208,14 @@ response compression, oversized displayed logo.
    Apache's own 404 page and the ErrorDocument attempt also 404s; the generated
    `/404.html` **is** deployed (200, with the icon links). This is pre-existing
    hosting configuration, not caused by T-018.
-7. Optional future: GitHub Actions deployment (not started).
+7. **Sitemap apex-root discrepancy (`pending`, owner decision):** the deployed
+   `sitemap.xml` lists `https://sapiensmetric.eu/` but the generator
+   (`apps/web/app/sitemap.ts`) does not. Decide the canonical policy (list the
+   apex redirect page, or redirect `/` permanently and list a canonical locale
+   home), then align the generator **before** the next deployment so a normal
+   build does not drop the entry. Do **not** overwrite production or change the
+   root redirect/canonical policy without that decision.
+8. Optional future: GitHub Actions deployment (not started).
 
 > **Analytics status:** container published and Realtime views owner-confirmed;
 > Tag Assistant confirmed the consent states. Continued operation depends on the
@@ -230,6 +255,11 @@ response compression, oversized displayed logo.
 - `owner-reported`: hosting, provider, `skygym.lt`, Bacloud timing, Search Console
   DNS verification and sitemap attempts, GA4/GTM creation, public contact,
   operator, the `.htaccess` block, and the GTM import into SM-Workspace.
+- `owner-confirmed` (2026-10-06): the owner tested the **T-019** synthetic
+  assessment in the browser and confirmed the expected behaviour (the full
+  start → answer → save → resume → submit → result → history journey). This is a
+  general browser confirmation; **no** specific device, browser, or accessibility
+  checks are asserted.
 - `owner-confirmed` (2026-09-28): GTM container publication (version name
   "GA4 – consent-gated public site"; numerical version ID not supplied), the Tag
   Assistant consent states, the GA4 Enhanced Measurement change (only history-based
@@ -237,5 +267,6 @@ response compression, oversized displayed logo.
 - Not claimed: successful Search Console sitemap ingestion/indexing; GA4
   report-level verification beyond the owner's Realtime view; the cause of the
   Realtime trailing-slash duplicate; the GTM numerical version ID; or a specific
-  deployed **commit** (the deployed **artifact id** is `64c4941cba87d08c`; T-014 is
-  committed, archived, and pushed).
+  deployed **commit** (the deployed **artifact id** is `97e89b25b1edd8a9`; T-014
+  and T-018 are committed, archived, and pushed; T-019 is a local UI and is
+  **not** deployed).

@@ -59,13 +59,13 @@ for locale in lt en; do
   for slug in how-ability-tests-differ-from-knowledge-tests what-an-online-iq-test-can-tell-you why-percentage-correct-is-not-a-percentile; do
     check "missing article $locale/articles/$slug/" "[ -f '$REL/$locale/articles/$slug/index.html' ]"
   done
-  for excluded in auth account admin; do
+  for excluded in auth account admin assessment; do
     check "excluded application route present: $locale/$excluded" "[ ! -e '$REL/$locale/$excluded' ]"
   done
 done
 
-# No exported HTML may live under an app route path.
-if find "$REL" -path '*/auth/*' -name '*.html' -o -path '*/account/*' -name '*.html' -o -path '*/admin/*' -name '*.html' 2>/dev/null | grep -q .; then
+# No exported HTML may live under an app route path (T-019 adds assessment).
+if find "$REL" \( -path '*/auth/*' -o -path '*/account/*' -o -path '*/admin/*' -o -path '*/assessment/*' \) -name '*.html' 2>/dev/null | grep -q .; then
   note_fail "application route HTML present in the release"
 else
   note_pass
@@ -82,12 +82,20 @@ fi
 
 # sitemap/robots.
 check "sitemap missing production LT URL" "grep -q 'https://sapiensmetric.eu/lt/' '$REL/sitemap.xml'"
-if grep -Eq '/(auth|account|admin)/' "$REL/sitemap.xml"; then
+if grep -Eq '/(auth|account|admin|assessment)/' "$REL/sitemap.xml"; then
   note_fail "sitemap lists a non-public route"
 else
   note_pass
 fi
 check "robots.txt missing sitemap" "grep -q 'Sitemap: https://sapiensmetric.eu/sitemap.xml' '$REL/robots.txt'"
+check "robots.txt missing allow-all rule" "grep -qixF -- 'User-Agent: *' '$REL/robots.txt' && grep -qxF -- 'Allow: /' '$REL/robots.txt'"
+# robots.txt is source-generated and must not carry a Host directive (Google no
+# longer supports it); a normal build must not need a production copy.
+if grep -qiE '^[[:space:]]*Host[[:space:]]*:' "$REL/robots.txt" 2>/dev/null; then
+  note_fail "release robots.txt must not contain a Host directive"
+else
+  note_pass
+fi
 check "custom 404 missing" "grep -q 'Page not found' '$REL/404.html'"
 
 # Confirmed contact + locale-preserving links.

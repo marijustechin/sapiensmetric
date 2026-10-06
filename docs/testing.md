@@ -461,6 +461,38 @@ isolation. The migration `1781440000004-CreateAssessmentAttempts` is applied to
 the local DB with `migration:run`. These tests establish engine/persistence
 behaviour only; they do **not** validate assessment content or psychometrics.
 
+## T-019 synthetic-assessment UI checks
+
+Framework-free behavioural tests (`pnpm --filter @sapiensmetric/web test`, part of
+the root `test` chain; Node's built-in runner, no React test renderer):
+
+- `apps/web/features/assessment/assessment-answers.test.ts` — resume/draft
+  conversion, key-order-independent equality, clear-as-skipped, pending-only
+  entries, answered counts, ordering defaults, and keyboard reordering.
+- `apps/web/features/assessment/assessment-store.test.ts` — drives the store with
+  a fake API: resume restores persisted answers; save sends only edits and clears
+  them; clearing sends `skipped`; **duplicate** save/submit in-flight calls are
+  rejected; **save-before-submit** (and the block when that save fails);
+  clean submit skips saving; **revision conflict** keeps local edits, blocks
+  further saves, and recovers via keep-local merge that re-applies only the
+  participant's edits; finalised attempts are read-only; load recovers from
+  unauthorized/not-found; disabled synthetic availability on start; and an
+  **ambiguous** network submit is reconciled against the server.
+
+The static-export harness (`scripts/verify-static-export.sh`) asserts the route
+exists in both locales, carries `noindex`, declares the icon/manifest head links,
+and is absent from the sitemap; the public-release harness
+(`scripts/verify-public-release.sh`) asserts the route is excluded. `scripts/verify.sh`
+invariant 22 additionally asserts the outputs exist, that no keyed/scoring material
+or analytics reference reaches the assessment UI, and that starting requires an
+explicit action.
+
+A browser walkthrough (mobile layout, keyboard use, visual result rendering) was
+**not** performed in the implementing session (no browser was available). The
+owner later tested the assessment in the browser and confirmed the expected
+behaviour; the manual acceptance checklist in `docs/assessment-ui.md` remains the
+detailed step list.
+
 ## Workflow expectations
 
 - Every task must state how its work is verified (tests, script, or manual

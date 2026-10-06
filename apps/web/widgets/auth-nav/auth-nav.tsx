@@ -47,6 +47,7 @@ export function AuthNav() {
       <Link href="/auth/verify-email">{t('verify')}</Link>
       <Link href="/auth/forgot-password">{t('forgot')}</Link>
       <Link href="/account">{t('account')}</Link>
+      <Link href="/assessment">{t('assessment')}</Link>
       <span className="ml-auto flex items-center gap-3">
         {status === 'authenticated' && user ? (
           <>

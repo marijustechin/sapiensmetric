@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
+import { Link } from '../../shared/i18n/navigation';
 import { useAuth } from './auth-provider';
 import { loginHref } from './auth-navigation';
 import type { AppLocale } from '../../shared/lib/locale-navigation';
@@ -54,6 +55,9 @@ export function AccountView() {
       <p>{t('signedInAs')}</p>
       <p className="font-mono">{user.email}</p>
       <p className="text-sm text-gray-600">{t('notice')}</p>
+      <Link href="/assessment" className="underline">
+        {t('assessmentLink')}
+      </Link>
       <button
         type="button"
         onClick={() => void onSignOut()}

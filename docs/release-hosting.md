@@ -27,6 +27,19 @@ bash scripts/verify-public-release.sh
   (unused at runtime by public pages); it does not require DB/SMTP/OAuth
   values, and public pages make no API requests.
 
+### robots.txt and sitemap.xml (build from source; do not copy from production)
+
+- `robots.txt` is generated from **`apps/web/app/robots.ts`**: an allow-all rule
+  plus the production sitemap URL, and **no `Host` directive** (Google no longer
+  supports `Host`). A normal `pnpm build:public` reproduces the intended file; do
+  **not** copy production `robots.txt` back into the artifact.
+- `sitemap.xml` is generated from **`apps/web/app/sitemap.ts`**. Known
+  discrepancy (`docs/publication-status.md` §3): the deployed file lists the apex
+  `https://sapiensmetric.eu/`, which the generator does **not**; a build would drop
+  that one entry. This is an **open owner policy decision** — do not silently
+  change the root redirect/canonical policy or overwrite production. Resolve it
+  before the next deployment if the apex entry should be kept.
+
 ## What belongs in the website document root
 
 Upload the **contents of `dist/public-site/`** into the website document root
@@ -52,12 +65,17 @@ for `sapiensmetric.eu` (e.g. `public_html/`):
    `en/auth`, `en/account`, `en/admin` (and the `lt` equivalents).
 4. **Verify** (see below), then optionally purge any provider cache.
 
-Hosting facts (`owner-reported`): current provider **vHost** (cPanel, Apache),
-**no SSH**; `sapiensmetric.eu` uses **`public_html`**, which is shared with the
-account's legacy main domain **`skygym.lt`** (no longer owned; the provider
-cannot currently change the account's main domain). A **Bacloud** move is
-expected but timing/configuration are unconfirmed. The provider has announced the
-migration; do not assume a different control panel or server configuration.
+Hosting facts (`owner-reported`; migration plan `owner-confirmed` 2026-10-06):
+current frontend provider **vHost** (cPanel, Apache, **no SSH**) is **temporary**;
+`sapiensmetric.eu` uses **`public_html`**, which is shared with the account's
+legacy main domain **`skygym.lt`** (no longer owned; the provider cannot currently
+change the account's main domain). The frontend is planned to migrate to
+**Bacloud** in **approximately three months** (**tentative**). The **Bacloud**
+target has **no Node.js runtime** (static hosting only), so the **backend** will
+use a **separate Node.js-capable provider, not yet selected**. The planned API
+origin remains **https://api.sapiensmetric.eu**; API deployment is **pending** and
+is not authorised by the current release work. Do not assume a different control
+panel or server configuration.
 
 Note: the manual upload procedure below is a fallback. WebDAV automation
 (`docs/deployment-webdav.md`) performs the same release upload and **never
@@ -151,8 +169,13 @@ successful.
 
 ## Missing hosting inputs
 
-- Bacloud migration timing and final control-panel/document-root configuration.
+- Bacloud migration timing and final control-panel/document-root configuration
+  (migration planned in ~3 months; **tentative**).
+- The **backend** Node.js-capable provider is **not yet selected** (Bacloud has no
+  Node.js runtime).
 - Whether a cache/purge step is needed after upload.
 - HTTPS certificate management details (auto-renew?) — HTTPS is active.
 - Server-side backups **outside** `public_html` (the WebDAV account is restricted
   to `public_html`; local backups are used otherwise).
+- Separate tracked follow-ups (owning task/hosting): the **webmanifest
+  `Content-Type`** mapping and the **custom 404** ErrorDocument behaviour.

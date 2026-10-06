@@ -297,7 +297,32 @@ Concurrency uses a pessimistic row lock plus the optimistic revision. All routes
 sit behind `AccessTokenGuard` and enforce ownership from `request.userId`; client
 DTOs (`packages/contracts/src/assessment.ts`) never include answer keys. Synthetic
 content is OFF by default (`ASSESSMENT_SYNTHETIC_ENABLED`) and the config refuses to
-enable it in production. No web UI; the API is not deployed.
+enable it in production. No web UI in T-017 (T-019 adds a local one); the API is
+not deployed.
+
+## T-019 minimal local synthetic-assessment UI (local/development only)
+
+T-019 (`docs/assessment-ui.md`) adds the browser surface over the T-017 API so the
+full start → answer → save → resume → submit → result → history journey can be
+exercised locally. It follows FSD light:
+
+- `apps/web/features/assessment/` — the feature: client-safe `assessment-types.ts`,
+  the typed fetch client `assessment-api.ts` (the **single** module that knows the
+  `/assessments/attempts` endpoints), pure answer helpers
+  (`assessment-answers.ts`), the framework-free observable store
+  (`assessment-store.ts`), and the item/runner/result/history components. It
+  imports **no** auth, no analytics, and never the keyed `@sapiensmetric/assessment`
+  package or the server synthetic fixture.
+- `apps/web/widgets/assessment-screen/` — composes the feature with
+  `features/auth` (injects an in-memory access-token getter) and the client-side
+  `?attempt=` selection.
+- `apps/web/app/[locale]/(app)/assessment/page.tsx` — thin route; `noindex`.
+
+The page is a static-export shell (no dynamic attempt-ID path): the active attempt
+is a client-side selection, read from `window.location`, so the build needs no
+runtime data. The route is excluded from the public release and sitemap
+(`build-public-release.sh`, `verify-public-release.sh`) and carries `noindex`. The
+server stays authoritative for ownership, revisions, submission, and scoring.
 
 ## T-007 Google OpenID Connect sign-in (implemented, approved, archived)
 

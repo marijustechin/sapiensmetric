@@ -6,7 +6,14 @@ authorises work, and only one task is active at a time.
 
 ## Now
 
-- **No active task.** **T-018 (Favicon/manifest data)** was approved and archived
+- **No active task.** **T-019 (Minimal local synthetic-assessment UI)** was
+  approved and archived on 2026-10-06 (record:
+  `tasks/done/2026-10-06-minimal-local-synthetic-assessment-ui.md`): a browser
+  surface over the T-017 synthetic assessment API (start → answer → save → resume
+  → submit → raw result → history), FSD-light and static-export compatible,
+  `noindex` and excluded from the public release; local/development only, not
+  deployed. The owner confirmed it in the browser — see `docs/assessment-ui.md`.
+- **T-018 (Favicon/manifest data)** was approved and archived
   on 2026-10-06 (record: `tasks/done/2026-10-06-favicon-manifest-data.md`): the
   owner-supplied PNG/ICO page/device icons + `site.webmanifest` (served from
   `/branding/...`) replace the interim WebP favicon; in-page WebP logos unchanged.

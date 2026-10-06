@@ -15,7 +15,7 @@
 #   3. The archived T-006..T-011 records contain their exact titles and final
 #      approved statuses; the archived T-006 record contains the required
 #      definition sections, the six exact browser routes, and the access-gate
-#      markers; the T-014..T-018 archives exist with their headings/statuses; and
+#      markers; the T-014..T-019 archives exist with their headings/statuses; and
 #      tasks/current.md declares that no task is active.
 #   4. docs/decisions.md contains D-016 (heading, and section-scoped date /
 #      O-006 note / verification access gate / review-correction markers),
@@ -60,7 +60,12 @@
 #      package is not imported into the web app.
 #  21. The T-017 persisted-attempt outputs exist, the migration is registered,
 #      synthetic content is off by default (and refused in production), contracts
-#      export the attempt schemas, and the web app gains no attempt surface.
+#      export the attempt schemas, and the attempt API is reached from exactly one
+#      auditable web module (T-019 added the browser surface).
+#  22. The T-019 synthetic-assessment UI outputs exist, its behavioural tests are
+#      present, the route is noindex and excluded from the public release/sitemap,
+#      no keyed form/answer key/scoring import reaches the web build, and no
+#      assessment data path references analytics.
 #
 # Exit code 0 = all invariants hold; non-zero = at least one failed.
 
@@ -133,7 +138,7 @@ for a in "${archives[@]}"; do
   fi
 done
 
-# --- Invariant 3: T-006..T-018 archived; no active task -----------------
+# --- Invariant 3: T-006..T-019 archived; no active task -----------------
 # The archived records' exact headings and final statuses are asserted
 # literally; tasks/current.md must declare that no task is active.
 
@@ -343,6 +348,22 @@ if grep -qxF -- "$t018_status" "$t018_archive"; then
   note_pass
 else
   note_fail "T-018 archive does not contain the final approved status"
+fi
+
+t019_archive='tasks/done/2026-10-06-minimal-local-synthetic-assessment-ui.md'
+t019_heading='# T-019 — Minimal local synthetic-assessment UI (archived)'
+t019_status='- **Final status:** Approved (human review granted)'
+
+if grep -qxF -- "$t019_heading" "$t019_archive"; then
+  note_pass
+else
+  note_fail "T-019 archive does not contain the exact archived heading"
+fi
+
+if grep -qxF -- "$t019_status" "$t019_archive"; then
+  note_pass
+else
+  note_fail "T-019 archive does not contain the final approved status"
 fi
 
 if grep -qxF '# No active task' tasks/current.md; then
@@ -1420,8 +1441,8 @@ fi
 # --- Invariant 21: T-017 persisted-attempt outputs ----------------------
 # Authenticated synthetic attempt slice: outputs exist, the migration is
 # registered, synthetic content is OFF by default (and refused in production),
-# contracts export the attempt schemas, and the web app gains no assessment
-# attempt surface (no UI in this task).
+# contracts export the attempt schemas, and the attempt API is reached from
+# exactly one auditable web module (T-019 later added the browser surface).
 
 t017_outputs=(
   packages/contracts/src/assessment.ts
@@ -1469,12 +1490,105 @@ else
   note_fail "contracts index does not export the assessment schemas"
 fi
 
-# No assessment-attempt surface in the web app (this task has no UI).
+# T-017 exposed the API only; T-019 adds the browser surface. The attempt
+# endpoints must be referenced from exactly one web module (the auditability
+# boundary), not spread across the app.
+attempt_api_refs="$(grep -rl --exclude-dir=node_modules --exclude-dir=.next \
+  --exclude-dir=out --exclude-dir=dist -E '/assessments/attempts' apps/web 2>/dev/null | sort)"
+if [ "$attempt_api_refs" = "apps/web/features/assessment/assessment-api.ts" ]; then
+  note_pass
+else
+  note_fail "the assessment-attempt API must be referenced only by features/assessment/assessment-api.ts (got: ${attempt_api_refs:-none})"
+fi
+
+# The web app must not reference the DB table/schema name.
 if grep -rq --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=out \
-  --exclude-dir=dist -E '/assessments/attempts|assessment_attempts' apps/web 2>/dev/null; then
-  note_fail "the web app references the assessment-attempt API/schema (no UI in T-017)"
+  --exclude-dir=dist 'assessment_attempts' apps/web 2>/dev/null; then
+  note_fail "the web app references the assessment_attempts schema"
 else
   note_pass
+fi
+
+# --- Invariant 22: T-019 synthetic-assessment UI ------------------------
+# Browser surface over the T-017 API: outputs exist, the route is noindex and
+# excluded from the public release and sitemap, no keyed form/answer-key/scoring
+# material reaches the web build, the API client is the single integration point,
+# and no assessment data path touches analytics.
+
+t019_outputs=(
+  apps/web/features/assessment/assessment-types.ts
+  apps/web/features/assessment/assessment-api.ts
+  apps/web/features/assessment/assessment-answers.ts
+  apps/web/features/assessment/assessment-answers.test.ts
+  apps/web/features/assessment/assessment-store.ts
+  apps/web/features/assessment/assessment-store.test.ts
+  apps/web/features/assessment/assessment-item.tsx
+  apps/web/features/assessment/assessment-runner.tsx
+  apps/web/features/assessment/assessment-result.tsx
+  apps/web/features/assessment/assessment-history.tsx
+  apps/web/widgets/assessment-screen/assessment-screen.tsx
+  apps/web/widgets/assessment-screen/use-assessment-store.ts
+  apps/web/widgets/assessment-screen/use-attempt-param.ts
+  "apps/web/app/[locale]/(app)/assessment/page.tsx"
+  docs/assessment-ui.md
+)
+
+for out in "${t019_outputs[@]}"; do
+  if [ -e "$out" ]; then
+    note_pass
+  else
+    note_fail "T-019 output missing: $out"
+  fi
+done
+
+# The route carries noindex metadata.
+if grep -qF 'noindexMetadata' "apps/web/app/[locale]/(app)/assessment/page.tsx"; then
+  note_pass
+else
+  note_fail "the assessment route does not use noindexMetadata"
+fi
+
+# Keyed material must never reach the web build: no answer keys, tolerances, or
+# the scoring package import.
+if grep -rq --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=out \
+  --exclude-dir=dist -E 'correctOptionId|correctOptionIds|correctOrder|acceptedValue|absoluteTolerance|@sapiensmetric/assessment' \
+  apps/web/features/assessment apps/web/widgets/assessment-screen 2>/dev/null; then
+  note_fail "keyed form/answer-key/scoring material is referenced by the assessment UI"
+else
+  note_pass
+fi
+
+# No assessment data path may touch analytics (no GTM/GA4 import in the feature).
+if grep -rq --exclude-dir=node_modules -E "features/analytics|shared/lib/analytics|dataLayer|gtag" \
+  apps/web/features/assessment apps/web/widgets/assessment-screen 2>/dev/null; then
+  note_fail "the assessment UI references analytics (assessment data must not reach GA4/GTM)"
+else
+  note_pass
+fi
+
+# The feature must not create an attempt on mount: starting is an explicit action
+# in the store (`startNew`) and the screen calls it from a click handler.
+if grep -qF 'startNew' apps/web/features/assessment/assessment-store.ts &&
+  grep -qF 'onStart' apps/web/widgets/assessment-screen/assessment-screen.tsx; then
+  note_pass
+else
+  note_fail "the assessment store/screen do not expose an explicit start action"
+fi
+
+# The public release must exclude the assessment route.
+if grep -qF 'EXCLUDED_ROUTES=(auth account admin assessment)' scripts/build-public-release.sh &&
+  grep -qF 'assessment' scripts/verify-public-release.sh; then
+  note_pass
+else
+  note_fail "the public release tooling does not exclude the assessment route"
+fi
+
+# The static-export harness must assert the route and its noindex.
+if grep -qF '"lt/assessment" "en/assessment"' scripts/verify-static-export.sh &&
+  grep -qF '"en/assessment/index.html" "lt/assessment/index.html"' scripts/verify-static-export.sh; then
+  note_pass
+else
+  note_fail "verify-static-export.sh does not assert the assessment route/noindex"
 fi
 
 # --- Summary -----------------------------------------------------------

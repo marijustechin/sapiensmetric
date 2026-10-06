@@ -42,11 +42,17 @@ Remaining human/owner actions and reconciled state. **Current-state entry point:
       HTTPS www → 301; HTTPS apex → 200); `.htaccess` block preserved
       (see `docs/release-hosting.md`).
 - [x] `sitemap.xml` served 200 `application/xml`; `robots.txt` allows crawling and
-      references it (checked 2026-09-27: 20 URLs). **Owner SEO edits preserved
-      2026-10-06:** production `robots.txt` has no `Host:` line and
-      `sitemap.xml` has **21** URLs (incl. `/`); the favicon deployment reconciled
-      to these production bytes instead of reverting them (open follow-up:
-      reconcile the generator).
+      references it (checked 2026-09-27: 20 URLs).
+- [x] **`robots.txt` resolved at the source (2026-10-06):** `apps/web/app/robots.ts`
+      no longer emits `Host` (Google does not support it) and a normal
+      `pnpm build:public` reproduces the intended file; production already omits
+      `Host`, so no production copy is needed.
+- [ ] **Sitemap apex-root discrepancy (open, owner decision):** production
+      `sitemap.xml` has **21** URLs including `https://sapiensmetric.eu/`; the
+      generator produces **20** and omits the apex root. A build would drop that
+      one entry — **do not** change the redirect/canonical policy or overwrite
+      production without the owner's decision, then align the generator before the
+      next deployment.
 - [x] Favicon/icon set + web manifest deployed 2026-10-06 (artifact
       `97e89b25b1edd8a9`, operation `mux030hl-e8032efd1883`); `/branding/*` icon
       URLs and `<head>` links verified; in-page owl logo preserved.
@@ -58,8 +64,15 @@ Remaining human/owner actions and reconciled state. **Current-state entry point:
       ErrorDocument attempt also 404s); the generated `/404.html` is deployed.
 - [ ] `public_html` is shared with the legacy main domain `skygym.lt` (owner no
       longer owns it; provider cannot change the main domain) — owner-reported.
-- [ ] Bacloud migration timing and final control-panel/document-root config
-      (unconfirmed); cache/purge step unknown.
+- [ ] **Hosting migration plan (owner-confirmed 2026-10-06):** current frontend
+      **vHost** hosting is **temporary**; the frontend is planned to move to
+      **Bacloud** in **~3 months (tentative)**. Bacloud has **no Node.js runtime**;
+      the **backend** will use a **separate Node.js-capable provider, not yet
+      selected**. Planned API origin stays **https://api.sapiensmetric.eu**; API
+      deployment is **pending** and not authorised by the current work.
+      Cache/purge step unknown.
+- [ ] Manifest `Content-Type` and custom-404 ErrorDocument remain **separate
+      tracked follow-ups** (see below / `docs/publication-status.md`).
 
 ## SEO / Search Console
 - [x] Canonicals, hreflang, `noindex` on non-public routes, sitemap/robots

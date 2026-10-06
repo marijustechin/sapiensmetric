@@ -194,6 +194,14 @@ including `/`) so the release did **not** revert them. Plan artifact id
 verified; `robots.txt`/`sitemap.xml` hashes unchanged. Rollback:
 `pnpm deploy:rollback -- --operation mux030hl-e8032efd1883 --confirm`.
 
+> **Follow-up (2026-10-06):** `robots.txt` is now generated from
+> `apps/web/app/robots.ts` **without** a `Host` directive, so a normal build
+> reproduces production and must not be copied back from production. The deployed
+> `sitemap.xml` still contains the apex `https://sapiensmetric.eu/` that the
+> generator omits — an open source/deployment discrepancy; resolve the policy
+> **before** any future deployment instead of copying production over the build
+> (see `docs/publication-status.md` §3).
+
 ### verify (post-deployment)
 
 GETs the canonical site and checks: `/`, `/en/`, `/lt/`, guide, results, about,
