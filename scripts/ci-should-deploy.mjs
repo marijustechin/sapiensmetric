@@ -9,13 +9,16 @@
  *   - `docs/` and `tasks/` (documentation, task records, committed deployment
  *     records);
  *   - `apps/api/` (backend, not part of the web bundle);
- *   - `packages/contracts/`, `packages/assessment/` (not used by the web bundle);
+ *   - `packages/assessment/` (pure scoring core; not used by the web bundle);
  *   - a small allow-list of root markdown files and `.gitignore`.
  *
- * Everything else deploys — web source, public assets, `next.config.mjs`,
- * `tailwind.config.ts`, `package.json`, `pnpm-lock.yaml`, `scripts/`, `.github/`
- * — so shared build dependencies and release/deployment tooling are never
- * accidentally skipped. An empty/unknown change set also favours deployment.
+ * `packages/contracts/` is deliberately NOT skipped: shared contract changes can
+ * affect frontend consumers, so until dependency-aware classification exists the
+ * conservative choice is to deploy. Everything else deploys — web source, public
+ * assets, `next.config.mjs`, `tailwind.config.ts`, `package.json`,
+ * `pnpm-lock.yaml`, `scripts/`, `.github/` — so shared build dependencies and
+ * release/deployment tooling are never accidentally skipped. An empty/unknown
+ * change set also favours deployment.
  *
  * Usage: `node scripts/ci-should-deploy.mjs [file ...]` (or a newline-separated
  * list on stdin). Prints exactly `true` or `false` on stdout; reasons on stderr.
@@ -27,7 +30,6 @@ export const IGNORED_PREFIXES = [
   'docs/',
   'tasks/',
   'apps/api/',
-  'packages/contracts/',
   'packages/assessment/',
 ];
 

@@ -174,6 +174,11 @@ jobs:
           retention-days: 90
           if-no-files-found: error
 
+  # Backup persistence is MANDATORY. Every step that captures, encrypts,
+  # uploads, downloads, decrypts or validates the baseline is a normal failing
+  # step (no `continue-on-error`), so any baseline failure stops this job before
+  # a single PUT is issued. `continue-on-error` is used only for the
+  # supplementary deployment-record commit in the `record` job.
   deploy:
     name: Upload and verify production
     needs: [verify, baseline]
@@ -207,6 +212,20 @@ jobs:
             -pass env:BACKUP_ENCRYPTION_PASSPHRASE
           tar -C dist/deploy-baseline -xzf baseline-artifact/baseline.tar.gz
           test -f "dist/deploy-baseline/${{ needs.baseline.outputs.operation }}/manifest.json"
+      - name: Assert the persisted baseline matches this run (mandatory)
+        env:
+          EXPECTED_OPERATION: ${{ needs.baseline.outputs.operation }}
+          EXPECTED_ARTIFACT_ID: ${{ needs.baseline.outputs.artifact_id }}
+        run: |
+          set -euo pipefail
+          test -f baseline-artifact/meta.txt
+          grep -qx "operation=${EXPECTED_OPERATION}" baseline-artifact/meta.txt
+          grep -qx "artifact_id=${EXPECTED_ARTIFACT_ID}" baseline-artifact/meta.txt
+          MANIFEST="dist/deploy-baseline/${EXPECTED_OPERATION}/manifest.json"
+          test -f "$MANIFEST"
+          node -e "const fs=require('fs');const m=JSON.parse(fs.readFileSync(process.argv[1],'utf8'));if(m.operationId!==process.argv[2]||m.artifactId!==process.argv[3]){console.error('::error::baseline manifest does not match this run');process.exit(1);}" "$MANIFEST" "$EXPECTED_OPERATION" "$EXPECTED_ARTIFACT_ID"
+          BACKUPS=$(find "dist/deploy-baseline/${EXPECTED_OPERATION}/files" -type f | wc -l)
+          echo "::notice::mandatory baseline validated: operation=${EXPECTED_OPERATION} artifact=${EXPECTED_ARTIFACT_ID} backups=${BACKUPS}"
       - name: Guard against a stale release overwriting a newer one
         id: guard
         run: |

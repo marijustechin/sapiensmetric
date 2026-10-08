@@ -15,4 +15,8 @@ artifact reference, and the rollback command.
 
 CI-written records are best-effort (`continue-on-error`): if the record commit
 cannot be pushed (for example a concurrent push), the run summary still carries
-the same information. See `../release-hosting.md` and `../deployment-webdav.md`.
+the same information. This `continue-on-error` applies **only** to this
+supplementary record — never to backup persistence. The encrypted pre-deployment
+baseline is captured, uploaded, downloaded, decrypted and validated by mandatory
+steps, and any baseline failure stops the deployment before a single production
+PUT. See `../release-hosting.md` and `../deployment-webdav.md`.

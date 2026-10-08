@@ -70,7 +70,12 @@ As of T-021 the normal path is **push to `main` → GitHub Actions publishes**:
    uploads over WebDAV, verifies production, and records the deployment in
    `docs/deployments/`.
 3. Doc-only and API-only changes do not deploy (`scripts/ci-should-deploy.mjs`);
-   web/public assets, lockfile, `package.json`, `scripts/` and workflow changes do.
+   web/public assets, lockfile, `package.json`, `scripts/`, workflow changes and
+   **shared `packages/contracts/` changes** do (contract changes can affect
+   frontend consumers, so classification stays conservative).
+4. Baseline persistence/retrieval/validation is **mandatory**: any failure stops
+   the deployment before any production PUT. Only the supplementary
+   deployment-record commit is `continue-on-error`.
 
 The relationship between the three states:
 

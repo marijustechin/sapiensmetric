@@ -99,21 +99,29 @@ Flow and guarantees:
 
 1. **Classify** (`.github/workflows/deploy.yml`, `scripts/ci-should-deploy.mjs`):
    deployments are skipped only when every changed file is clearly frontend-
-   irrelevant (`docs/`, `tasks/`, `apps/api/`, `packages/contracts/`,
-   `packages/assessment/`, a small root-markdown allow-list). Web source, public
-   assets, `package.json`, `pnpm-lock.yaml`, `scripts/` and `.github/` always
-   deploy; an unknown/empty change set favours deployment.
+   irrelevant (`docs/`, `tasks/`, `apps/api/`, `packages/assessment/`, a small
+   root-markdown allow-list). Web source, public assets, `package.json`,
+   `pnpm-lock.yaml`, `scripts/` and `.github/` always deploy, and so does
+   **`packages/contracts/`** — shared contract changes can affect frontend
+   consumers, so until dependency-aware classification exists the conservative
+   choice is to deploy. An unknown/empty change set also favours deployment.
 2. **Build once**: the `verify` job runs `pnpm verify` and uploads
    `dist/public-site` as the `public-site` artifact. The `deploy` job downloads
    that artifact; it never rebuilds, so CI and production operate on identical
    bytes.
-3. **Baseline before overwrite**: the `baseline` job runs
+3. **Baseline before overwrite (mandatory)**: the `baseline` job runs
    `deploy-webdav.mjs baseline --ci` (read-only against production) to capture
    every file the release would overwrite, tars the baseline, encrypts it with
    `openssl` (AES-256-CBC, PBKDF2, 200k iterations) using the
    `BACKUP_ENCRYPTION_PASSPHRASE` secret, and uploads it as the `deploy-baseline`
-   artifact (retention 90 days). The `deploy` job **downloads and checksum-verifies
-   it before any PUT**, so "backup persisted" is proven before overwrites.
+   artifact (retention 90 days). The `deploy` job then **downloads** it,
+   **checksum-verifies** the ciphertext, **decrypts** it with the passphrase,
+   **extracts** it, and **asserts the manifest's operation id and artifact id
+   match this run** — every one of these steps is a normal failing step with **no
+   `continue-on-error`**. If *any* capture, encryption, upload, download,
+   decryption or validation step fails, the deployment job stops and **no
+   production PUT is issued**. `continue-on-error` is used **only** for the
+   supplementary deployment-record commit, never for backup persistence.
 4. **Upload**: `deploy-webdav.mjs apply --confirm --ci --operation <id>` resumes
    the baseline operation, keeps assets-first ordering, creates missing parent
    collections on `409`, preserves `.htaccess`/`.well-known`/unrelated files and

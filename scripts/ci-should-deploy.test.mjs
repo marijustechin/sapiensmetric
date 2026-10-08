@@ -22,10 +22,20 @@ test('documentation-only changes do not deploy', () => {
 test('API-only and non-web-package changes do not deploy', () => {
   for (const files of [
     ['apps/api/src/main.ts'],
-    ['packages/contracts/src/assessment.ts'],
     ['packages/assessment/src/scoring.ts'],
   ]) {
     assert.equal(shouldDeploy(files).deploy, false, JSON.stringify(files));
+  }
+});
+
+test('shared contract changes deploy (conservative until dependency-aware)', () => {
+  // packages/contracts is NOT on the skip list: shared contracts can affect
+  // frontend consumers, so a contract-only change must still deploy.
+  for (const files of [
+    ['packages/contracts/src/assessment.ts'],
+    ['packages/contracts/src/auth.ts', 'packages/contracts/src/index.ts'],
+  ]) {
+    assert.equal(shouldDeploy(files).deploy, true, JSON.stringify(files));
   }
 });
 
@@ -70,6 +80,8 @@ test('isIgnored is prefix- and allow-list based', () => {
   assert.equal(isIgnored('docs/anything/deep.md'), true);
   assert.equal(isIgnored('apps/api/src/x.ts'), true);
   assert.equal(isIgnored('apps/web/AGENTS.md'), true);
+  assert.equal(isIgnored('packages/assessment/src/scoring.ts'), true);
+  assert.equal(isIgnored('packages/contracts/src/assessment.ts'), false);
   assert.equal(isIgnored('apps/web/app/page.tsx'), false);
   assert.equal(isIgnored('apps/apiary/x'), false); // not the apps/api/ prefix
 });
