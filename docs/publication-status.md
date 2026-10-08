@@ -22,7 +22,8 @@ Search Console), `docs/deployment-webdav.md` (WebDAV automation),
 | T-014 (frontend-only release prep; analytics extension; WebDAV tooling; consent-command fix) | `implemented`, **approved and archived** at `tasks/done/2026-09-26-frontend-only-publication-preparation.md`; committed/pushed in the T-014 finalisation commit (see git log). Deployed artifact `64c4941cba87d08c` (`re-checked`) |
 | **T-018 (favicon/manifest)** | `implemented`, **approved and archived** 2026-10-06 (`tasks/done/2026-10-06-favicon-manifest-data.md`); committed/pushed as **`f1d0e69`** |
 | **T-019 (minimal local synthetic-assessment UI)** | `implemented`, **approved and archived** 2026-10-06 (`tasks/done/2026-10-06-minimal-local-synthetic-assessment-ui.md`); owner-confirmed in the browser. **Local/development only — not deployed, not publication-ready.** |
-| **T-020 (hamburger nav, mobile/markup review, reproducible sitemap, HTML-conformance fixes)** | `implemented` + **frontend-only deployed** 2026-10-06 (owner-authorised; two deployments); **not committed/pushed/archived** — READY_FOR_HUMAN_REVIEW in `tasks/current.md` |
+| **T-020 (hamburger nav, mobile/markup review, reproducible sitemap, HTML-conformance fixes)** | `implemented`, **approved and archived** 2026-10-09 (`tasks/done/2026-10-06-mobile-first-navigation-markup-sitemap.md`); frontend-only deployed 2026-10-06; committed/pushed as **`1b35e03`** |
+| **T-021 (CI and automatic frontend publication)** | `implemented` (`.github/workflows/ci.yml`, `.github/workflows/deploy.yml`, classifier, `baseline`/`--ci` tool support); **automatic publication not yet exercised** — requires the owner to configure the `production` environment secrets. READY_FOR_HUMAN_REVIEW in `tasks/current.md` |
 | Release build | `pnpm build:public` → `dist/public-site/` (`implemented`; artifact present locally) |
 | Public release scope | informational pages + articles only; auth/account/admin/assessment and the API are **excluded** (`implemented`) |
 | **Deployed artifact (current)** | **artifact id `7facf7e558173e17`** (167 files; 7 create / 160 overwrite), operation **`mux42oos-932ee20e6c2c`**, deployed **2026-10-06 23:08–23:12 EEST** (20:08–20:12 UTC) (`re-checked`) — T-020 plus the HTML-conformance fixes (valid global 404, consent `<section>` without a redundant `role`) |
@@ -248,7 +249,15 @@ response compression, oversized displayed logo.
    on the built export **and on the deployed EN/LT pages and `/404.html`** reports
    **0 errors / 0 warnings**; only the React informational "trailing slash on void
    elements" notices remain, intentionally **not** post-processed.
-8. Optional future: GitHub Actions deployment (not started).
+8. **CI/CD owner configuration (`pending`):** T-021 configures `.github/workflows/
+   ci.yml` (verify on PRs) and `deploy.yml` (automatic publication on `main`).
+   Before automatic publication works, the owner must create the `production`
+   GitHub environment secrets `WEBDAV_USERNAME`, `WEBDAV_PASSWORD` and
+   `BACKUP_ENCRYPTION_PASSPHRASE` (store the passphrase copy independently), and
+   optionally the variables `WEBDAV_URL`/`PUBLIC_SITE_URL`/
+   `NEXT_PUBLIC_API_BASE_URL`. Until then the deploy workflow fails safely before
+   any production write. Backups are encrypted Actions artifacts (retention 90
+   days) — not permanent; see `docs/deployment-webdav.md`.
 
 > **Analytics status:** container published and Realtime views owner-confirmed;
 > Tag Assistant confirmed the consent states. Continued operation depends on the

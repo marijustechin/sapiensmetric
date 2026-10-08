@@ -167,7 +167,8 @@ root local `.env` (see below); no second API-specific env file is created.
 
 Requirements:
 
-- Node.js `>=20.9.0`
+- Node.js `>=22.18.0` (the web unit tests run `.ts` files directly, which needs
+  native TypeScript type-stripping; CI uses Node 24).
 - pnpm `11.26.0` (pinned via `packageManager` and root `engines`)
 
 ```bash
@@ -202,6 +203,15 @@ pnpm --filter @sapiensmetric/api test:integration
 ```
 
 The web build emits static-export output to `apps/web/out`.
+
+### Continuous integration and publication
+
+GitHub Actions runs `pnpm verify` on pull requests (`.github/workflows/ci.yml`,
+never deploying). A push to `main` (`.github/workflows/deploy.yml`) builds the
+public release **once**, persists an encrypted pre-deployment baseline off-runner,
+publishes the exact verified artifact over WebDAV, verifies production and records
+the deployment. See `docs/deployment-webdav.md` ("Continuous deployment") and
+`docs/release-hosting.md`.
 
 ## Boundaries (non-negotiable)
 

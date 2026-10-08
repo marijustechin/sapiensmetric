@@ -72,9 +72,119 @@ pnpm deploy:rollback -- --operation <operationId> --confirm
 ```
 
 Manual equivalents: `node scripts/deploy-webdav.mjs
-<check|plan|apply|rollback|verify> [--env .env.deploy.local]
+<check|plan|baseline|apply|rollback|verify> [--env .env.deploy.local] [--ci]
 [--artifact dist/public-site] [--remote-base URL] [--site https://sapiensmetric.eu]
 [--operation <operationId>] [--confirm]`.
+
+`--ci` reads `WEBDAV_URL`/`WEBDAV_USERNAME`/`WEBDAV_PASSWORD` from the process
+environment instead of `.env.deploy.local`; values are never printed. `baseline`
+captures (but does not upload) a fresh operation's pre-deployment backups so CI
+can persist them off-runner before `apply` overwrites anything.
+
+## Continuous deployment (GitHub Actions, T-021)
+
+Two workflows (pinned to full action SHAs):
+
+- **`.github/workflows/ci.yml`** — on pull requests, non-`main` pushes and manual
+  dispatch: `pnpm install --frozen-lockfile` then `pnpm verify` (lint, typecheck,
+  unit/contract/API tests, FSD, build, static-export invariant, public-release
+  freshness/completeness, harness). **Never deploys**; no production secrets;
+  `permissions: contents: read`.
+- **`.github/workflows/deploy.yml`** — on push to `main` and manual dispatch:
+  `classify` → `verify` (builds the release **once**) → `baseline` (capture +
+  encrypted off-runner persistence) → `deploy` (upload the **exact** verified
+  artifact + production verify) → `record`.
+
+Flow and guarantees:
+
+1. **Classify** (`.github/workflows/deploy.yml`, `scripts/ci-should-deploy.mjs`):
+   deployments are skipped only when every changed file is clearly frontend-
+   irrelevant (`docs/`, `tasks/`, `apps/api/`, `packages/contracts/`,
+   `packages/assessment/`, a small root-markdown allow-list). Web source, public
+   assets, `package.json`, `pnpm-lock.yaml`, `scripts/` and `.github/` always
+   deploy; an unknown/empty change set favours deployment.
+2. **Build once**: the `verify` job runs `pnpm verify` and uploads
+   `dist/public-site` as the `public-site` artifact. The `deploy` job downloads
+   that artifact; it never rebuilds, so CI and production operate on identical
+   bytes.
+3. **Baseline before overwrite**: the `baseline` job runs
+   `deploy-webdav.mjs baseline --ci` (read-only against production) to capture
+   every file the release would overwrite, tars the baseline, encrypts it with
+   `openssl` (AES-256-CBC, PBKDF2, 200k iterations) using the
+   `BACKUP_ENCRYPTION_PASSPHRASE` secret, and uploads it as the `deploy-baseline`
+   artifact (retention 90 days). The `deploy` job **downloads and checksum-verifies
+   it before any PUT**, so "backup persisted" is proven before overwrites.
+4. **Upload**: `deploy-webdav.mjs apply --confirm --ci --operation <id>` resumes
+   the baseline operation, keeps assets-first ordering, creates missing parent
+   collections on `409`, preserves `.htaccess`/`.well-known`/unrelated files and
+   previous hashed assets, and never mirrors or deletes.
+5. **Verify production**: `deploy-webdav.mjs verify --site <PUBLIC_SITE_URL>`
+   checks public routes/deep links (`/`, `/en/`, `/lt/`, guide, results, about,
+   contact, privacy), `robots.txt`/`sitemap.xml`, and that `auth/account/admin/
+   assessment` return 404. It checks HTTP reachability; the byte-level
+   equivalence is proven earlier (the uploaded artifact is the verified one).
+6. **Record**: a durable `docs/deployments/<timestamp>-<sha>.md` record (source
+   SHA, run URL, artifact id, operation id, baseline artifact, rollback command)
+   plus the run summary.
+
+### Concurrency, overrides and failure
+
+- `concurrency: production-frontend`, `cancel-in-progress: false`: one production
+  write at a time; an in-flight deployment is never cancelled mid-way.
+- A **stale-release guard** (push events only) skips a run whose `github.sha` is
+  no longer `origin/main`, so an older queued release cannot overwrite a newer
+  one. Manual `workflow_dispatch` bypasses the guard (explicit override).
+- Each deployment uses a **fresh operation**; a retry resumes only the **same**
+  operation with matching artifact id and destination (`assertResumeMatches`).
+  A network/verification failure does **not** trigger blind rollback: the run
+  reports the operation id and the forward-resume or rollback commands.
+- **Failure recovery**: re-run the failed job (resumes the same operation), or
+  `workflow_dispatch` → `mode: deploy` to redeploy `main`.
+- **Rollback**: `workflow_dispatch` → `mode: rollback` with `operation` and the
+  `run_id` that holds the encrypted `deploy-baseline` artifact; the job downloads
+  and decrypts that baseline, then restores the overwritten originals. Created
+  paths are left in place (harmless unused hashed assets).
+
+### Required credentials and configuration
+
+Configure a GitHub **environment named `production`** (recommended: require
+reviewers) with:
+
+| Kind | Name | Value |
+| --- | --- | --- |
+| Secret | `WEBDAV_USERNAME` | `webdav@sapiensmetric.eu` |
+| Secret | `WEBDAV_PASSWORD` | the cPanel Web Disk password |
+| Secret | `BACKUP_ENCRYPTION_PASSPHRASE` | a strong passphrase; store a copy **independently** (a password manager), not only in GitHub |
+| Variable | `WEBDAV_URL` (optional) | defaults to `https://sapiensmetric.eu:2078/` |
+| Variable | `PUBLIC_SITE_URL` (optional) | defaults to `https://sapiensmetric.eu` |
+| Variable | `NEXT_PUBLIC_API_BASE_URL` (optional) | defaults to `https://api.sapiensmetric.eu` |
+
+No other configuration is required (Actions artifacts/retention use the
+repository defaults). To enter a secret locally (then paste the value into
+GitHub, never into chat), use:
+
+```bash
+gh secret set WEBDAV_PASSWORD --env production            # prompts, not echoed
+gh secret set WEBDAV_USERNAME --env production
+gh secret set BACKUP_ENCRYPTION_PASSPHRASE --env production
+```
+
+### Backup retention and recovery (limitations)
+
+- The encrypted `deploy-baseline` Actions artifact has a **90-day retention** and
+  is **not a permanent backup**. The owner-held `BACKUP_ENCRYPTION_PASSPHRASE` is
+  the independently stored recovery key; without it the baseline cannot be read.
+- Recovery from a fresh machine/runner: download the artifact for the operation
+  (`gh run download <run_id> -n deploy-baseline`), decrypt with the passphrase,
+  extract under `dist/deploy-baseline/<operation>/`, then run
+  `pnpm deploy:rollback -- --operation <operationId> --confirm` with local
+  credentials.
+- A durable off-host destination (object storage/backup host) is the recommended
+  replacement once available; the design expects to swap the artifact step
+  without changing the tool's operation/baseline invariants.
+- Artifacts contain the **pre-deployment public files** (already public on the
+  live site); they are still encrypted because they may capture transient or
+  unreleased state. Do not treat them as secret-free without review.
 
 ### check (read-only)
 

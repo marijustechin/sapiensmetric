@@ -58,6 +58,33 @@ for `sapiensmetric.eu` (e.g. `public_html/`):
 > `docs/deployment-webdav.md` (`pnpm deploy:check|plan|apply|verify`). The manual
 > procedure below remains the fallback.
 
+## Normal publication workflow (automatic, T-021)
+
+As of T-021 the normal path is **push to `main` → GitHub Actions publishes**:
+
+1. `.github/workflows/ci.yml` runs `pnpm verify` on pull requests (never
+   deploys).
+2. `.github/workflows/deploy.yml` on `main`: classifies the change, runs
+   `pnpm verify` (which builds `apps/web/out` and `dist/public-site`), uploads
+   that exact artifact, captures + encrypts a pre-deployment baseline off-runner,
+   uploads over WebDAV, verifies production, and records the deployment in
+   `docs/deployments/`.
+3. Doc-only and API-only changes do not deploy (`scripts/ci-should-deploy.mjs`);
+   web/public assets, lockfile, `package.json`, `scripts/` and workflow changes do.
+
+The relationship between the three states:
+
+- **Committed source** (a `main` commit SHA) → **CI artifact** (content-based
+  `artifactId` over the exact `dist/public-site` bytes; transferred between jobs,
+  never rebuilt) → **deployed production content** (verified reachable). A
+  deployment record ties the SHA, artifact id, operation id and baseline together.
+- Production can be **ahead of source** for deployments made before CI existed
+  (T-020 was deployed from an uncommitted tree); do not relabel those artifacts.
+
+The manual procedure below remains the fallback. Credentials, failure/resume,
+rollback and backup retention/recovery are documented in
+`docs/deployment-webdav.md` ("Continuous deployment").
+
 ## Upload procedure (vHost; Bacloud migration announced)
 
 1. **Backup** the current document root: download/archive it (e.g.

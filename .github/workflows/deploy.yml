@@ -1,0 +1,330 @@
+name: Deploy public frontend
+
+# Automatic frontend-only publication. A push to `main` runs the full gate,
+# builds the release ONCE, captures a durable pre-deployment baseline, uploads
+# the exact verified artifact over WebDAV, verifies production, and records the
+# deployment. `workflow_dispatch` provides explicit recovery (redeploy) and
+# rollback.
+#
+# Scope: frontend only. API deployment, DNS, Google accounts and hosting
+# configuration are out of scope. The deploy tool never deletes/mirrors, never
+# touches `.htaccess`/`.well-known`, and keeps auth/account/admin/assessment
+# excluded.
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      # CI-written deployment records must not re-trigger a deployment.
+      - 'docs/deployments/**'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'deploy (default) or rollback'
+        type: choice
+        options:
+          - deploy
+          - rollback
+        default: deploy
+      operation:
+        description: 'operation id (required for rollback; optional to resume a deploy)'
+        required: false
+      run_id:
+        description: 'run id holding the encrypted baseline (required for rollback)'
+        required: false
+
+# Least privilege by default; the record job requests write access separately.
+permissions:
+  contents: read
+
+# Serialise production writes and never cancel an in-progress deployment.
+concurrency:
+  group: production-frontend
+  cancel-in-progress: false
+
+env:
+  NEXT_PUBLIC_API_BASE_URL: ${{ vars.NEXT_PUBLIC_API_BASE_URL || 'https://api.sapiensmetric.eu' }}
+  WEBDAV_URL: ${{ vars.WEBDAV_URL || 'https://sapiensmetric.eu:2078/' }}
+  PUBLIC_SITE_URL: ${{ vars.PUBLIC_SITE_URL || 'https://sapiensmetric.eu' }}
+
+jobs:
+  # --- deployment path (push to main, or manual mode=deploy) ----------------
+  classify:
+    name: Classify changes
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || inputs.mode == 'deploy'
+    outputs:
+      deploy: ${{ steps.classify.outputs.deploy }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+      - name: Decide whether to deploy
+        id: classify
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          BEFORE="${{ github.event.before }}"
+          if [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+            echo "::notice::No previous commit; favouring deployment."
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if ! git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+            echo "::notice::Cannot resolve $BEFORE; favouring deployment."
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          FILES=$(git diff --name-only "$BEFORE" "${{ github.sha }}")
+          echo "Changed files:"; printf '%s\n' "$FILES" | sed 's/^/  /'
+          DEPLOY=$(printf '%s\n' "$FILES" | node scripts/ci-should-deploy.mjs)
+          echo "deploy=$DEPLOY" >> "$GITHUB_OUTPUT"
+          echo "::notice::deploy=$DEPLOY"
+
+  verify:
+    name: Verify and build release
+    needs: classify
+    if: needs.classify.outputs.deploy == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Verify (builds apps/web/out and dist/public-site once)
+        run: pnpm verify
+      - name: Upload the verified public artifact (exact bytes for deployment)
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: public-site
+          path: dist/public-site
+          retention-days: 30
+          if-no-files-found: error
+
+  baseline:
+    name: Capture and persist pre-deployment baseline
+    needs: verify
+    environment: production
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      operation: ${{ steps.prepare.outputs.operation }}
+      artifact_id: ${{ steps.prepare.outputs.artifact_id }}
+    steps:
+      - name: Check out source (for the change/record context)
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+      - name: Download the verified public artifact
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: public-site
+          path: dist/public-site
+      - name: Capture baseline (read-only; no production writes)
+        id: prepare
+        env:
+          WEBDAV_USERNAME: ${{ secrets.WEBDAV_USERNAME }}
+          WEBDAV_PASSWORD: ${{ secrets.WEBDAV_PASSWORD }}
+        run: |
+          set -euo pipefail
+          node scripts/deploy-webdav.mjs baseline --ci \
+            --remote-base "$WEBDAV_URL" \
+            --artifact dist/public-site | tee baseline.log
+          OP=$(grep -E '^OPERATION=' baseline.log | cut -d= -f2)
+          AID=$(grep -E '^ARTIFACT_ID=' baseline.log | cut -d= -f2)
+          test -n "$OP" || { echo "no operation id produced"; exit 1; }
+          echo "operation=$OP" >> "$GITHUB_OUTPUT"
+          echo "artifact_id=$AID" >> "$GITHUB_OUTPUT"
+      - name: Encrypt the baseline for off-runner persistence
+        env:
+          BACKUP_ENCRYPTION_PASSPHRASE: ${{ secrets.BACKUP_ENCRYPTION_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+          OP="${{ steps.prepare.outputs.operation }}"
+          mkdir -p baseline-artifact
+          tar -C dist/deploy-baseline -czf baseline-artifact/baseline.tar.gz "$OP"
+          openssl enc -aes-256-cbc -pbkdf2 -iter 200000 -salt \
+            -in baseline-artifact/baseline.tar.gz \
+            -out baseline-artifact/baseline.enc \
+            -pass env:BACKUP_ENCRYPTION_PASSPHRASE
+          ( cd baseline-artifact && sha256sum baseline.enc > baseline.enc.sha256 )
+          cat > baseline-artifact/meta.txt <<EOF
+          operation=$OP
+          artifact_id=${{ steps.prepare.outputs.artifact_id }}
+          source_sha=${{ github.sha }}
+          run_id=${{ github.run_id }}
+          created_utc=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          retention_days=90
+          EOF
+          rm -f baseline-artifact/baseline.tar.gz
+      - name: Upload the encrypted baseline (persisted before any overwrite)
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: deploy-baseline
+          path: baseline-artifact
+          retention-days: 90
+          if-no-files-found: error
+
+  deploy:
+    name: Upload and verify production
+    needs: [verify, baseline]
+    environment: production
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+      - name: Download the verified public artifact
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: public-site
+          path: dist/public-site
+      - name: Download the persisted baseline (proves persistence before overwrite)
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: deploy-baseline
+          path: baseline-artifact
+      - name: Decrypt and verify the baseline
+        env:
+          BACKUP_ENCRYPTION_PASSPHRASE: ${{ secrets.BACKUP_ENCRYPTION_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+          ( cd baseline-artifact && sha256sum -c baseline.enc.sha256 )
+          openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 \
+            -in baseline-artifact/baseline.enc \
+            -out baseline-artifact/baseline.tar.gz \
+            -pass env:BACKUP_ENCRYPTION_PASSPHRASE
+          tar -C dist/deploy-baseline -xzf baseline-artifact/baseline.tar.gz
+          test -f "dist/deploy-baseline/${{ needs.baseline.outputs.operation }}/manifest.json"
+      - name: Guard against a stale release overwriting a newer one
+        id: guard
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" != "push" ]; then
+            echo "skipped=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          LATEST=$(git ls-remote "https://github.com/${{ github.repository }}.git" refs/heads/main | cut -f1)
+          if [ -n "$LATEST" ] && [ "$LATEST" != "${{ github.sha }}" ]; then
+            echo "::notice::origin/main is $LATEST (this run is ${{ github.sha }}); skipping the stale deployment."
+            echo "skipped=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skipped=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Upload the exact verified artifact (no rebuild)
+        if: steps.guard.outputs.skipped != 'true'
+        env:
+          WEBDAV_USERNAME: ${{ secrets.WEBDAV_USERNAME }}
+          WEBDAV_PASSWORD: ${{ secrets.WEBDAV_PASSWORD }}
+        run: |
+          set -euo pipefail
+          node scripts/deploy-webdav.mjs apply --confirm --ci \
+            --remote-base "$WEBDAV_URL" \
+            --operation "${{ needs.baseline.outputs.operation }}"
+      - name: Verify production (routes, deep links, robots, sitemap, exclusions)
+        if: steps.guard.outputs.skipped != 'true'
+        run: node scripts/deploy-webdav.mjs verify --site "$PUBLIC_SITE_URL"
+
+  record:
+    name: Record deployment
+    needs: [baseline, deploy]
+    if: needs.deploy.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Write the deployment record and summary
+        env:
+          OPERATION: ${{ needs.baseline.outputs.operation }}
+          ARTIFACT_ID: ${{ needs.baseline.outputs.artifact_id }}
+        run: |
+          set -euo pipefail
+          mkdir -p docs/deployments
+          STAMP=$(date -u +%Y%m%dT%H%M%SZ)
+          FILE="docs/deployments/${STAMP}-${{ github.sha }}.md"
+          cat > "$FILE" <<EOF
+          # Frontend deployment ${STAMP}
+
+          - Source commit: \`${{ github.sha }}\`
+          - Trigger: ${{ github.event_name }}
+          - Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          - Artifact id (content): \`${ARTIFACT_ID}\`
+          - Operation id: \`${OPERATION}\`
+          - Destination: \`${{ env.WEBDAV_URL }}\`
+          - Public site: \`${{ env.PUBLIC_SITE_URL }}\`
+          - Encrypted baseline artifact: \`deploy-baseline\` (retention 90 days, run ${{ github.run_id }})
+          - Rollback: retrieve the encrypted baseline, decrypt with the owner-held
+            recovery key, then \`pnpm deploy:rollback -- --operation ${OPERATION} --confirm\`
+          - Post-deploy verification: \`node scripts/deploy-webdav.mjs verify --site ${PUBLIC_SITE_URL}\` (see the run log)
+          EOF
+          cat "$FILE" >> "$GITHUB_STEP_SUMMARY"
+      - name: Commit the record (non-fatal; skipped from CI re-trigger)
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+          git checkout -B deploy-record origin/main
+          git add docs/deployments
+          if git diff --cached --quiet; then
+            echo "::notice::no deployment record to commit"
+            exit 0
+          fi
+          git commit -m "docs(deploy): record ${{ needs.baseline.outputs.operation }} [skip ci]"
+          git push origin HEAD:main
+
+  # --- manual rollback path (workflow_dispatch mode=rollback) ---------------
+  rollback:
+    name: Roll back a deployment
+    if: github.event_name == 'workflow_dispatch' && inputs.mode == 'rollback'
+    environment: production
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+      - name: Download the encrypted baseline from the deployment run
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: deploy-baseline
+          run-id: ${{ inputs.run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: baseline-artifact
+      - name: Decrypt and verify the baseline
+        env:
+          BACKUP_ENCRYPTION_PASSPHRASE: ${{ secrets.BACKUP_ENCRYPTION_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+          ( cd baseline-artifact && sha256sum -c baseline.enc.sha256 )
+          openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 \
+            -in baseline-artifact/baseline.enc \
+            -out baseline-artifact/baseline.tar.gz \
+            -pass env:BACKUP_ENCRYPTION_PASSPHRASE
+          tar -C dist/deploy-baseline -xzf baseline-artifact/baseline.tar.gz
+          test -f "dist/deploy-baseline/${{ inputs.operation }}/manifest.json"
+      - name: Restore the baseline originals
+        env:
+          WEBDAV_USERNAME: ${{ secrets.WEBDAV_USERNAME }}
+          WEBDAV_PASSWORD: ${{ secrets.WEBDAV_PASSWORD }}
+        run: |
+          test -n "${{ inputs.operation }}" || { echo "operation is required"; exit 1; }
+          node scripts/deploy-webdav.mjs rollback --confirm --ci --operation "${{ inputs.operation }}"

@@ -9,7 +9,9 @@ import { join } from 'node:path';
 
 import {
   artifactIdentity,
+  credentialsFromEnv,
   newOperationId,
+  reservedPaths,
   shouldCaptureBaseline,
   assertResumeMatches,
   sha256,
@@ -91,4 +93,36 @@ test('resume verifies artifact contents and destination match', () => {
 test('upload ordering is deterministic with assets first', () => {
   const ordered = sortKeysForUpload(['index.html', '_next/x.js', 'branding/a.webp', 'en/index.html']);
   assert.deepEqual(ordered.slice(0, 2), ['_next/x.js', 'branding/a.webp']);
+});
+
+test('CI credentials come from the environment and reject disabled TLS', () => {
+  const env = {
+    WEBDAV_URL: 'https://host:2078',
+    WEBDAV_USERNAME: 'ci-user',
+    WEBDAV_PASSWORD: 's3cret-value',
+  };
+  const creds = credentialsFromEnv(env);
+  assert.equal(creds.url, 'https://host:2078/');
+  // The Authorization header is derived, but the raw password is never returned.
+  assert.match(creds.auth, /^Basic /);
+  assert.equal(Buffer.from(creds.auth.slice('Basic '.length), 'base64').toString('utf8'), 'ci-user:s3cret-value');
+  assert.equal(JSON.stringify(creds).includes('s3cret-value'), false, 'raw password must not appear in the returned object');
+
+  assert.throws(() => credentialsFromEnv({ WEBDAV_URL: 'https://host/' }), /WEBDAV_URL and WEBDAV_USERNAME/);
+  assert.throws(
+    () => credentialsFromEnv({ WEBDAV_URL: 'https://host/', WEBDAV_USERNAME: 'u' }),
+    /WEBDAV_PASSWORD/,
+  );
+  assert.throws(
+    () => credentialsFromEnv({ ...env, NODE_TLS_REJECT_UNAUTHORIZED: '0' }),
+    /TLS certificate verification/,
+  );
+});
+
+test('reserved hosting-controlled paths are detected', () => {
+  assert.deepEqual(
+    reservedPaths(['index.html', '.htaccess', '.well-known/acme/x', '.well-known', 'en/index.html']),
+    ['.htaccess', '.well-known/acme/x', '.well-known'],
+  );
+  assert.deepEqual(reservedPaths(['index.html', '_next/a.js']), []);
 });

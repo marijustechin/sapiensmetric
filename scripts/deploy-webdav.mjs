@@ -15,8 +15,12 @@
  * Backup files and manifest updates are written atomically (temp file + rename)
  * BEFORE the corresponding remote file is overwritten.
  *
- * Commands: check | plan | apply | rollback | verify. Credentials are parsed as
- * data from `.env.deploy.local`; TLS verification is always on.
+ * Commands: check | plan | baseline | apply | rollback | verify.
+ * Credentials are parsed as data from `.env.deploy.local` (local) or read from
+ * `WEBDAV_URL`/`WEBDAV_USERNAME`/`WEBDAV_PASSWORD` with `--ci` (never printed);
+ * TLS verification is always on. `baseline` captures (but does not upload) a
+ * fresh operation's pre-deployment backups so CI can persist them off-runner
+ * before `apply` overwrites anything.
  */
 import { createHash, randomBytes } from 'node:crypto';
 import {
@@ -105,7 +109,7 @@ export function parseEnvFile(text) {
 }
 
 export function parseArgs(argv) {
-  const args = { command: null, env: ENV_DEFAULT, artifact: ARTIFACT_DEFAULT, site: SITE_DEFAULT, confirm: false, remoteBase: null, operation: null };
+  const args = { command: null, env: ENV_DEFAULT, artifact: ARTIFACT_DEFAULT, site: SITE_DEFAULT, confirm: false, remoteBase: null, operation: null, ci: false };
   const positional = [];
   for (let i = 0; i < argv.length; i += 1) {
     const a = argv[i];
@@ -115,20 +119,61 @@ export function parseArgs(argv) {
     else if (a === '--remote-base') args.remoteBase = argv[++i];
     else if (a === '--operation' || a === '--baseline') args.operation = argv[++i];
     else if (a === '--confirm') args.confirm = true;
+    else if (a === '--ci') args.ci = true;
     else positional.push(a);
   }
   args.command = positional[0] ?? null;
   return args;
 }
 
-function loadCredentials(envPath) {
-  if (!existsSync(envPath)) throw new Error(`Missing ${envPath}. Copy .env.deploy.local.example to ${envPath} and enter the password locally.`);
-  const env = parseEnvFile(readFileSync(envPath, 'utf8'));
+/**
+ * Credentials from the process environment (CI). Values are read into memory
+ * only; the tool never prints URL/user/password. TLS verification stays on.
+ */
+export function credentialsFromEnv(env = process.env) {
+  const url = env.WEBDAV_URL;
+  const username = env.WEBDAV_USERNAME;
+  const password = env.WEBDAV_PASSWORD;
+  if (!url || !username) {
+    throw new Error('WEBDAV_URL and WEBDAV_USERNAME must be set in the environment (CI).');
+  }
+  if (!password) {
+    throw new Error('WEBDAV_PASSWORD must be set in the environment (CI).');
+  }
+  if (env.NODE_TLS_REJECT_UNAUTHORIZED === '0') {
+    throw new Error('Refusing to run with TLS certificate verification disabled.');
+  }
+  return {
+    url: url.endsWith('/') ? url : `${url}/`,
+    auth: `Basic ${Buffer.from(`${username}:${password}`, 'utf8').toString('base64')}`,
+  };
+}
+
+/**
+ * Load credentials from the environment when `--ci` is passed (or when no env
+ * file exists but WEBDAV_* env vars are present), otherwise from the local
+ * `.env.deploy.local` file. The file is parsed as data, never sourced.
+ */
+function loadCredentials(args) {
+  const useEnv = args.ci
+    || (!existsSync(args.env)
+      && (process.env.WEBDAV_URL || process.env.WEBDAV_USERNAME || process.env.WEBDAV_PASSWORD));
+  if (useEnv) return credentialsFromEnv(process.env);
+
+  if (!existsSync(args.env)) throw new Error(`Missing ${args.env}. Copy .env.deploy.local.example to ${args.env} and enter the password locally.`);
+  const env = parseEnvFile(readFileSync(args.env, 'utf8'));
   const { WEBDAV_URL: url, WEBDAV_USERNAME: username, WEBDAV_PASSWORD: password } = env;
   if (!url || !username) throw new Error('WEBDAV_URL and WEBDAV_USERNAME must be set.');
-  if (!password) throw new Error(`WEBDAV_PASSWORD is empty. Enter it locally in ${envPath} on the WEBDAV_PASSWORD= line.`);
+  if (!password) throw new Error(`WEBDAV_PASSWORD is empty. Enter it locally in ${args.env} on the WEBDAV_PASSWORD= line.`);
   if (process.env.NODE_TLS_REJECT_UNAUTHORIZED === '0') throw new Error('Refusing to run with TLS certificate verification disabled.');
   return { url: url.endsWith('/') ? url : `${url}/`, auth: `Basic ${Buffer.from(`${username}:${password}`, 'utf8').toString('base64')}` };
+}
+
+/** Hosting-controlled paths must never be uploaded from an artifact. */
+export function reservedPaths(paths) {
+  return paths.filter(
+    (path) => path === '.htaccess' || path === '.well-known' || path.startsWith('.well-known/'),
+  );
 }
 
 // --- atomic persistence ----------------------------------------------------
@@ -240,9 +285,9 @@ function computeArtifact(artifact, ordered) {
   return { artifactId: artifactIdentity(hashes), hashes: new Map(hashes.map((h) => [h.path, h.sha256])) };
 }
 
-async function resolveRemoteBase(args, auth) {
+async function resolveRemoteBase(args, creds, auth) {
   if (args.remoteBase) return args.remoteBase.endsWith('/') ? args.remoteBase : `${args.remoteBase}/`;
-  const { url } = loadCredentials(args.env);
+  const { url } = creds;
   const root = await propfind(url, 1, auth);
   const hasPublicHtml = hrefsFromXml(root, url).some((e) => e.replace(/\/$/, '') === 'public_html');
   return hasPublicHtml ? `${url}public_html/` : url;
@@ -251,7 +296,7 @@ async function resolveRemoteBase(args, auth) {
 // --- commands --------------------------------------------------------------
 
 async function commandCheck(args) {
-  const { url, auth } = loadCredentials(args.env);
+  const { url, auth } = loadCredentials(args);
   console.log(`WebDAV URL: ${url}`);
   console.log('TLS: certificate verification is ON (never disabled).');
   const root = await propfind(url, 1, auth);
@@ -276,9 +321,7 @@ async function planOrApply(args, apply) {
   // Hosting-controlled files must never be uploaded: an artifact copy of
   // `.htaccess` or `.well-known/**` would overwrite the remote originals even
   // though the tool performs no mirror/delete.
-  const reserved = ordered.filter(
-    (path) => path === '.htaccess' || path === '.well-known' || path.startsWith('.well-known/'),
-  );
+  const reserved = reservedPaths(ordered);
   if (reserved.length > 0) {
     throw new Error(
       `Artifact contains hosting-controlled paths that must not be uploaded: ${reserved.join(', ')}`,
@@ -286,9 +329,9 @@ async function planOrApply(args, apply) {
   }
   const { artifactId, hashes } = computeArtifact(artifact, ordered);
 
-  const creds = loadCredentials(args.env);
+  const creds = loadCredentials(args);
   const auth = creds.auth;
-  const remoteBase = await resolveRemoteBase(args, auth);
+  const remoteBase = await resolveRemoteBase(args, creds, auth);
 
   if (apply && !args.confirm) throw new Error('`apply` requires `--confirm`. Use `plan` for a dry run.');
 
@@ -403,6 +446,74 @@ async function planOrApply(args, apply) {
   console.log(`Rollback: node scripts/deploy-webdav.mjs rollback --operation ${opId} --confirm`);
 }
 
+/**
+ * Prepare a fresh operation's pre-deployment baseline WITHOUT writing to
+ * production: capture every remote file the artifact would overwrite, persist
+ * the backups + manifest locally (atomically), and stop. CI persists this
+ * directory off-runner (encrypted) before `apply` is allowed to overwrite
+ * anything. `apply --operation <id>` then resumes the same operation.
+ *
+ * Machine-readable `OPERATION=`, `BASELINE_DIR=` and `ARTIFACT_ID=` lines are
+ * printed for the workflow.
+ */
+async function commandBaseline(args) {
+  const artifact = resolve(args.artifact);
+  if (!existsSync(artifact)) throw new Error(`Artifact not found: ${artifact}. Run \`pnpm build:public\` first.`);
+  const ordered = sortKeysForUpload(walk(artifact));
+  const reserved = reservedPaths(ordered);
+  if (reserved.length > 0) {
+    throw new Error(`Artifact contains hosting-controlled paths that must not be uploaded: ${reserved.join(', ')}`);
+  }
+  const { artifactId, hashes } = computeArtifact(artifact, ordered);
+  const creds = loadCredentials(args);
+  const auth = creds.auth;
+  const remoteBase = await resolveRemoteBase(args, creds, auth);
+
+  const opId = args.operation ?? newOperationId();
+  const baselineDir = resolve(BASELINE_ROOT, opId);
+  const manifestPath = join(baselineDir, 'manifest.json');
+  let manifest;
+  if (existsSync(manifestPath)) {
+    manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
+    assertResumeMatches(manifest, { artifactId, remoteBase });
+  } else {
+    if (args.operation) throw new Error(`No baseline for operation ${opId}.`);
+    manifest = { operationId: opId, artifactId, remoteBase, artifactPath: artifact, createdAt: new Date().toISOString(), entries: [] };
+    writeFileAtomic(manifestPath, JSON.stringify(manifest, null, 2));
+  }
+  const byPath = new Map(manifest.entries.map((e) => [e.path, e]));
+  const syncEntries = () => { manifest.entries = [...byPath.values()].sort((a, b) => a.path.localeCompare(b.path)); manifest.updatedAt = new Date().toISOString(); };
+  const saveManifest = () => writeFileAtomic(manifestPath, JSON.stringify(manifest, null, 2));
+
+  console.log(`BASELINE — source ${artifact}`);
+  console.log(`Remote base: ${remoteBase}`);
+  console.log(`Artifact id (content): ${artifactId}   Files: ${ordered.length}`);
+  console.log(`Operation: ${opId}   Baseline: ${baselineDir}`);
+  let captured = 0;
+  for (const key of ordered) {
+    const stat = await remoteStat(`${remoteBase}${key}`, auth);
+    if (stat.state === 'error') throw new Error(`Existence check for ${key} failed (${stat.via} ${stat.status}); not treating as missing.`);
+    if (stat.state !== 'exists') continue;
+    const entry = byPath.get(key);
+    if (shouldCaptureBaseline(entry)) {
+      const buffer = await fetchBuffer(`${remoteBase}${key}`, auth);
+      const backupRel = `files/${key}`;
+      downloadAtomic(buffer, join(baselineDir, backupRel));
+      byPath.set(key, { path: key, action: 'overwrite', contentHash: hashes.get(key), backup: backupRel, bytes: buffer.length, capturedAt: new Date().toISOString() });
+      syncEntries();
+      saveManifest();
+      captured += 1;
+      console.log(`  baseline ${key} (${buffer.length} bytes)`);
+    }
+  }
+  syncEntries();
+  saveManifest();
+  console.log(`\nBaseline captured for ${captured} overwritten file(s). No production writes performed.`);
+  console.log(`OPERATION=${opId}`);
+  console.log(`BASELINE_DIR=${baselineDir}`);
+  console.log(`ARTIFACT_ID=${artifactId}`);
+}
+
 async function commandRollback(args) {
   if (!args.confirm) throw new Error('`rollback` requires `--confirm`.');
   if (!args.operation) throw new Error('`rollback` requires --operation <operationId>.');
@@ -410,7 +521,7 @@ async function commandRollback(args) {
   const manifestPath = join(baselineDir, 'manifest.json');
   if (!existsSync(manifestPath)) throw new Error(`No baseline for operation ${args.operation}.`);
   const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
-  const { auth } = loadCredentials(args.env);
+  const { auth } = loadCredentials(args);
   let restored = 0;
   for (const entry of manifest.entries) {
     if (entry.action !== 'overwrite') continue;
@@ -452,11 +563,12 @@ async function main() {
   const args = parseArgs(process.argv.slice(2));
   if (args.command === 'check') await commandCheck(args);
   else if (args.command === 'plan') await planOrApply(args, false);
+  else if (args.command === 'baseline') await commandBaseline(args);
   else if (args.command === 'apply') await planOrApply(args, true);
   else if (args.command === 'rollback') await commandRollback(args);
   else if (args.command === 'verify') await commandVerify(args);
   else {
-    console.log('Usage: node scripts/deploy-webdav.mjs <check|plan|apply|rollback|verify> [--env .env.deploy.local] [--artifact dist/public-site] [--remote-base URL] [--site URL] [--operation <id>] [--confirm]');
+    console.log('Usage: node scripts/deploy-webdav.mjs <check|plan|baseline|apply|rollback|verify> [--env .env.deploy.local] [--ci] [--artifact dist/public-site] [--remote-base URL] [--site URL] [--operation <id>] [--confirm]');
     process.exitCode = 1;
   }
 }

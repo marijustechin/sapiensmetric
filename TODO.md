@@ -6,7 +6,14 @@ authorises work, and only one task is active at a time.
 
 ## Now
 
-- **No active task.** **T-020 (Mobile-first navigation, markup review, and
+- **T-021 (CI and automatic frontend publication)** is the **active task** —
+  READY_FOR_HUMAN_REVIEW. GitHub Actions `ci.yml` runs `pnpm verify` on pull
+  requests; `deploy.yml` builds the release once on `main`, persists an encrypted
+  pre-deployment baseline off-runner, publishes the exact verified artifact over
+  WebDAV, verifies production and records the deployment. Automatic publication
+  awaits owner-configured `production` environment secrets; see
+  `docs/deployment-webdav.md`. Committed and pushed; not archived.
+- **T-020 (Mobile-first navigation, markup review, and
   reproducible public sitemap)** was approved and archived on 2026-10-09 (record:
   `tasks/done/2026-10-06-mobile-first-navigation-markup-sitemap.md`): the
   accessible hamburger/drawer navigation, mobile/markup review, the
@@ -105,12 +112,6 @@ authorises work, and only one task is active at a time.
 
 ## Next (not yet authorised)
 
-- **CI and automatic frontend publication (proposed).** A GitHub Actions pipeline
-  that runs `pnpm verify` on pull requests, builds the public release once on
-  `main`, and publishes it through the existing WebDAV mechanism with durable,
-  recoverable backups and post-deploy verification. Frontend-only; recommended by
-  the T-020 audit (`docs/audit-2026-10-09.md`). Implementation and authorisation
-  are tracked by the task scoped in `tasks/current.md`.
 - **Proposed next slice (not started or authorised): item review pipeline, form
   assembly, and pilot delivery/data design.** The two-role item review pipeline,
   session-form assembly, and the attempt-lifecycle/data-minimisation design — see

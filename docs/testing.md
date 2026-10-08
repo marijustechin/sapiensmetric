@@ -533,6 +533,28 @@ detailed step list.
   `app/global-not-found.tsx` (enabled by `experimental.globalNotFound`), which
   emits one valid document with `lang`, the shared icon set/manifest and styles.
 
+## CI/CD checks (T-021)
+
+- `scripts/ci-should-deploy.test.mjs` (part of `pnpm test:deploy`): the change
+  classifier deploys for web/public/config/lockfile/`scripts/`/`.github/` changes,
+  and skips only for `docs/`, `tasks/`, `apps/api/`, `packages/contracts/`,
+  `packages/assessment/` and the small root-markdown allow-list; empty/unknown
+  change sets favour deployment.
+- `scripts/deploy-webdav.test.mjs` additionally covers CI credential loading
+  (`credentialsFromEnv`, no raw password in the result, TLS-disabled refusal) and
+  reserved-path detection. `apply`/`baseline` keep the operation/baseline/resume
+  invariants.
+- `.github/workflows/ci.yml` runs `pnpm verify` on pull requests and non-`main`
+  pushes only (no deploy, no production secrets). `.github/workflows/deploy.yml`
+  runs the gate, builds once, captures/persists an encrypted baseline, uploads the
+  exact artifact, verifies production and records the deployment.
+- The runtime browser/Nu checks (`verify-navigation-runtime.mjs`,
+  `verify-html-conformance.mjs`) remain diagnostic (Chromium/network) and are not
+  in the CI gate; run them manually after UI/HTML changes.
+- **Not yet exercised end-to-end**: the automatic deployment requires the owner to
+  configure the `production` environment secrets (see `docs/deployment-webdav.md`).
+  Until then the deploy workflow fails safely before any production write.
+
 ## Workflow expectations
 
 - Every task must state how its work is verified (tests, script, or manual

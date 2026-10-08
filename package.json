@@ -4,7 +4,7 @@
   "private": true,
   "packageManager": "pnpm@11.26.0",
   "engines": {
-    "node": ">=20.9.0",
+    "node": ">=22.18.0",
     "pnpm": "11.26.0"
   },
   "scripts": {
@@ -19,10 +19,11 @@
     "verify:public-release": "bash scripts/verify-public-release.sh",
     "deploy:check": "node scripts/deploy-webdav.mjs check",
     "deploy:plan": "node scripts/deploy-webdav.mjs plan",
+    "deploy:baseline": "node scripts/deploy-webdav.mjs baseline",
     "deploy:apply": "node scripts/deploy-webdav.mjs apply --confirm",
     "deploy:rollback": "node scripts/deploy-webdav.mjs rollback",
     "deploy:verify": "node scripts/deploy-webdav.mjs verify",
-    "test:deploy": "node --test scripts/deploy-webdav.test.mjs",
+    "test:deploy": "node --test scripts/deploy-webdav.test.mjs scripts/ci-should-deploy.test.mjs",
     "verify:gtm": "node scripts/verify-gtm-container.mjs",
     "verify:consent-runtime": "node scripts/verify-consent-gtm-runtime.mjs",
     "verify": "pnpm lint && pnpm typecheck && pnpm test && pnpm test:deploy && pnpm verify:gtm && node scripts/verify-fsd-boundaries.mjs && pnpm build && bash scripts/build-public-release.sh --no-build && bash scripts/verify-static-export.sh && bash scripts/verify-public-release.sh && bash scripts/verify.sh"
