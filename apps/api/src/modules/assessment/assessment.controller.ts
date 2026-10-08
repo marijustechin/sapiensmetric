@@ -5,6 +5,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Inject,
   Param,
   Post,
   Put,
@@ -38,7 +39,11 @@ import { AssessmentService } from './assessment.service.js';
 @Controller('assessments')
 @UseGuards(AccessTokenGuard)
 export class AssessmentController {
-  constructor(private readonly assessments: AssessmentService) {}
+  // Explicit `@Inject` (matching the other controllers) keeps the dependency
+  // resolvable under test runners that do not emit `design:paramtypes`.
+  constructor(
+    @Inject(AssessmentService) private readonly assessments: AssessmentService,
+  ) {}
 
   @Post('attempts')
   @HttpCode(HttpStatus.CREATED)

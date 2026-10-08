@@ -17,6 +17,30 @@ if [ ! -d "$REL" ]; then
   exit 1
 fi
 
+# Freshness + completeness: the release must equal the current web export minus
+# the documented excluded routes. A recursive, content-level comparison detects
+# changed JS/CSS, missing files and unexpected extra files — not only a changed
+# index.html. (The single-file check it replaces could not.)
+if [ -d "$ROOT_DIR/apps/web/out" ]; then
+  expected_dir="$(mktemp -d)"
+  cp -R "$ROOT_DIR/apps/web/out/." "$expected_dir/"
+  for locale in lt en; do
+    for route in auth account admin assessment; do
+      rm -rf "$expected_dir/$locale/$route"
+    done
+  done
+  diff_output="$(diff -r --brief "$expected_dir" "$REL" 2>&1 || true)"
+  if [ -z "$diff_output" ]; then
+    note_pass
+  else
+    note_fail "public release does not match the current web export (excluding auth/account/admin/assessment): run pnpm build:public"
+    printf '%s\n' "$diff_output" | head -20
+  fi
+  rm -rf "$expected_dir"
+else
+  note_fail "cannot confirm release freshness: apps/web/out is missing (run pnpm build)"
+fi
+
 for item in index.html 404.html robots.txt sitemap.xml _next branding; do
   check "required release item missing: $item" "[ -e '$REL/$item' ]"
 done
@@ -84,6 +108,26 @@ fi
 check "sitemap missing production LT URL" "grep -q 'https://sapiensmetric.eu/lt/' '$REL/sitemap.xml'"
 if grep -Eq '/(auth|account|admin|assessment)/' "$REL/sitemap.xml"; then
   note_fail "sitemap lists a non-public route"
+else
+  note_pass
+fi
+# T-020: the repository generator is authoritative — 20 public URLs (locale homes
+# + pages + articles), excluding the root remembered-language redirect.
+sitemap_locs="$(grep -oE '<loc>[^<]+</loc>' "$REL/sitemap.xml" 2>/dev/null | sed -E 's#</?loc>##g')"
+sitemap_count="$(printf '%s\n' "$sitemap_locs" | grep -c '^https://')"
+if [ "$sitemap_count" -eq 20 ]; then
+  note_pass
+else
+  note_fail "sitemap must contain exactly 20 public URLs (found $sitemap_count)"
+fi
+if printf '%s\n' "$sitemap_locs" | grep -qx 'https://sapiensmetric.eu/en/' &&
+  printf '%s\n' "$sitemap_locs" | grep -qx 'https://sapiensmetric.eu/lt/'; then
+  note_pass
+else
+  note_fail "sitemap must include the /en/ and /lt/ locale homes"
+fi
+if printf '%s\n' "$sitemap_locs" | grep -qx 'https://sapiensmetric.eu/'; then
+  note_fail "sitemap must not list the root remembered-language redirect"
 else
   note_pass
 fi

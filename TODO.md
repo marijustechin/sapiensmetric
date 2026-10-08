@@ -6,7 +6,15 @@ authorises work, and only one task is active at a time.
 
 ## Now
 
-- **No active task.** **T-019 (Minimal local synthetic-assessment UI)** was
+- **No active task.** **T-020 (Mobile-first navigation, markup review, and
+  reproducible public sitemap)** was approved and archived on 2026-10-09 (record:
+  `tasks/done/2026-10-06-mobile-first-navigation-markup-sitemap.md`): the
+  accessible hamburger/drawer navigation, mobile/markup review, the
+  content-generated 20-URL public sitemap, two HTML-conformance fixes, and the
+  bounded repository-audit corrections (`docs/audit-2026-10-09.md`). Frontend-only
+  deployed (current artifact `7facf7e558173e17`, operation
+  `mux42oos-932ee20e6c2c`); see `docs/publication-status.md`.
+- **T-019 (Minimal local synthetic-assessment UI)** was
   approved and archived on 2026-10-06 (record:
   `tasks/done/2026-10-06-minimal-local-synthetic-assessment-ui.md`): a browser
   surface over the T-017 synthetic assessment API (start → answer → save → resume
@@ -40,19 +48,26 @@ authorises work, and only one task is active at a time.
   `docs/assessment-foundations.md` (entry point), `docs/knowledge-pilot-spec.md`,
   `docs/pilot-item-samples.md`, and `docs/assessment-sources.md`. Draft items are
   **unreviewed**; independent subject/language review is **pending**. O-002/O-003/
-  O-006/O-007 remain open; no runtime, database, API, or UI is implemented.
+  O-006/O-007 remain open. T-015 itself was documentation-only; the scoring core
+  (T-016), synthetic attempt API (T-017), local UI (T-019) and public navigation
+  (T-020) were implemented by later tasks.
 - **T-014** was approved and archived on 2026-09-28 (record:
   `tasks/done/2026-09-26-frontend-only-publication-preparation.md`): the
-  reproducible frontend-only public release (`pnpm build:public` →
+  repeatable frontend-only public release (`pnpm build:public` →
   `dist/public-site/`), the consent-gated GTM→GA4 integration (D-027), and the
   WebDAV deployment tooling are complete, committed, and pushed, and the release
-  is deployed to `https://sapiensmetric.eu` (artifact `64c4941cba87d08c`).
+  is deployed to `https://sapiensmetric.eu`. The deployed artifact has since been
+  superseded; the **current** artifact is `7facf7e558173e17` (operation
+  `mux42oos-932ee20e6c2c`; T-020).
 - **Current publication state: `docs/publication-status.md`.** Remaining
   operational follow-ups are tracked there and in
   `docs/publication-checklist.md`: GA4 settings review (remaining Enhanced
   Measurement options, Signals/advertising), Search Console sitemap ingestion
   (not confirmed), the unresolved Realtime `/en/assessment-guide` vs
-  `/en/assessment-guide/` duplicate, and GA4 report-level verification.
+  `/en/assessment-guide/` duplicate, GA4 report-level verification, the manifest
+  `Content-Type` mapping, the custom-404 ErrorDocument, the confirmed hosting
+  migration plan (vHost temporary → Bacloud ~3 months, tentative; separate
+  Node.js backend provider not yet selected), and the pending API deployment.
 - **T-013 (Public website, educational content, and SEO foundation)** is
   approved (2026-09-26) and archived at
   `tasks/done/2026-09-26-public-website-educational-content-seo.md`
@@ -90,10 +105,12 @@ authorises work, and only one task is active at a time.
 
 ## Next (not yet authorised)
 
-- **Minimal local synthetic-assessment UI** — a small browser surface over the
-  existing attempt endpoints for local/testing use only, clearly labelled
-  synthetic, with no effect on the deployed public site. **Not authorised or
-  started.**
+- **CI and automatic frontend publication (proposed).** A GitHub Actions pipeline
+  that runs `pnpm verify` on pull requests, builds the public release once on
+  `main`, and publishes it through the existing WebDAV mechanism with durable,
+  recoverable backups and post-deploy verification. Frontend-only; recommended by
+  the T-020 audit (`docs/audit-2026-10-09.md`). Implementation and authorisation
+  are tracked by the task scoped in `tasks/current.md`.
 - **Proposed next slice (not started or authorised): item review pipeline, form
   assembly, and pilot delivery/data design.** The two-role item review pipeline,
   session-form assembly, and the attempt-lifecycle/data-minimisation design — see

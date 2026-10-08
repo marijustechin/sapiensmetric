@@ -22,7 +22,7 @@ bash scripts/verify-public-release.sh
   understanding-results, about, contact, privacy), `/{en,lt}/articles/` (index +
   three articles).
 - **Excluded (deterministically, by route):** `/{en,lt}/auth/`,
-  `/{en,lt}/account/`, `/{en,lt}/admin/`.
+  `/{en,lt}/account/`, `/{en,lt}/admin/`, `/{en,lt}/assessment/`.
 - **No secrets required:** the public build uses only the public API base value
   (unused at runtime by public pages); it does not require DB/SMTP/OAuth
   values, and public pages make no API requests.
@@ -33,12 +33,16 @@ bash scripts/verify-public-release.sh
   plus the production sitemap URL, and **no `Host` directive** (Google no longer
   supports `Host`). A normal `pnpm build:public` reproduces the intended file; do
   **not** copy production `robots.txt` back into the artifact.
-- `sitemap.xml` is generated from **`apps/web/app/sitemap.ts`**. Known
-  discrepancy (`docs/publication-status.md` §3): the deployed file lists the apex
-  `https://sapiensmetric.eu/`, which the generator does **not**; a build would drop
-  that one entry. This is an **open owner policy decision** — do not silently
-  change the root redirect/canonical policy or overwrite production. Resolve it
-  before the next deployment if the apex entry should be kept.
+- `sitemap.xml` is generated from **`apps/web/app/sitemap.ts`** via
+  `shared/content/sitemap.ts` (content-derived; no fixed URL ceiling). Under the
+  owner-approved T-020 policy it lists the **20** public EN/LT URLs (both locale
+  homes + public pages + articles) and **excludes the root remembered-language
+  redirect** and auth/account/admin/assessment. The generator is **authoritative**:
+  do **not** copy production `sitemap.xml` into the release. The T-020 deployment
+  intentionally replaced the previous 21-URL production file (which listed the
+  apex root) with the generated 20-URL version; production now matches the build.
+  URLs are canonical HTTPS non-www with trailing slashes and reciprocal EN/LT
+  alternates; `lastmod` stays the content review date (never build time).
 
 ## What belongs in the website document root
 
@@ -47,7 +51,8 @@ for `sapiensmetric.eu` (e.g. `public_html/`):
 
 - `index.html`, `404.html`, `robots.txt`, `sitemap.xml`
 - `_next/` and `branding/` (shared assets)
-- `en/` and `lt/` (with no `auth`, `account`, or `admin` subdirectories)
+- `en/` and `lt/` (with no `auth`, `account`, `admin`, or `assessment`
+  subdirectories)
 
 > WebDAV automation for this upload is documented separately in
 > `docs/deployment-webdav.md` (`pnpm deploy:check|plan|apply|verify`). The manual
@@ -88,13 +93,22 @@ touches `.htaccess`, `.well-known/**`, or unrelated files**.
 - `https://sapiensmetric.eu/en/` and `/lt/` → public home; locale switch works.
 - Deep-link refresh: `/en/articles/why-percentage-correct-is-not-a-percentile/`
   and `/lt/assessment-guide/` load directly (directory-style `index.html`).
-- `https://sapiensmetric.eu/robots.txt` and `/sitemap.xml` are served and use
-  `https://sapiensmetric.eu` URLs only.
-- `https://sapiensmetric.eu/en/auth/login/` and `/en/admin/` must **not** serve
-  application pages from this release (404/site error page is expected).
+- `https://sapiensmetric.eu/robots.txt` allows crawling, references the sitemap,
+  carries **no `Host` directive**, and is byte-identical to the artifact.
+- `https://sapiensmetric.eu/sitemap.xml` is served and its **20** URLs use
+  canonical HTTPS non-www with trailing slashes; the root remembered-language
+  redirect is absent. It is byte-identical to the artifact.
+- The public banner/navigation changes are covered by
+  `node scripts/verify-navigation-runtime.mjs [--base <url>]` (headless Chromium).
+- `https://sapiensmetric.eu/en/auth/login/`, `/en/admin/` and `/en/assessment/`
+  must **not** serve application pages from this release (404/site error page is
+  expected).
 - HTTPS is enforced and redirects HTTP → HTTPS; the canonical hostname is
   consistent (`https://sapiensmetric.eu`, no `www`).
-- 404: an unknown path returns the site's `404.html`.
+- 404: the generated `/404.html` **document is valid**, but an unknown path may
+  still be answered by **Apache's own 404** — the custom ErrorDocument
+  configuration is unresolved and out of scope here (see
+  `docs/publication-status.md`).
 
 ## Rollback
 
@@ -154,11 +168,12 @@ successful.
 2. Confirm `https://sapiensmetric.eu/sitemap.xml` (HTTPS, non-www) is submitted;
    if "Could not read sitemap" persists, use **live URL inspection** and recheck
    later.
-3. Monitor Pages/Indexing reports; confirm auth/account/admin are absent from the
-   sitemap and carry `noindex` if ever crawled.
-4. Analytics is consent-gated GTM → GA4 (prepared in the repository; **not
-   activated**) — see `docs/gtm/README.md`. Do not mark analytics active until the
-   container is published and the frontend deployed.
+3. Monitor Pages/Indexing reports; confirm auth/account/admin/assessment are
+   absent from the sitemap and carry `noindex` if ever crawled.
+4. Analytics is consent-gated GTM → GA4 and **deployed/activated** (container
+   published and frontend deployed 2026-09-28; see `docs/publication-status.md`
+   §4 and `docs/gtm/README.md`). Remaining analytics work is the owner GA4 settings
+   review and report-level verification, not activation.
 
 ## Explicitly out of scope
 

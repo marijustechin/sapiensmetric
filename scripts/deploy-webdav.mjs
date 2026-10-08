@@ -273,6 +273,17 @@ async function planOrApply(args, apply) {
   const artifact = resolve(args.artifact);
   if (!existsSync(artifact)) throw new Error(`Artifact not found: ${artifact}. Run \`pnpm build:public\` first.`);
   const ordered = sortKeysForUpload(walk(artifact));
+  // Hosting-controlled files must never be uploaded: an artifact copy of
+  // `.htaccess` or `.well-known/**` would overwrite the remote originals even
+  // though the tool performs no mirror/delete.
+  const reserved = ordered.filter(
+    (path) => path === '.htaccess' || path === '.well-known' || path.startsWith('.well-known/'),
+  );
+  if (reserved.length > 0) {
+    throw new Error(
+      `Artifact contains hosting-controlled paths that must not be uploaded: ${reserved.join(', ')}`,
+    );
+  }
   const { artifactId, hashes } = computeArtifact(artifact, ordered);
 
   const creds = loadCredentials(args.env);
@@ -419,7 +430,7 @@ async function commandRollback(args) {
 async function commandVerify(args) {
   const site = (args.site ?? SITE_DEFAULT).replace(/\/?$/, '/');
   const ok200 = ['', 'en/', 'lt/', 'en/assessment-guide/', 'lt/understanding-results/', 'en/about/', 'lt/contact/', 'en/privacy/', 'robots.txt', 'sitemap.xml'];
-  const expect404 = ['en/auth/login/', 'lt/account/', 'en/admin/'];
+  const expect404 = ['en/auth/login/', 'lt/account/', 'en/admin/', 'en/assessment/', 'lt/assessment/'];
   let failures = 0;
   for (const path of ok200) {
     let status = 0;

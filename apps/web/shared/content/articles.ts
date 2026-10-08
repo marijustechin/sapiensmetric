@@ -3,7 +3,7 @@
  * authored variant. Sources are drawn from the repository's recorded sources.
  */
 import type { ArticleContent, LocalizedRecord } from './types';
-import { SOURCES } from './site';
+import { SOURCES } from './site.ts';
 
 const UPDATED = '2026-09-26';
 

@@ -127,6 +127,12 @@ export const UI_STRINGS: Record<
     notFoundTitle: string;
     notFoundIntro: string;
     backHome: string;
+    skipToContent: string;
+    primaryNav: string;
+    footerNav: string;
+    menu: string;
+    openMenu: string;
+    closeMenu: string;
   }
 > = {
   en: {
@@ -150,6 +156,12 @@ export const UI_STRINGS: Record<
     notFoundIntro:
       'The page you requested does not exist. Try the home page or the assessment guide.',
     backHome: 'Back to home',
+    skipToContent: 'Skip to content',
+    primaryNav: 'Primary',
+    footerNav: 'Footer',
+    menu: 'Menu',
+    openMenu: 'Open menu',
+    closeMenu: 'Close menu',
   },
   lt: {
     siteTagline: 'Mokomoji medžiaga apie vertinimus',
@@ -172,6 +184,12 @@ export const UI_STRINGS: Record<
     notFoundIntro:
       'Prašomas puslapis neegzistuoja. Bandykite pradžios puslapį arba vertinimų vadovą.',
     backHome: 'Atgal į pradžią',
+    skipToContent: 'Pereiti prie turinio',
+    primaryNav: 'Pagrindinė navigacija',
+    footerNav: 'Poraštės navigacija',
+    menu: 'Meniu',
+    openMenu: 'Atidaryti meniu',
+    closeMenu: 'Uždaryti meniu',
   },
 };
 

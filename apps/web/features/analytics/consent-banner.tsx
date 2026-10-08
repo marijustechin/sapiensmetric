@@ -19,7 +19,6 @@ export function ConsentBanner() {
 
   return (
     <section
-      role="region"
       aria-label={t('title')}
       className="fixed inset-x-0 bottom-0 z-50 border-t border-slate-300 bg-white p-4 text-sm shadow-lg"
     >
@@ -33,14 +32,14 @@ export function ConsentBanner() {
           <button
             type="button"
             onClick={accept}
-            className="rounded bg-blue-700 px-4 py-2 font-medium text-white hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="inline-flex min-h-[44px] items-center rounded bg-blue-700 px-4 font-medium text-white hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             {t('accept')}
           </button>
           <button
             type="button"
             onClick={reject}
-            className="rounded border border-slate-400 px-4 py-2 font-medium text-slate-800 hover:border-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="inline-flex min-h-[44px] items-center rounded border border-slate-400 px-4 font-medium text-slate-800 hover:border-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             {t('reject')}
           </button>

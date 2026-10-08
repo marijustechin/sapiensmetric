@@ -81,9 +81,10 @@ workflow logic are owned by `features/auth`.
 ## Enforcement
 
 `scripts/verify-fsd-boundaries.mjs` (Node built-ins only; no new dependency)
-parses every `.ts`/`.tsx` file under `apps/web/{app,widgets,features,shared}`,
-resolves relative imports, and fails on any upward import. It also fails if an
-`entities/` or `processes/` directory appears. It is part of the `pnpm verify`
+parses every `.ts`/`.tsx` file under `apps/web/{app,widgets,features,entities,shared}`,
+resolves relative imports, and fails on any upward import. It also fails if a
+`processes/` directory appears (`entities/` **is** a valid layer, currently
+`entities/user`). It is part of the `pnpm verify`
 chain (`node scripts/verify-fsd-boundaries.mjs`).
 
 **Tailwind content coverage.** `apps/web/tailwind.config.ts` `content` must scan

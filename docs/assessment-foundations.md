@@ -1,9 +1,10 @@
 # Assessment foundations — Sapiens Metric (T-015)
 
-Status: **T-015 proposal for human review (READY_FOR_HUMAN_REVIEW)**. This
+Status: **T-015 approved and archived (2026-09-28)**. This
 document records **owner product direction** and a set of **methodological
 proposals**. It is not a validity claim, not a public test specification, and not
-approved policy. Nothing here authorises implementation. Open decisions
+approved policy; the T-016 scoring core and T-017 attempt API were implemented
+later. Nothing here authorises content. Open decisions
 (O-002, O-003, O-006, O-007) remain open; the T-002 proposals remain proposals.
 
 Companion documents produced by T-015:
@@ -330,7 +331,7 @@ or norms. Those require designed samples and specialist analysis.
 
 ## 7. Scoring core and bounded next slices
 
-**Implemented under T-016 (deliverable for human review):** the pure versioned
+**Implemented under T-016 (approved and archived 2026-09-28):** the pure versioned
 scoring core in `@sapiensmetric/assessment` — versioned form snapshots,
 validation, deterministic scoring for single-answer, multiple-select, ordering,
 and numeric items (inclusive absolute tolerance), and a browser-safe projection.

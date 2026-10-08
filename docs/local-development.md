@@ -66,8 +66,10 @@ pnpm --filter @sapiensmetric/api migration:show    # list executed/pending
 ```
 
 T-012 adds `1781440000003-CreateRolesAndAdminAudit` (`users.role`,
-`users.status`, `admin_audit_log`). Applied to the local Docker MySQL
-(`127.0.0.1:3307`). No production database has been touched.
+`users.status`, `admin_audit_log`), and T-017 adds
+`1781440000004-CreateAssessmentAttempts` (`assessment_attempts`, synthetic
+attempts). Applied to the local Docker MySQL (`127.0.0.1:3307`). No production
+database has been touched.
 
 ## Administrator bootstrap (T-012)
 

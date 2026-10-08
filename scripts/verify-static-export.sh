@@ -382,6 +382,55 @@ else
   note_pass
 fi
 
+# T-020 sitemap policy: generated from content; the approved set is the 20 public
+# EN/LT URLs (locale homes + pages + articles). The root remembered-language
+# redirect is excluded, every URL is canonical HTTPS non-www with a trailing
+# slash, and every entry carries both reciprocal alternates.
+sitemap_locs="$(grep -oE '<loc>[^<]+</loc>' "$OUT_DIR/sitemap.xml" 2>/dev/null | sed -E 's#</?loc>##g')"
+sitemap_count="$(printf '%s\n' "$sitemap_locs" | grep -c '^https://')"
+if [ "$sitemap_count" -eq 20 ]; then
+  note_pass
+else
+  note_fail "sitemap.xml must contain exactly 20 public URLs (found $sitemap_count)"
+fi
+
+if printf '%s\n' "$sitemap_locs" | grep -qx 'https://sapiensmetric.eu/en/' &&
+  printf '%s\n' "$sitemap_locs" | grep -qx 'https://sapiensmetric.eu/lt/'; then
+  note_pass
+else
+  note_fail "sitemap.xml must include the /en/ and /lt/ locale homes"
+fi
+
+if printf '%s\n' "$sitemap_locs" | grep -qx 'https://sapiensmetric.eu/'; then
+  note_fail "sitemap.xml must not list the root remembered-language redirect"
+else
+  note_pass
+fi
+
+sitemap_shape_ok=1
+while IFS= read -r loc; do
+  [ -z "$loc" ] && continue
+  case "$loc" in
+    https://sapiensmetric.eu/*/) ;;
+    *) sitemap_shape_ok=0 ;;
+  esac
+done <<< "$sitemap_locs"
+if [ "$sitemap_shape_ok" -eq 1 ]; then
+  note_pass
+else
+  note_fail "every sitemap URL must be canonical HTTPS non-www with a trailing slash"
+fi
+
+# Reciprocal alternates: each public path must advertise both locales.
+if grep -q 'hreflang="en"' "$OUT_DIR/sitemap.xml" &&
+  grep -q 'hreflang="lt"' "$OUT_DIR/sitemap.xml" &&
+  grep -q 'href="https://sapiensmetric.eu/en/"' "$OUT_DIR/sitemap.xml" &&
+  grep -q 'href="https://sapiensmetric.eu/lt/"' "$OUT_DIR/sitemap.xml"; then
+  note_pass
+else
+  note_fail "sitemap.xml is missing reciprocal EN/LT alternates"
+fi
+
 # robots.txt is generated from source (`app/robots.ts`): allow crawling, point at
 # the production sitemap, and do NOT emit a `Host` directive (Google no longer
 # supports it). A normal build must produce this without copying from production.
@@ -407,9 +456,13 @@ else
   note_fail "robots.txt must not contain a Host directive"
 fi
 
-# noindex on auth/account/admin/assessment (both locales).
+# noindex on auth/account/admin/assessment (both locales, every auth page).
 for page in \
   "en/auth/login/index.html" "lt/auth/login/index.html" \
+  "en/auth/register/index.html" "lt/auth/register/index.html" \
+  "en/auth/verify-email/index.html" "lt/auth/verify-email/index.html" \
+  "en/auth/forgot-password/index.html" "lt/auth/forgot-password/index.html" \
+  "en/auth/reset-password/index.html" "lt/auth/reset-password/index.html" \
   "en/account/index.html" "lt/account/index.html" \
   "en/admin/index.html" "lt/admin/index.html" \
   "en/assessment/index.html" "lt/assessment/index.html"; do

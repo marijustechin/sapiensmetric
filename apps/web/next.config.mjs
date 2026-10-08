@@ -50,6 +50,16 @@ function resolvePublicApiBaseUrl() {
 const nextConfig = {
   output: 'export',
   /**
+   * This app has two root layouts (`app/(root)` and `app/[locale]`) and no
+   * `app/layout.tsx`, so an ordinary `app/not-found.tsx` cannot produce a valid
+   * single document. `app/global-not-found.tsx` (the documented mechanism for
+   * multi-root-layout apps) returns the full 404 document instead. See T-013 /
+   * T-018 / T-020 and `docs/architecture.md`.
+   */
+  experimental: {
+    globalNotFound: true,
+  },
+  /**
    * Directory-style static routes: every page is emitted as its own
    * `<route>/index.html`. Production is plain shared static hosting with no
    * Next server, middleware, proxy, or rewrite rules, so a clean URL such as

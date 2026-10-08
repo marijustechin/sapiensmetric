@@ -27,10 +27,9 @@ documentation-harness invariants only:
   work), the T-001 discovery documents, and the T-002 documents exist;
 - the T-001, T-002, T-003, T-004, T-005, and T-006 task archives exist under
   `tasks/done/`;
-- the archived T-006, T-007, and T-008 records exist with their final approved
-  statuses, and `tasks/current.md` declares T-010 active and preserves the
-  delivered-but-unarchived T-009 record (T-009 is committed `52fe481` and pushed
-  to `origin/main`, but not human-reviewed or archived);
+- the archived T-006..T-019 records exist with their final approved statuses, and
+  `tasks/current.md` declares T-020 active (T-009 is committed `52fe481`, pushed,
+  and archived);
 - the T-007 Google sign-in outputs exist (identity entity/store/module, OAuth
   transaction service, JWKS/ID-token verification, token client, account
   resolution, controller, migration, and the web Google button);
@@ -492,6 +491,47 @@ A browser walkthrough (mobile layout, keyboard use, visual result rendering) was
 owner later tested the assessment in the browser and confirmed the expected
 behaviour; the manual acceptance checklist in `docs/assessment-ui.md` remains the
 detailed step list.
+
+## T-020 navigation and sitemap checks
+
+- `apps/web/shared/content/site.test.ts` — the public nav lists only published
+  public destinations (never auth/account/admin/assessment); `SITE_ORIGIN` is
+  canonical HTTPS non-www; the EN/LT UI strings expose identical keys with
+  non-empty navigation/drawer labels.
+- `apps/web/shared/content/sitemap.test.ts` — the sitemap is generated from content
+  (count derived from the content, not a hard-coded ceiling; currently 20),
+  includes both locale homes, excludes the root redirect and nonpublic routes,
+  uses canonical HTTPS non-www URLs with trailing slashes, carries reciprocal
+  EN/LT alternates, and uses truthful content review dates for `lastmod`.
+- `scripts/verify-static-export.sh` / `scripts/verify-public-release.sh` assert the
+  generated sitemap contains exactly the 20 public URLs, includes `/en/` and
+  `/lt/`, excludes the root and app routes, and has the expected shape, and that
+  `robots.txt` has allow-all + the sitemap line and **no `Host`**.
+- `scripts/verify-navigation-runtime.mjs` (headless Chromium, diagnostic; not part
+  of `pnpm verify`): serves the built export (or `--base <url>`) and checks, in EN
+  and LT at 360/390/768/1280 px, no horizontal overflow, landmarks + skip link,
+  single `h1`, image `alt`, drawer open, `aria-expanded`, focus entry/containment/
+  return, Escape + backdrop dismissal, route selection, locale-route preservation,
+  44 px touch targets, and that the public nav exposes no unavailable application
+  destinations. With `--base https://sapiensmetric.eu` it additionally checks the
+  consent banner stacking/inert/restoration while the drawer is open.
+  Browser evidence: run locally against the static export and against production
+  after the T-020 deployment.
+- **HTML conformance:** `node scripts/verify-html-conformance.mjs` submits the
+  generated export (`apps/web/out`) to the **Nu HTML Checker** HTTP API and fails
+  on errors/warnings while reporting informational notices separately. The
+  validated set covers the root redirect, both locale homepages, the articles
+  index, representative article and content pages, and the global 404. Result
+  (2026-10-06, after the fixes below): **0 errors, 0 warnings**; every remaining
+  message is the React-generated informational "trailing slash on void elements"
+  notice (root redirect 11, locale/content pages 28, 404 12). Those notices are
+  **not** post-processed away. Two attributable defects were fixed: (1) the
+  consent `<section>` carried a redundant `role="region"` (a section with an
+  accessible name is already a region); (2) `app/not-found.tsx` returned its own
+  `<html>/<head>/<body>`, which Next wrapped in the default document, producing a
+  nested/invalid 404 — replaced by the multi-root-layout mechanism
+  `app/global-not-found.tsx` (enabled by `experimental.globalNotFound`), which
+  emits one valid document with `lang`, the shared icon set/manifest and styles.
 
 ## Workflow expectations
 

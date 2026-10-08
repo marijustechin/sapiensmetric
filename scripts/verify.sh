@@ -15,7 +15,7 @@
 #   3. The archived T-006..T-011 records contain their exact titles and final
 #      approved statuses; the archived T-006 record contains the required
 #      definition sections, the six exact browser routes, and the access-gate
-#      markers; the T-014..T-019 archives exist with their headings/statuses; and
+#      markers; the T-014..T-020 archives exist with their headings/statuses; and
 #      tasks/current.md declares that no task is active.
 #   4. docs/decisions.md contains D-016 (heading, and section-scoped date /
 #      O-006 note / verification access gate / review-correction markers),
@@ -138,7 +138,7 @@ for a in "${archives[@]}"; do
   fi
 done
 
-# --- Invariant 3: T-006..T-019 archived; no active task -----------------
+# --- Invariant 3: T-006..T-020 archived; no active task -----------------
 # The archived records' exact headings and final statuses are asserted
 # literally; tasks/current.md must declare that no task is active.
 
@@ -364,6 +364,22 @@ if grep -qxF -- "$t019_status" "$t019_archive"; then
   note_pass
 else
   note_fail "T-019 archive does not contain the final approved status"
+fi
+
+t020_archive='tasks/done/2026-10-06-mobile-first-navigation-markup-sitemap.md'
+t020_heading='# T-020 — Mobile-first navigation, markup review, and reproducible public sitemap (archived)'
+t020_status='- **Final status:** Approved (human review granted)'
+
+if grep -qxF -- "$t020_heading" "$t020_archive"; then
+  note_pass
+else
+  note_fail "T-020 archive does not contain the exact archived heading"
+fi
+
+if grep -qxF -- "$t020_status" "$t020_archive"; then
+  note_pass
+else
+  note_fail "T-020 archive does not contain the final approved status"
 fi
 
 if grep -qxF '# No active task' tasks/current.md; then
@@ -1217,7 +1233,7 @@ t013_outputs=(
   "apps/web/app/[locale]/(app)/layout.tsx"
   "apps/web/app/sitemap.ts"
   "apps/web/app/robots.ts"
-  "apps/web/app/not-found.tsx"
+  "apps/web/app/global-not-found.tsx"
   docs/content.md
   docs/publication-checklist.md
 )
@@ -1552,8 +1568,8 @@ fi
 # the scoring package import.
 if grep -rq --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=out \
   --exclude-dir=dist -E 'correctOptionId|correctOptionIds|correctOrder|acceptedValue|absoluteTolerance|@sapiensmetric/assessment' \
-  apps/web/features/assessment apps/web/widgets/assessment-screen 2>/dev/null; then
-  note_fail "keyed form/answer-key/scoring material is referenced by the assessment UI"
+  apps/web 2>/dev/null; then
+  note_fail "keyed form/answer-key/scoring material is referenced anywhere in the web app"
 else
   note_pass
 fi

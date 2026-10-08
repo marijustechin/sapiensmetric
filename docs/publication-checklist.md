@@ -16,8 +16,10 @@ Remaining human/owner actions and reconciled state. **Current-state entry point:
 - [ ] Review the Privacy page against the actually deployed behaviour.
 
 ## Release artifact
-- [x] Reproducible build `pnpm build:public` → `dist/public-site/` (public
-      pages/articles only; auth/account/admin excluded).
+- [x] Repeatable release build `pnpm build:public` → `dist/public-site/` (public
+      pages/articles only; auth/account/admin/assessment excluded). Repeatable
+      generation, not byte-identical independent builds — see
+      `docs/deployment-webdav.md` "Reproducibility terminology".
 - [x] Owner manually published the informational frontend (owner-reported; earlier
       revision).
 - [x] **Deployed 2026-09-28 21:13–21:17 EEST** (18:13–18:17 UTC): artifact id
@@ -47,15 +49,35 @@ Remaining human/owner actions and reconciled state. **Current-state entry point:
       no longer emits `Host` (Google does not support it) and a normal
       `pnpm build:public` reproduces the intended file; production already omits
       `Host`, so no production copy is needed.
-- [ ] **Sitemap apex-root discrepancy (open, owner decision):** production
-      `sitemap.xml` has **21** URLs including `https://sapiensmetric.eu/`; the
-      generator produces **20** and omits the apex root. A build would drop that
-      one entry — **do not** change the redirect/canonical policy or overwrite
-      production without the owner's decision, then align the generator before the
-      next deployment.
+- [x] **Sitemap apex-root discrepancy RESOLVED (2026-10-06, owner policy):** the
+      repository generator is authoritative and lists the **20** public EN/LT URLs
+      (locale homes + pages + articles), **excluding the root redirect** and
+      auth/account/admin/assessment. The T-020 deployment intentionally replaced
+      the previous 21-URL production sitemap with the generated 20-URL version;
+      production `sitemap.xml` is byte-identical to the artifact. No production
+      copy is used.
 - [x] Favicon/icon set + web manifest deployed 2026-10-06 (artifact
       `97e89b25b1edd8a9`, operation `mux030hl-e8032efd1883`); `/branding/*` icon
       URLs and `<head>` links verified; in-page owl logo preserved.
+- [x] **T-020 navigation/markup + reproducible sitemap deployed 2026-10-06**
+      (artifact `779cf9f32f90f277`, operation `mux3032z-9200a465dd4a`); drawer nav
+      + responsive/markup change; `/robots.txt` and `/sitemap.xml` byte-identical
+      to the artifact; excluded routes 404. Headless-Chromium checks at
+      360/390/768/1280 px EN+LT (local build) and on production
+      (`scripts/verify-navigation-runtime.mjs`).
+- [x] **T-020 HTML-conformance fixes deployed 2026-10-06** (artifact
+      `7facf7e558173e17`, operation `mux42oos-932ee20e6c2c`, baseline
+      `dist/deploy-baseline/mux42oos-932ee20e6c2c/`); production `/404.html`,
+      `/en/`, `/lt/`, an article page, `/robots.txt` and `/sitemap.xml`
+      byte-identical to the artifact. **Not committed/pushed/archived** —
+      READY_FOR_HUMAN_REVIEW.
+- [x] **HTML conformance (Nu HTML Checker)** — root redirect, both locale
+      homepages, articles index, article/content pages and the global 404, on the
+      built export **and on the deployed EN/LT pages and `/404.html`**:
+      **0 errors / 0 warnings** (`scripts/verify-html-conformance.mjs`); only the
+      React informational "trailing slash on void elements" notices remain
+      (recorded, not post-processed). The deployed `/404.html` document is valid;
+      unknown URLs may still be served by Apache's own 404 (separate, unchanged).
 - [ ] **Manifest MIME mapping (owner/hosting):** `/branding/site.webmanifest` is
       served 200 with **no `Content-Type`**; mapping `.webmanifest` to
       `application/manifest+json` is required (cPanel MIME Types or owner-managed

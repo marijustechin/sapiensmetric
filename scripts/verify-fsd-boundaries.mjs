@@ -5,7 +5,7 @@
  * Enforces the layer direction documented in `docs/fsd-light.md` for the web
  * app (`apps/web`):
  *
- *   app (4) -> widgets (3) -> features (2) -> shared (1)
+ *   app (5) -> widgets (4) -> features (3) -> entities (2) -> shared (1)
  *
  * A module may import from its own layer or any lower layer, never an upper
  * one. Cross-imports within a layer are allowed. Non-relative specifiers

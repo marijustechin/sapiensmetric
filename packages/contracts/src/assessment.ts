@@ -75,10 +75,17 @@ export type ResponseEntryDto = z.infer<typeof responseEntrySchema>;
  * not mentioned are unchanged. `revision` is the revision the client last saw;
  * a mismatch is rejected as a conflict (no silent lost updates).
  */
-export const saveAnswersRequestSchema = z.object({
-  revision: z.number().int().nonnegative(),
-  answers: z.array(responseEntrySchema),
-});
+export const saveAnswersRequestSchema = z
+  .object({
+    revision: z.number().int().nonnegative(),
+    answers: z.array(responseEntrySchema),
+  })
+  .refine(
+    (value) =>
+      new Set(value.answers.map((entry) => entry.itemId)).size ===
+      value.answers.length,
+    { message: 'Duplicate itemId entries are not allowed.', path: ['answers'] },
+  );
 export type SaveAnswersRequest = z.infer<typeof saveAnswersRequestSchema>;
 
 export const assessmentAttemptStatusSchema = z.enum(['in_progress', 'finalised']);

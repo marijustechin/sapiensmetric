@@ -6,8 +6,41 @@ read/write) via WebDAV.
 
 > **Production deployments were explicitly authorised and performed on
 > 2026-09-28** (operations `muliubrg-822e9fdae477` and `mulkgfk6-0768754a1976`)
-> **and 2026-10-06** (operation `mux030hl-e8032efd1883`). Any further upload
-> requires the same explicit authorisation.
+> **and 2026-10-06** (operations `mux030hl-e8032efd1883`,
+> `mux3032z-9200a465dd4a`, and `mux42oos-932ee20e6c2c` — see the observed
+> deployments below). Any further upload requires the same explicit authorisation.
+
+## Reproducibility terminology (read before calling a build "reproducible")
+
+Two distinct properties, deliberately not conflated here:
+
+- **Repeatable release generation** — *established.* `pnpm build:public` (or
+  `build-public-release.sh --no-build` after `pnpm build`) deterministically turns
+  the current `apps/web/out` into a complete `dist/public-site/` with the
+  documented route exclusions. `verify-public-release.sh` now proves the release
+  equals that export file-for-file (contents included), and
+  `verify-static-export.sh` proves the export shape.
+- **Byte-identical independent builds** — *not established, and not claimed.* The
+  Next.js build emits a build-scoped id and hash-named `_next` assets, so two
+  independent builds of identical source differ in those bytes. The `Host`/SEO
+  outputs are content-stable, but the bundle is not bit-for-bit reproducible.
+
+Consequences/controls:
+
+- **Artifact identity is content-based** (`artifactIdentity` = sorted
+  `path\0sha256`): it identifies the *exact* artifact being deployed, so
+  `plan`/`apply`/`resume`/`rollback` are consistent and a fresh operation gets a
+  fresh baseline. Do **not** relabel an artifact as belonging to a commit it was
+  not built from.
+- **Do not pin `generateBuildId` solely to suppress the changing identifier.**
+  Pinning the id alone does not make the build reproducible (asset contents and
+  other build inputs still vary); it would only hide the difference and could
+  mislead the identity model. A future decision to pursue byte-reproducible builds
+  must be justified on its own merits (deterministic toolchain/inputs) and
+  recorded before changing the config.
+- The reproducible-from-source property that *is* claimed applies to the
+  **sitemap/robots** (generated from repository content) and to the release
+  **file set**, not to bundle bytes.
 
 ## Credentials (never printed/committed/bundled/uploaded)
 
@@ -194,13 +227,34 @@ including `/`) so the release did **not** revert them. Plan artifact id
 verified; `robots.txt`/`sitemap.xml` hashes unchanged. Rollback:
 `pnpm deploy:rollback -- --operation mux030hl-e8032efd1883 --confirm`.
 
-> **Follow-up (2026-10-06):** `robots.txt` is now generated from
+> **Follow-up (2026-10-06):** `robots.txt` is generated from
 > `apps/web/app/robots.ts` **without** a `Host` directive, so a normal build
-> reproduces production and must not be copied back from production. The deployed
-> `sitemap.xml` still contains the apex `https://sapiensmetric.eu/` that the
-> generator omits — an open source/deployment discrepancy; resolve the policy
-> **before** any future deployment instead of copying production over the build
-> (see `docs/publication-status.md` §3).
+> reproduces production and must not be copied back from production.
+
+**Observed navigation/sitemap deployment (T-020, 2026-10-06, authorised):** the
+artifact was built and verified, then planned and applied **without a rebuild**
+(plan artifact id **`779cf9f32f90f277`**, 167 files; 8 create / 159 overwrite) as a
+fresh operation **`mux3032z-9200a465dd4a`**, 167/167 uploaded. Baseline
+`dist/deploy-baseline/mux3032z-9200a465dd4a/` (159 backups captured before
+overwrites). `.htaccess`, `.well-known/**`, unrelated files and previous hashed
+assets were preserved. Post-deploy `pnpm deploy:verify` all ok; production
+`robots.txt` and `sitemap.xml` are **byte-identical** to the artifact, and the
+sitemap has the intended **20** URLs (the repository generator is authoritative;
+its predecessor's 21st apex-root entry was intentionally dropped). Rollback:
+`pnpm deploy:rollback -- --operation mux3032z-9200a465dd4a --confirm`.
+
+**Observed HTML-conformance deployment (T-020 follow-up, 2026-10-06,
+authorised):** the corrected artifact (valid global 404, consent `<section>`
+without a redundant `role="region"`) was built/verified and applied **without a
+rebuild** as a **fresh operation `mux42oos-932ee20e6c2c`** — content-based
+artifact id **`7facf7e558173e17`** (167 files; 7 create / 160 overwrite), 167/167
+uploaded, baseline `dist/deploy-baseline/mux42oos-932ee20e6c2c/` (160 backups
+captured before overwrites). `.htaccess`, `.well-known/**`, unrelated files and
+previous hashed assets were preserved. Post-deploy: all `pnpm deploy:verify`
+routes ok; production `/404.html`, `/en/`, `/lt/`, an article page, `/robots.txt`
+and `/sitemap.xml` byte-identical to the artifact; Nu HTML Checker on the
+deployed EN/LT pages and `/404.html` = 0 errors / 0 warnings. Rollback:
+`pnpm deploy:rollback -- --operation mux42oos-932ee20e6c2c --confirm`.
 
 ### verify (post-deployment)
 

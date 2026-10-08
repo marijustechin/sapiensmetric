@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 #
-# build-public-release.sh — reproducible frontend-only public release (T-014).
+# build-public-release.sh — repeatable frontend-only public release (T-014).
+# ("Repeatable" = the documented procedure deterministically produces the release
+# from the current export; byte-identical independent builds are NOT claimed —
+# see docs/deployment-webdav.md "Reproducibility terminology".)
 #
 # Builds the static web export and assembles a dedicated deployment directory
 # containing ONLY the public website: the root remembered-language entry, the
@@ -10,20 +13,43 @@
 # matching).
 #
 # Requires no API, DB, SMTP, or OAuth secrets. Run with `pnpm build:public`.
+#
+# `--no-build` reuses an existing `apps/web/out` (used by `pnpm verify`, which
+# already builds the web export once) so the release is assembled from the exact
+# same build that `verify-static-export.sh` checks, with no duplicate build.
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WEB_DIR="$ROOT_DIR/apps/web"
 OUT_DIR="$WEB_DIR/out"
 ARTIFACT="$ROOT_DIR/dist/public-site"
+BUILD_EXPORT=1
+if [ "${1:-}" = "--no-build" ]; then
+  BUILD_EXPORT=0
+fi
 
-echo "==> Building the static web export"
-pnpm --filter @sapiensmetric/web build
+if [ "$BUILD_EXPORT" -eq 1 ]; then
+  echo "==> Building the static web export"
+  pnpm --filter @sapiensmetric/web build
+else
+  echo "==> Reusing the existing static web export"
+fi
 
 if [ ! -d "$OUT_DIR" ]; then
   echo "ERROR: static export not found at $OUT_DIR" >&2
   exit 1
 fi
+
+# Never place hosting-controlled files in the release artifact: the WebDAV
+# deployment must preserve the remote `.htaccess` and `.well-known/**` (there is
+# no mirror/delete, but an uploaded copy would overwrite them). Fail loudly rather
+# than silently shipping them.
+for reserved in .htaccess .well-known; do
+  if [ -e "$OUT_DIR/$reserved" ]; then
+    echo "ERROR: $OUT_DIR/$reserved must not be part of the web export (hosting-controlled)" >&2
+    exit 1
+  fi
+done
 
 echo "==> Assembling $ARTIFACT"
 rm -rf "$ARTIFACT"
@@ -55,6 +81,14 @@ required=(index.html 404.html robots.txt sitemap.xml _next branding)
 for item in "${required[@]}"; do
   if [ ! -e "$ARTIFACT/$item" ]; then
     echo "FAIL: release is missing $item" >&2
+    failures=$((failures + 1))
+  fi
+done
+
+# Hosting-controlled files must never be in the release artifact.
+for reserved in .htaccess .well-known; do
+  if [ -e "$ARTIFACT/$reserved" ]; then
+    echo "FAIL: release must not contain hosting-controlled $reserved" >&2
     failures=$((failures + 1))
   fi
 done

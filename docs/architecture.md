@@ -32,7 +32,8 @@ database dependency.
   `docs/assessment-scoring.md`, T-016). No UI, framework, DB, network, or clock
   dependencies.
 - `packages/contracts` → **@sapiensmetric/contracts** — Zod schemas shared
-  between web and API. Currently the health-response contract.
+  between web and API: health, auth, admin, and the client-safe assessment
+  attempt contracts.
 
 ## Foundation scaffold (T-003)
 
@@ -47,7 +48,8 @@ T-003 created the minimal web/API baseline:
 - `packages/contracts` (`@sapiensmetric/contracts`): shared Zod health-response
   contract;
 - `packages/assessment` (`@sapiensmetric/assessment`): compilable pure
-  TypeScript package (no items, scoring, fixtures, or assessment claims).
+  TypeScript package (no items, fixtures, or assessment claims; the versioned
+  scoring core was added later by T-016).
 
 T-003 resolved O-001 (test runner: Vitest, D-011) and O-005 (package names,
 D-012).
@@ -250,7 +252,7 @@ authoring.
 
 ## T-014 frontend-only public release
 
-T-014 (D-026) prepares a reproducible frontend-only release without changing the
+T-014 (D-026) prepares a repeatable frontend-only release without changing the
 application. `scripts/build-public-release.sh` (`pnpm build:public`) builds the
 static export and assembles `dist/public-site/`, deterministically excluding the
 `/{lt,en}/{auth,account,admin}` route directories; `_next` is the shared
@@ -324,6 +326,36 @@ runtime data. The route is excluded from the public release and sitemap
 (`build-public-release.sh`, `verify-public-release.sh`) and carries `noindex`. The
 server stays authoritative for ownership, revisions, submission, and scoring.
 
+## T-020 mobile-first public navigation and reproducible sitemap
+
+T-020 replaces the public horizontal navigation with a hamburger/drawer menu used
+at every width, does a focused mobile/markup review, and makes the public sitemap
+reproducible from repository content.
+
+- `apps/web/shared/ui/drawer.tsx` — a **generic, auth-free** modal drawer
+  primitive: portal to `document.body`, focus moved in and returned to the
+  trigger, Tab containment, Escape/backdrop dismissal, `inert` on the page region
+  (`#site-root`) plus body scroll lock while modal, and `motion-reduce`
+  transitions.
+- `apps/web/widgets/site-header/site-header.tsx` — public header (logo → current
+  locale home, visible language switch, accessible menu button with
+  `aria-expanded`/`aria-controls`) plus the drawer's translated, current-page-aware
+  navigation. Public destinations only; the authenticated app keeps its own nav.
+- `apps/web/widgets/site-shell/site-shell.tsx` — adds a skip link
+  (`#main-content`) and the `#site-root` inert target. `SiteFooter` uses
+  translated landmark labels.
+- `apps/web/shared/content/sitemap.ts` — pure, content-derived sitemap entries used
+  by `app/sitemap.ts`: the 20 public EN/LT URLs (locale homes + pages + articles),
+  excluding the root redirect and nonpublic routes, with reciprocal alternates and
+  truthful `lastmod`. The repository generator is authoritative; production is no
+  longer seeded from a copied file.
+- `apps/web/app/global-not-found.tsx` — the global 404. Because the app has two
+  root layouts and no `app/layout.tsx`, an ordinary `app/not-found.tsx` produced a
+  nested document; the documented multi-root-layout mechanism
+  (`experimental.globalNotFound`) emits a single valid document (with `lang`,
+  styles, and the shared icon/manifest metadata). HTML conformance is checked by
+  `scripts/verify-html-conformance.mjs` (Nu HTML Checker).
+
 ## T-007 Google OpenID Connect sign-in (implemented, approved, archived)
 
 T-007 adds optional Google OIDC sign-in (authorization-code flow with PKCE)
@@ -346,7 +378,9 @@ over the existing auth API, per D-018.
 - Product UI features and public marketing/site content beyond the minimal
   development page.
 - shadcn component installation (unless a real UI need arises).
-- Deployment/hosting/DNS configuration.
+- Deployment/hosting/DNS configuration. (The **frontend-only public site** is now
+  deployed to `https://sapiensmetric.eu` under T-014/T-018/T-020; **API
+  deployment**, DNS changes, and hosting-account migration remain deferred.)
 - Microservices, Redis, queues.
 - vHosts Node-to-MySQL feasibility (later, separate infrastructure task).
 

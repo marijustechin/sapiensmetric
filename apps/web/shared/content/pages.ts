@@ -3,7 +3,7 @@
  * natural-language variants (not machine translation of each other).
  */
 import type { LocalizedRecord, PageContent } from './types';
-import { PUBLIC_CONTACT_EMAIL, SOURCES } from './site';
+import { PUBLIC_CONTACT_EMAIL, SOURCES } from './site.ts';
 
 export type PageKey =
   | 'home'

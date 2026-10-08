@@ -80,7 +80,10 @@ environment.
 - `apps/api/src/database/` — TypeORM data source and migration scripts
   (+ `cleanup-action-tokens.ts`).
 - `apps/api/src/database/migrations/` — `CreateAuthTables1781440000000`,
-  `CreateEmailActionTokens1781440000001`.
+  `CreateEmailActionTokens1781440000001` (T-006), plus later migrations owned by
+  other tasks: `1781440000002-CreateUserIdentities` (T-007 Google OIDC),
+  `1781440000003-CreateRolesAndAdminAudit` (T-012), and
+  `1781440000004-CreateAssessmentAttempts` (T-017).
 - `apps/api/src/modules/users/` — User entity, store, module.
 - `apps/api/src/modules/auth/` — auth controller, service, guard, password and
   token services, `action-token.service.ts`, `ip-rate-limiter.ts`, tests.

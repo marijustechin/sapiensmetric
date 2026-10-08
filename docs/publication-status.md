@@ -22,14 +22,15 @@ Search Console), `docs/deployment-webdav.md` (WebDAV automation),
 | T-014 (frontend-only release prep; analytics extension; WebDAV tooling; consent-command fix) | `implemented`, **approved and archived** at `tasks/done/2026-09-26-frontend-only-publication-preparation.md`; committed/pushed in the T-014 finalisation commit (see git log). Deployed artifact `64c4941cba87d08c` (`re-checked`) |
 | **T-018 (favicon/manifest)** | `implemented`, **approved and archived** 2026-10-06 (`tasks/done/2026-10-06-favicon-manifest-data.md`); committed/pushed as **`f1d0e69`** |
 | **T-019 (minimal local synthetic-assessment UI)** | `implemented`, **approved and archived** 2026-10-06 (`tasks/done/2026-10-06-minimal-local-synthetic-assessment-ui.md`); owner-confirmed in the browser. **Local/development only — not deployed, not publication-ready.** |
+| **T-020 (hamburger nav, mobile/markup review, reproducible sitemap, HTML-conformance fixes)** | `implemented` + **frontend-only deployed** 2026-10-06 (owner-authorised; two deployments); **not committed/pushed/archived** — READY_FOR_HUMAN_REVIEW in `tasks/current.md` |
 | Release build | `pnpm build:public` → `dist/public-site/` (`implemented`; artifact present locally) |
-| Public release scope | informational pages + articles only; auth/account/admin and the API are **excluded** (`implemented`) |
-| **Deployed artifact (current)** | **artifact id `97e89b25b1edd8a9`** (166 files; 10 create / 156 overwrite), operation **`mux030hl-e8032efd1883`**, deployed **2026-10-06 21:16–21:21 EEST** (18:16–18:21 UTC) (`re-checked`) — the favicon/manifest update |
+| Public release scope | informational pages + articles only; auth/account/admin/assessment and the API are **excluded** (`implemented`) |
+| **Deployed artifact (current)** | **artifact id `7facf7e558173e17`** (167 files; 7 create / 160 overwrite), operation **`mux42oos-932ee20e6c2c`**, deployed **2026-10-06 23:08–23:12 EEST** (20:08–20:12 UTC) (`re-checked`) — T-020 plus the HTML-conformance fixes (valid global 404, consent `<section>` without a redundant `role`) |
 | Deployment destination | **`https://sapiensmetric.eu:2078/`** (WebDAV URL root; account chrooted to `public_html`; do not append `/public_html/`) (`re-checked`) |
-| Deployment baseline (rollback source) | **`dist/deploy-baseline/mux030hl-e8032efd1883/`** (156 backups + `manifest.json`) (`re-checked`) |
-| Rollback command | `pnpm deploy:rollback -- --operation mux030hl-e8032efd1883 --confirm` |
-| Prior deployment (superseded) | artifact `64c4941cba87d08c`, operation `mulkgfk6-0768754a1976`, 2026-09-28 21:13–21:17 EEST (consent-command fix); earlier `fcbbf30a7645982a` / `muliubrg-822e9fdae477` |
-| Source HEAD / repo-vs-deployed | source HEAD `f1d0e69` (T-018) plus the T-019 finalisation commit (see git log); deployed artifact id `97e89b25b1edd8a9` — **not** a commit hash |
+| Deployment baseline (rollback source) | **`dist/deploy-baseline/mux42oos-932ee20e6c2c/`** (160 backups + `manifest.json`) (`re-checked`) |
+| Rollback command | `pnpm deploy:rollback -- --operation mux42oos-932ee20e6c2c --confirm` |
+| Prior deployments (superseded) | artifact `779cf9f32f90f277`, operation `mux3032z-9200a465dd4a`, 2026-10-06 22:38–22:42 EEST (nav/markup + 20-URL sitemap); artifact `97e89b25b1edd8a9`, operation `mux030hl-e8032efd1883`, 2026-10-06 21:16–21:21 EEST (favicon/manifest); earlier `64c4941cba87d08c` / `mulkgfk6-0768754a1976` |
+| Source HEAD / repo-vs-deployed | source HEAD **`0af704e`** plus the **uncommitted T-020 changes**; deployed artifact id `7facf7e558173e17` — **not** a commit hash |
 
 ## 2. Hosting (`owner-reported`; plan `owner-confirmed` 2026-10-06)
 
@@ -76,18 +77,25 @@ production sitemap line, and **no `Host` directive** (Google no longer supports
 `Host`). A normal `pnpm build:public` reproduces this file; no production copy is
 needed, and the earlier `Host:` mismatch is resolved at the source.
 
-**Sitemap source-vs-deployment discrepancy (open; `re-checked`, 2026-10-06):**
-the **deployed** `sitemap.xml` has **21** URLs including the apex
-`https://sapiensmetric.eu/`; the repository generator (`apps/web/app/sitemap.ts`)
-produces **20** URLs (the EN/LT homes, public pages, and articles) and does **not**
-list the apex root — the remembered-language redirect page. The URL-set diff is
-**exactly** that one entry. This is a **source/deployment discrepancy**, not a
-generator defect to fix silently: listing the apex root, or redirecting `/`
-permanently and listing a canonical locale home instead, is an SEO/canonical
-policy decision. The generator, the root redirect/canonical policy, and the
-production file are **unchanged** here; a future deployment built from the
-repository would drop the apex-root entry unless the generator is deliberately
-aligned first. Owner decision required (see Next actions).
+**Sitemap source-vs-deployment discrepancy — RESOLVED (`re-checked`,
+2026-10-06):** before T-020 the deployed `sitemap.xml` had **21** URLs including
+the apex `https://sapiensmetric.eu/`, while the repository generator produced
+**20** and omitted it. Under the owner-approved T-020 policy the repository
+generator is now **authoritative**: the sitemap lists the **20** public EN/LT
+URLs (both locale homes `/en/` and `/lt/`, the five public pages per locale, the
+articles index, and the three articles), with reciprocal EN/LT alternates,
+canonical HTTPS non-www URLs, trailing slashes, and truthful `lastmod` dates. The
+**root remembered-language redirect is deliberately excluded**, and
+auth/account/admin/assessment are excluded. The generator is derived from
+repository content (no fixed URL ceiling; new pages/articles are picked up
+automatically). The T-020 deployment **intentionally replaced the 21-URL
+production sitemap with the generated 20-URL version**; production
+`sitemap.xml` and `robots.txt` bytes now match the artifact.
+
+> **Search Console:** No causal link has been established between the previous
+> 20-versus-21 URL discrepancy and Search Console's sitemap ingestion failure.
+> Source/deployment consistency is resolved; Search Console ingestion remains
+> unconfirmed (see §4 and Next actions).
 
 **PageSpeed** (`checked-2026-09-27`, historical lab, tested the then-current `www`
 URL; not a guarantee for later releases):
@@ -105,7 +113,7 @@ response compression, oversized displayed logo.
 | GA4 measurement ID | **G-0CR4C3KPH3** (`external`, owner-created) |
 | GTM web container | **GTM-WRBRTKRT** (`external`, owner-created) |
 | Analytics consent integration + GTM JSON | `implemented`; GTM file corrected to the **UI import format** and validated locally (`pnpm verify:gtm`) |
-| Consent-gated frontend deployed | **`deployed`** 2026-09-28 (current artifact `64c4941cba87d08c`, operation `mulkgfk6-0768754a1976`) |
+| Consent-gated frontend deployed | **`deployed`** 2026-09-28 (artifact `64c4941cba87d08c`, operation `mulkgfk6-0768754a1976`; **superseded** by the current artifact `7facf7e558173e17`) |
 | Consent Mode command format | **Fixed and deployed 2026-09-28**: consent commands are gtag **Arguments objects** (`createGtagLayerPush`), not plain Arrays. Production browser checks: fresh/Reject → **no Google requests**; Accept + restored consent → `gtm.js?id=GTM-WRBRTKRT` with `google_tag_data.ics.usedDefault:true`, `analytics_storage` granted, advertising denied |
 | GTM import (SM-Workspace) | **owner-confirmed done**: corrected container imported into **SM-Workspace**; **both tags reviewed** by the owner |
 | GTM container publication | **owner-confirmed published** 2026-09-28, version name **"GA4 – consent-gated public site"**; the **numerical version ID was not supplied** and is not asserted |
@@ -168,8 +176,33 @@ response compression, oversized displayed logo.
   Rollback: `pnpm deploy:rollback -- --operation mux030hl-e8032efd1883 --confirm`.
   **Post-note (2026-10-06):** `robots.txt` is now generated from
   `apps/web/app/robots.ts` without a `Host` directive (matches production; no
-  production copy needed). The deployed `sitemap.xml` still lists the apex root
-  that the repository generator omits — see the sitemap discrepancy in §3.
+  production copy needed).
+- **T-020 navigation/markup + sitemap deployment done** (`re-checked`,
+  2026-10-06 22:38–22:42 EEST): a **new operation `mux3032z-9200a465dd4a`**
+  deployed artifact **`779cf9f32f90f277`** (167 files; 8 create / 159 overwrite),
+  baseline `dist/deploy-baseline/mux3032z-9200a465dd4a/` (159 backups). The exact
+  planned artifact was applied without a rebuild between plan and apply.
+  `.htaccess`, `.well-known/**`, unrelated remote files and previous hashed assets
+  were preserved; auth/account/admin/assessment remain excluded (404). Post-deploy
+  `pnpm deploy:verify` all ok; production `/robots.txt` and `/sitemap.xml` are
+  **byte-identical** to the artifact; the production sitemap has **20** URLs with
+  the root redirect excluded (intentional replacement of the previous 21-URL
+  file). Rollback:
+  `pnpm deploy:rollback -- --operation mux3032z-9200a465dd4a --confirm`.
+- **HTML-conformance fixes deployment done** (`re-checked`, 2026-10-06
+  23:08–23:12 EEST): a **new operation `mux42oos-932ee20e6c2c`** deployed artifact
+  **`7facf7e558173e17`** (167 files; 7 create / 160 overwrite), fresh baseline
+  `dist/deploy-baseline/mux42oos-932ee20e6c2c/` (160 backups). Exact planned
+  artifact applied without a rebuild; `.htaccess`/`.well-known`/unrelated files and
+  previous hashed assets preserved; app routes remain 404. Post-deploy: all
+  `pnpm deploy:verify` routes ok; production `/404.html`, `/en/`, `/lt/`, an
+  article page, `/robots.txt` and `/sitemap.xml` are **byte-identical** to the
+  artifact; **Nu HTML Checker on the deployed EN/LT pages and `/404.html` reports
+  0 errors / 0 warnings** (only informational trailing-slash notices). Two distinct
+  404 facts: the deployed `/404.html` **document is valid**, while **unknown URLs
+  may still be answered by Apache's own 404** (separate custom-ErrorDocument issue,
+  unchanged). Rollback:
+  `pnpm deploy:rollback -- --operation mux42oos-932ee20e6c2c --confirm`.
 - **Tooling gap found and fixed during deploy:** the first `apply` stopped with
   **HTTP 409** on `PUT _next/static/o_lQS7h7de0Z3kNMCfWnJ/_buildManifest.js` because
   the remote lacked that **new** collection and the tool never issued `MKCOL`. The
@@ -197,7 +230,7 @@ response compression, oversized displayed logo.
 4. **Future releases**: rebuild, then `pnpm deploy:plan` → `pnpm deploy:apply`
    (new operation) → `pnpm deploy:verify`. Rollback any release with
    `pnpm deploy:rollback -- --operation <operationId> --confirm`. The current
-   release's baseline is `dist/deploy-baseline/mux030hl-e8032efd1883/`.
+   release's baseline is `dist/deploy-baseline/mux42oos-932ee20e6c2c/`.
 5. **Manifest MIME mapping (owner/hosting, `pending`):** production serves
    `/branding/site.webmanifest` **200 but with no `Content-Type` header** (Apache
    has no `.webmanifest` mapping), which risks browsers rejecting the manifest.
@@ -207,14 +240,14 @@ response compression, oversized displayed logo.
 6. **Custom 404 handling (hosting observation, `pending`):** unknown paths return
    Apache's own 404 page and the ErrorDocument attempt also 404s; the generated
    `/404.html` **is** deployed (200, with the icon links). This is pre-existing
-   hosting configuration, not caused by T-018.
-7. **Sitemap apex-root discrepancy (`pending`, owner decision):** the deployed
-   `sitemap.xml` lists `https://sapiensmetric.eu/` but the generator
-   (`apps/web/app/sitemap.ts`) does not. Decide the canonical policy (list the
-   apex redirect page, or redirect `/` permanently and list a canonical locale
-   home), then align the generator **before** the next deployment so a normal
-   build does not drop the entry. Do **not** overwrite production or change the
-   root redirect/canonical policy without that decision.
+   hosting configuration, not caused by T-018/T-020.
+7. **HTML-conformance fixes (`done`, deployed 2026-10-06):** the nested-document
+   404 (`app/global-not-found.tsx`) and the consent `<section>`'s redundant
+   `role="region"` are fixed and **deployed** in artifact `7facf7e558173e17`
+   (operation `mux42oos-932ee20e6c2c`). Nu HTML Checker (`scripts/verify-html-conformance.mjs`)
+   on the built export **and on the deployed EN/LT pages and `/404.html`** reports
+   **0 errors / 0 warnings**; only the React informational "trailing slash on void
+   elements" notices remain, intentionally **not** post-processed.
 8. Optional future: GitHub Actions deployment (not started).
 
 > **Analytics status:** container published and Realtime views owner-confirmed;
@@ -250,6 +283,30 @@ response compression, oversized displayed logo.
   auth/account/admin 404). **No browser visual check** of the rendered tab icon
   (no browser in the session); the missing manifest `Content-Type` and the 404
   ErrorDocument behaviour were observed on production.
+- `re-checked` (2026-10-06, T-020): implementation + frontend-only deployment of
+  the hamburger navigation and reproducible sitemap (artifact
+  `779cf9f32f90f277`, operation `mux3032z-9200a465dd4a`, baseline
+  `dist/deploy-baseline/mux3032z-9200a465dd4a/`, 167 files; deployed
+  22:38–22:42 EEST); plan/apply used the same artifact (no rebuild in between);
+  `.htaccess`/`.well-known`/hashed assets preserved; excluded routes 404;
+  production `robots.txt`/`sitemap.xml` byte-identical to the artifact with a
+  **20-URL** sitemap (root excluded). **Headless-Chromium evidence**
+  (`scripts/verify-navigation-runtime.mjs`) was run against the local static
+  export at **360/390/768/1280 px in EN and LT** and against **production**:
+  no horizontal overflow on the public pages, landmarks + skip link, single `h1`,
+  image alt text, drawer open/close, focus entry/containment/return, Escape and
+  backdrop dismissal, route selection, locale-route preservation, drawer touch
+  targets ≥ 44 px, and the consent banner stacking/inert/restoration with the
+  drawer open. See `docs/testing.md` for the exact checks.
+- `re-checked` (2026-10-06, T-020 HTML-conformance follow-up): the corrected
+  artifact **`7facf7e558173e17`** (operation `mux42oos-932ee20e6c2c`, baseline
+  `dist/deploy-baseline/mux42oos-932ee20e6c2c/`, 167 files; 23:08–23:12 EEST) was
+  applied without a rebuild; production `/404.html`, `/en/`, `/lt/`, an article
+  page, `/robots.txt` and `/sitemap.xml` are **byte-identical** to the artifact;
+  **Nu HTML Checker** on the built export and on the deployed EN/LT pages and
+  `/404.html` = **0 errors / 0 warnings** (informational trailing-slash notices
+  only). The deployed `/404.html` is a valid single document; unknown URLs may
+  still be answered by Apache's own 404 (separate, unchanged).
 - `checked-2026-09-27` (external): redirect, query-retention, sitemap/robots, and
   PageSpeed results above.
 - `owner-reported`: hosting, provider, `skygym.lt`, Bacloud timing, Search Console
@@ -264,9 +321,13 @@ response compression, oversized displayed logo.
   "GA4 – consent-gated public site"; numerical version ID not supplied), the Tag
   Assistant consent states, the GA4 Enhanced Measurement change (only history-based
   page changes disabled), and the GA4 Realtime page/article views.
-- Not claimed: successful Search Console sitemap ingestion/indexing; GA4
-  report-level verification beyond the owner's Realtime view; the cause of the
-  Realtime trailing-slash duplicate; the GTM numerical version ID; or a specific
-  deployed **commit** (the deployed **artifact id** is `97e89b25b1edd8a9`; T-014
-  and T-018 are committed, archived, and pushed; T-019 is a local UI and is
-  **not** deployed).
+- Search Console: **no causal link has been established** between the previous
+  20-versus-21 URL discrepancy and Search Console's sitemap ingestion failure;
+  source/deployment consistency is resolved, but **Search Console ingestion
+  remains unconfirmed**. Not claimed: successful Search Console sitemap
+  ingestion/indexing; GA4 report-level verification beyond the owner's
+  Realtime view; the cause of the Realtime trailing-slash duplicate; the GTM
+  numerical version ID; or a specific deployed **commit** (the current deployed
+  **artifact id** is `7facf7e558173e17`; the T-020 changes were deployed from the
+  working tree and are **not yet committed**; T-014/T-018/T-019 statuses are
+  recorded above).

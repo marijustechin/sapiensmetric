@@ -1,9 +1,10 @@
 # Assessment attempts API — T-017 (synthetic, local/test only)
 
-Status: **T-017 deliverable for human review (READY_FOR_HUMAN_REVIEW)**. This is
-an authenticated API/DB vertical slice for starting, saving, resuming, and
-submitting an assessment attempt. It uses **synthetic content only** and is
-**not publication-ready**. No web UI is part of this task.
+Status: **T-017 approved and archived (2026-09-28)**. This is an authenticated
+API/DB vertical slice for starting, saving, resuming, and submitting an
+assessment attempt. It uses **synthetic content only** and is **not
+publication-ready**. T-017 itself added no web UI; the local browser surface was
+added later by T-019 (see `docs/assessment-ui.md`).
 
 ## 1. Scope and boundaries
 

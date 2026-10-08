@@ -22,7 +22,7 @@ export function SiteFooter({ locale }: { locale: AppLocale }) {
   return (
     <footer className="mt-16 border-t border-slate-200 bg-slate-50">
       <div className="mx-auto flex max-w-5xl flex-col gap-4 px-4 py-8 text-sm sm:px-6 md:flex-row md:justify-between">
-        <nav aria-label="Footer" className="flex flex-wrap gap-x-4 gap-y-2">
+        <nav aria-label={strings.footerNav} className="flex flex-wrap gap-x-4 gap-y-2">
           {NAV_ITEMS.map((item) => (
             <Link
               key={item.key}

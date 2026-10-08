@@ -9,13 +9,14 @@ A serious cognitive-ability and knowledge-assessment platform.
   frontend + static-export directory routes + a deployed public website.** A
   buildable pnpm monorepo with a static web app (Next.js App Router, static
   export as `<route>/index.html`), a NestJS/Fastify API (health + `/auth/*`),
-  shared Zod contracts, and a local MySQL 8.0.46 environment. No assessment items,
-  scoring, or norming yet. The **frontend-only public site is deployed** to
-  `https://sapiensmetric.eu`; the API is not deployed.
+  shared Zod contracts, and a local MySQL 8.0.46 environment. No assessment items
+  or norming yet (a pure scoring core exists, T-016). The **frontend-only public
+  site is deployed** to `https://sapiensmetric.eu`; the API is not deployed.
 
-T-001..T-014 are complete, approved, and archived in `tasks/done/`. **T-014 —
+T-001..T-019 are complete, approved, and archived in `tasks/done/`. **T-014 —
 Frontend-only publication preparation** (archived 2026-09-28) delivered the
-reproducible public release (`pnpm build:public` → `dist/public-site/`), the
+repeatable public release (`pnpm build:public` → `dist/public-site/`; repeatable,
+not byte-identical-independent-build — see `docs/deployment-webdav.md`), the
 consent-gated GTM→GA4 integration (D-027), and the WebDAV deployment tooling,
 and deployed it to production (release state: `docs/publication-status.md`).
 **T-015 — Assessment foundations and first knowledge-pilot specification**
@@ -43,7 +44,14 @@ replaced the interim WebP favicon with the owner-supplied PNG/ICO icon set +
 browser surface over the T-017 synthetic assessment API (start → answer → save →
 resume → submit → raw result → history), local/development only, `noindex` and
 excluded from the public release — see `docs/assessment-ui.md`. The owner
-confirmed it works as intended in the browser. There is **no active task**.
+confirmed it works as intended in the browser. **T-020 — Mobile-first navigation,
+markup review, and reproducible public sitemap** (approved and archived
+2026-10-09) replaced the public horizontal navigation with an accessible
+hamburger/drawer menu, performed a focused mobile/markup review, made the sitemap
+reproducible from repository content (20 URLs, root redirect excluded), and fixed
+two HTML-conformance defects (valid global 404; no redundant consent
+`role="region"`); a bounded repository audit was folded in. There is **no active
+task**.
 T-013
 (D-025/D-026) added a bilingual public website
 with original educational content about assessments, SEO metadata, a generated
@@ -115,8 +123,10 @@ root local `.env` (see below); no second API-specific env file is created.
   `docs/assessment-sources.md`. The versioned scoring core is implemented under
   **T-016** (archived) in `@sapiensmetric/assessment`
   (`docs/assessment-scoring.md`); **T-017** (archived) added the synthetic
-  persisted-attempt API slice (`docs/assessments.md`, local/test only). Remaining
-  slices (minimal local synthetic UI, item review pipeline, feedback delivery,
+  persisted-attempt API slice (`docs/assessments.md`, local/test only); **T-019**
+  (archived) added the local synthetic-assessment UI (`docs/assessment-ui.md`), and
+  **T-020** (active) adds the hamburger navigation, mobile/markup review and a
+  reproducible sitemap. Remaining slices (item review pipeline, feedback delivery,
   exposure/retakes) are **not started** and gated on the remaining prerequisites
   and on O-002/O-003/O-006/O-007. Independent content/language review is
   **pending** before any item publication.
@@ -146,10 +156,10 @@ root local `.env` (see below); no second API-specific env file is created.
 - `tasks/` — current task and archived tasks.
 - `TODO.md` — planning index (never authorises work).
 - `scripts/verify.sh` — dependency-free documentation-harness checks
-  (including the archived task records through T-014, the T-008 frontend outputs,
-  the T-007 Google sign-in outputs, the T-010 corrective outputs, the T-014
-  release/analytics/deployment outputs, and the completed T-003/T-004/T-005/T-006
-  outputs).
+  (including the archived task records through T-019 with T-020 active, the T-008
+  frontend outputs, the T-007 Google sign-in outputs, the T-010 corrective
+  outputs, the T-014/T-015/T-016/T-017/T-018/T-019 assessment/release outputs, and
+  the completed T-003/T-004/T-005/T-006 outputs).
 - `scripts/verify-static-export.sh` — dependency-free static-export route
   invariant (run after `pnpm build`; part of `pnpm verify`).
 
