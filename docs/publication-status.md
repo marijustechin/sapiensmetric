@@ -23,15 +23,15 @@ Search Console), `docs/deployment-webdav.md` (WebDAV automation),
 | **T-018 (favicon/manifest)** | `implemented`, **approved and archived** 2026-10-06 (`tasks/done/2026-10-06-favicon-manifest-data.md`); committed/pushed as **`f1d0e69`** |
 | **T-019 (minimal local synthetic-assessment UI)** | `implemented`, **approved and archived** 2026-10-06 (`tasks/done/2026-10-06-minimal-local-synthetic-assessment-ui.md`); owner-confirmed in the browser. **Local/development only — not deployed, not publication-ready.** |
 | **T-020 (hamburger nav, mobile/markup review, reproducible sitemap, HTML-conformance fixes)** | `implemented`, **approved and archived** 2026-10-09 (`tasks/done/2026-10-06-mobile-first-navigation-markup-sitemap.md`); frontend-only deployed 2026-10-06; committed/pushed as **`1b35e03`** |
-| **T-021 (CI and automatic frontend publication)** | `implemented` (`.github/workflows/ci.yml`, `.github/workflows/deploy.yml`, classifier, `baseline`/`--ci` tool support); **automatic publication not yet exercised** — requires the owner to configure the `production` environment secrets. READY_FOR_HUMAN_REVIEW in `tasks/current.md` |
-| Release build | `pnpm build:public` → `dist/public-site/` (`implemented`; artifact present locally) |
+| **T-021 (CI and automatic frontend publication)** | `implemented` **and exercised**: the first automatic push-to-`main` deployment succeeded 2026-10-09 (run #6). READY_FOR_HUMAN_REVIEW in `tasks/current.md` |
+| Release build | `pnpm build:public` → `dist/public-site/` (`implemented`; also built once per CI run) |
 | Public release scope | informational pages + articles only; auth/account/admin/assessment and the API are **excluded** (`implemented`) |
-| **Deployed artifact (current)** | **artifact id `7facf7e558173e17`** (167 files; 7 create / 160 overwrite), operation **`mux42oos-932ee20e6c2c`**, deployed **2026-10-06 23:08–23:12 EEST** (20:08–20:12 UTC) (`re-checked`) — T-020 plus the HTML-conformance fixes (valid global 404, consent `<section>` without a redundant `role`) |
+| **Deployed artifact (current)** | **artifact id `4ad00f748d5c2d7e`**, operation **`mv0jf68i-80ea22b4c68e`**, deployed **2026-10-09 08:54 EEST** (05:54 UTC) by the automatic workflow (source commit `84ec5b1`) — `re-checked`. First CI-deployed release; production now matches CI output rather than a hand-run artifact |
 | Deployment destination | **`https://sapiensmetric.eu:2078/`** (WebDAV URL root; account chrooted to `public_html`; do not append `/public_html/`) (`re-checked`) |
-| Deployment baseline (rollback source) | **`dist/deploy-baseline/mux42oos-932ee20e6c2c/`** (160 backups + `manifest.json`) (`re-checked`) |
-| Rollback command | `pnpm deploy:rollback -- --operation mux42oos-932ee20e6c2c --confirm` |
-| Prior deployments (superseded) | artifact `779cf9f32f90f277`, operation `mux3032z-9200a465dd4a`, 2026-10-06 22:38–22:42 EEST (nav/markup + 20-URL sitemap); artifact `97e89b25b1edd8a9`, operation `mux030hl-e8032efd1883`, 2026-10-06 21:16–21:21 EEST (favicon/manifest); earlier `64c4941cba87d08c` / `mulkgfk6-0768754a1976` |
-| Source HEAD / repo-vs-deployed | source HEAD **`0af704e`** plus the **uncommitted T-020 changes**; deployed artifact id `7facf7e558173e17` — **not** a commit hash |
+| Deployment baseline (rollback source) | CI deployment baseline is the **encrypted `deploy-baseline` Actions artifact** from run `37889657578` (retention 90 days; NOT permanent). Pre-T-021 deployments used local `dist/deploy-baseline/<operationId>/` |
+| Rollback command | Retrieve/decrypt the run's `deploy-baseline` artifact, extract under `dist/deploy-baseline/<operationId>/`, then `pnpm deploy:rollback -- --operation mv0jf68i-80ea22b4c68e --confirm` |
+| Prior deployments (superseded) | artifact `7facf7e558173e17`, operation `mux42oos-932ee20e6c2c`, 2026-10-06 23:08–23:12 EEST (T-020 + HTML-conformance); artifact `779cf9f32f90f277` / `mux3032z-9200a465dd4a`; artifact `97e89b25b1edd8a9` / `mux030hl-e8032efd1883`; earlier `64c4941cba87d08c` / `mulkgfk6-0768754a1976` |
+| Source HEAD / repo-vs-deployed | source `main` at **`028b46c`** (CI deployment record) / deployed from **`84ec5b1`**; deployed artifact id `4ad00f748d5c2d7e` — **not** a commit hash |
 
 ## 2. Hosting (`owner-reported`; plan `owner-confirmed` 2026-10-06)
 
@@ -204,6 +204,20 @@ response compression, oversized displayed logo.
   may still be answered by Apache's own 404** (separate custom-ErrorDocument issue,
   unchanged). Rollback:
   `pnpm deploy:rollback -- --operation mux42oos-932ee20e6c2c --confirm`.
+- **First automatic CI deployment succeeded** (`re-checked`, 2026-10-09, run
+  [#6](https://github.com/marijustechin/sapiensmetric/actions/runs/37889657578)):
+  the `Deploy public frontend` workflow classified the push, ran `pnpm verify`
+  (built the release once), captured + encrypted the pre-deployment baseline
+  off-runner (artifact `deploy-baseline`, run 37889657578), downloaded/checksum-
+  verified/decrypted/extracted/validated it, uploaded the exact artifact
+  (operation `mv0jf68i-80ea22b4c68e`, content artifact `4ad00f748d5c2d7e`),
+  verified production and committed `docs/deployments/20261009T055411Z-84ec5b1….md`
+  (commit `028b46c`). Independent post-check: `/`, `/en/`, `/lt/`, deep links
+  return 200; `auth/account/admin/assessment` return 404; production
+  `robots.txt`/`sitemap.xml` byte-match the repository export and the sitemap has
+  **20** URLs. Two workflow defects were found and fixed during bring-up
+  (fresh-runner baseline extraction destination; deploy-job checkout) — see
+  commits `7d64561` and `84ec5b1`.
 - **Tooling gap found and fixed during deploy:** the first `apply` stopped with
   **HTTP 409** on `PUT _next/static/o_lQS7h7de0Z3kNMCfWnJ/_buildManifest.js` because
   the remote lacked that **new** collection and the tool never issued `MKCOL`. The
@@ -249,15 +263,14 @@ response compression, oversized displayed logo.
    on the built export **and on the deployed EN/LT pages and `/404.html`** reports
    **0 errors / 0 warnings**; only the React informational "trailing slash on void
    elements" notices remain, intentionally **not** post-processed.
-8. **CI/CD owner configuration (`pending`):** T-021 configures `.github/workflows/
-   ci.yml` (verify on PRs) and `deploy.yml` (automatic publication on `main`).
-   Before automatic publication works, the owner must create the `production`
-   GitHub environment secrets `WEBDAV_USERNAME`, `WEBDAV_PASSWORD` and
-   `BACKUP_ENCRYPTION_PASSPHRASE` (store the passphrase copy independently), and
-   optionally the variables `WEBDAV_URL`/`PUBLIC_SITE_URL`/
-   `NEXT_PUBLIC_API_BASE_URL`. Until then the deploy workflow fails safely before
-   any production write. Backups are encrypted Actions artifacts (retention 90
-   days) — not permanent; see `docs/deployment-webdav.md`.
+8. **CI/CD (`done`, configured + exercised):** `.github/workflows/ci.yml` runs
+   `pnpm verify` on PRs; `deploy.yml` publishes `main` automatically. The owner has
+   configured the `production` environment secrets (`WEBDAV_USERNAME`,
+   `WEBDAV_PASSWORD`, `BACKUP_ENCRYPTION_PASSPHRASE`). Remaining operational
+   caveat: deployment baselines are **encrypted Actions artifacts with 90-day
+   retention — not permanent**; the owner must keep the passphrase copy
+   independently and should adopt the documented durable off-host destination
+   before relying on multi-month rollback (see `docs/deployment-webdav.md`).
 
 > **Analytics status:** container published and Realtime views owner-confirmed;
 > Tag Assistant confirmed the consent states. Continued operation depends on the
@@ -316,6 +329,15 @@ response compression, oversized displayed logo.
   `/404.html` = **0 errors / 0 warnings** (informational trailing-slash notices
   only). The deployed `/404.html` is a valid single document; unknown URLs may
   still be answered by Apache's own 404 (separate, unchanged).
+- `re-checked` (2026-10-09): the first **automatic CI deployment** (run #6,
+  commit `84ec5b1`) completed successfully end-to-end — classify → verify
+  (build once) → encrypted baseline (mandatory validation) → upload exact
+  artifact (operation `mv0jf68i-80ea22b4c68e`, content `4ad00f748d5c2d7e`) →
+  production verify → durable record (`docs/deployments/20261009T055411Z-84ec5b1….md`,
+  commit `028b46c`). Independent post-checks: public routes 200, app routes 404,
+  `robots.txt`/`sitemap.xml` byte-match the repository export (20 sitemap URLs).
+  Two bring-up workflow defects were fixed (`7d64561`, `84ec5b1`); both failed
+  **before** any production PUT.
 - `checked-2026-09-27` (external): redirect, query-retention, sitemap/robots, and
   PageSpeed results above.
 - `owner-reported`: hosting, provider, `skygym.lt`, Bacloud timing, Search Console

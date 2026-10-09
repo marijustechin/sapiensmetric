@@ -5,8 +5,9 @@
   dependency upgrades).
 - **Created:** 2026-10-09
 - **Status:** Active — **READY_FOR_HUMAN_REVIEW**. Implemented, committed and
-  pushed. Automatic publication is configured but **not yet exercised** (requires
-  owner-entered GitHub secrets/environment).
+  pushed. Automatic publication is configured **and exercised**: the first
+  push-to-`main` deployment succeeded on 2026-10-09 (run #6, source `84ec5b1`,
+  artifact `4ad00f748d5c2d7e`, operation `mv0jf68i-80ea22b4c68e`).
 - **Baseline:** T-020 archived; source HEAD at T-020 finalisation (`1b35e03`).
 
 ---
