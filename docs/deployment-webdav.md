@@ -116,8 +116,10 @@ Flow and guarantees:
    `BACKUP_ENCRYPTION_PASSPHRASE` secret, and uploads it as the `deploy-baseline`
    artifact (retention 90 days). The `deploy` job then **downloads** it,
    **checksum-verifies** the ciphertext, **decrypts** it with the passphrase,
-   **extracts** it, and **asserts the manifest's operation id and artifact id
-   match this run** — every one of these steps is a normal failing step with **no
+   **extracts** it (via `scripts/restore-baseline.mjs`, which creates the
+   destination parent `dist/deploy-baseline` on the fresh runner), and
+   **asserts the manifest's operation id and artifact id match this run** —
+   every one of these steps is a normal failing step with **no
    `continue-on-error`**. If *any* capture, encryption, upload, download,
    decryption or validation step fails, the deployment job stops and **no
    production PUT is issued**. `continue-on-error` is used **only** for the

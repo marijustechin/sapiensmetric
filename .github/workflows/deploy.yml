@@ -200,7 +200,7 @@ jobs:
         with:
           name: deploy-baseline
           path: baseline-artifact
-      - name: Decrypt and verify the baseline
+      - name: Decrypt, extract and validate the baseline (mandatory)
         env:
           BACKUP_ENCRYPTION_PASSPHRASE: ${{ secrets.BACKUP_ENCRYPTION_PASSPHRASE }}
         run: |
@@ -210,8 +210,13 @@ jobs:
             -in baseline-artifact/baseline.enc \
             -out baseline-artifact/baseline.tar.gz \
             -pass env:BACKUP_ENCRYPTION_PASSPHRASE
-          tar -C dist/deploy-baseline -xzf baseline-artifact/baseline.tar.gz
-          test -f "dist/deploy-baseline/${{ needs.baseline.outputs.operation }}/manifest.json"
+          # Fresh runner: the destination parent does not exist yet; the script
+          # creates it, extracts the archive and validates the manifest.
+          node scripts/restore-baseline.mjs \
+            --archive baseline-artifact/baseline.tar.gz \
+            --target dist/deploy-baseline \
+            --operation "${{ needs.baseline.outputs.operation }}" \
+            --artifact "${{ needs.baseline.outputs.artifact_id }}"
       - name: Assert the persisted baseline matches this run (mandatory)
         env:
           EXPECTED_OPERATION: ${{ needs.baseline.outputs.operation }}
@@ -328,7 +333,7 @@ jobs:
           run-id: ${{ inputs.run_id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path: baseline-artifact
-      - name: Decrypt and verify the baseline
+      - name: Decrypt, extract and validate the baseline (mandatory)
         env:
           BACKUP_ENCRYPTION_PASSPHRASE: ${{ secrets.BACKUP_ENCRYPTION_PASSPHRASE }}
         run: |
@@ -338,8 +343,13 @@ jobs:
             -in baseline-artifact/baseline.enc \
             -out baseline-artifact/baseline.tar.gz \
             -pass env:BACKUP_ENCRYPTION_PASSPHRASE
-          tar -C dist/deploy-baseline -xzf baseline-artifact/baseline.tar.gz
-          test -f "dist/deploy-baseline/${{ inputs.operation }}/manifest.json"
+          EXPECTED_ARTIFACT=$(grep -E '^artifact_id=' baseline-artifact/meta.txt | cut -d= -f2)
+          # Fresh runner: create the destination parent, extract, validate.
+          node scripts/restore-baseline.mjs \
+            --archive baseline-artifact/baseline.tar.gz \
+            --target dist/deploy-baseline \
+            --operation "${{ inputs.operation }}" \
+            --artifact "$EXPECTED_ARTIFACT"
       - name: Restore the baseline originals
         env:
           WEBDAV_USERNAME: ${{ secrets.WEBDAV_USERNAME }}

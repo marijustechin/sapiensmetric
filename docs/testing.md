@@ -544,6 +544,11 @@ detailed step list.
 - The deploy workflow treats baseline persistence/retrieval/validation as
   **mandatory** (no `continue-on-error`); only the supplementary deployment-record
   commit is non-fatal. A baseline failure prevents all production PUTs.
+- `scripts/restore-baseline.test.mjs` (part of `pnpm test:deploy`, 5 tests):
+  exercises baseline extraction **into a fresh temporary directory with no
+  pre-existing `dist/deploy-baseline`** (the observed `tar: dist/deploy-baseline:
+  Cannot open` failure), plus missing-archive, operation-id and artifact-id
+  rejection. The workflow uses the same `restore-baseline.mjs` the test covers.
 - `scripts/deploy-webdav.test.mjs` additionally covers CI credential loading
   (`credentialsFromEnv`, no raw password in the result, TLS-disabled refusal) and
   reserved-path detection. `apply`/`baseline` keep the operation/baseline/resume
