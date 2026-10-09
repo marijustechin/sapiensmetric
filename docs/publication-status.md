@@ -23,15 +23,15 @@ Search Console), `docs/deployment-webdav.md` (WebDAV automation),
 | **T-018 (favicon/manifest)** | `implemented`, **approved and archived** 2026-10-06 (`tasks/done/2026-10-06-favicon-manifest-data.md`); committed/pushed as **`f1d0e69`** |
 | **T-019 (minimal local synthetic-assessment UI)** | `implemented`, **approved and archived** 2026-10-06 (`tasks/done/2026-10-06-minimal-local-synthetic-assessment-ui.md`); owner-confirmed in the browser. **Local/development only — not deployed, not publication-ready.** |
 | **T-020 (hamburger nav, mobile/markup review, reproducible sitemap, HTML-conformance fixes)** | `implemented`, **approved and archived** 2026-10-09 (`tasks/done/2026-10-06-mobile-first-navigation-markup-sitemap.md`); frontend-only deployed 2026-10-06; committed/pushed as **`1b35e03`** |
-| **T-021 (CI and automatic frontend publication)** | `implemented` **and exercised**: the first automatic push-to-`main` deployment succeeded 2026-10-09 (run #6). READY_FOR_HUMAN_REVIEW in `tasks/current.md` |
+| **T-021 (CI and automatic frontend publication)** | `implemented`, **approved and archived** 2026-10-09 (`tasks/done/2026-10-09-ci-automatic-frontend-publication.md`); exercised by automatic deployments (runs #6, #7, #8). |
 | Release build | `pnpm build:public` → `dist/public-site/` (`implemented`; also built once per CI run) |
 | Public release scope | informational pages + articles only; auth/account/admin/assessment and the API are **excluded** (`implemented`) |
-| **Deployed artifact (current)** | **artifact id `4ad00f748d5c2d7e`**, operation **`mv0jf68i-80ea22b4c68e`**, deployed **2026-10-09 08:54 EEST** (05:54 UTC) by the automatic workflow (source commit `84ec5b1`) — `re-checked`. First CI-deployed release; production now matches CI output rather than a hand-run artifact |
+| **Deployed artifact (current)** | **artifact id `989e56bbde959a72`**, operation **`mv117op2-dfa835d70897`**, deployed **2026-10-09 17:13 EEST** (14:13 UTC) by the automatic workflow, run [#8](https://github.com/marijustechin/sapiensmetric/actions/runs/37940657467) (source commit `779822b`) — `re-checked`. Run #8 was triggered by the T-021 finalisation (`scripts/verify.sh`; classifier treats `scripts/` as deploy-relevant) and is **accepted**; no classifier exemption was added. |
 | Deployment destination | **`https://sapiensmetric.eu:2078/`** (WebDAV URL root; account chrooted to `public_html`; do not append `/public_html/`) (`re-checked`) |
-| Deployment baseline (rollback source) | CI deployment baseline is the **encrypted `deploy-baseline` Actions artifact** from run `37889657578` (retention 90 days; NOT permanent). Pre-T-021 deployments used local `dist/deploy-baseline/<operationId>/` |
-| Rollback command | Retrieve/decrypt the run's `deploy-baseline` artifact, extract under `dist/deploy-baseline/<operationId>/`, then `pnpm deploy:rollback -- --operation mv0jf68i-80ea22b4c68e --confirm` |
-| Prior deployments (superseded) | artifact `7facf7e558173e17`, operation `mux42oos-932ee20e6c2c`, 2026-10-06 23:08–23:12 EEST (T-020 + HTML-conformance); artifact `779cf9f32f90f277` / `mux3032z-9200a465dd4a`; artifact `97e89b25b1edd8a9` / `mux030hl-e8032efd1883`; earlier `64c4941cba87d08c` / `mulkgfk6-0768754a1976` |
-| Source HEAD / repo-vs-deployed | source `main` at **`028b46c`** (CI deployment record) / deployed from **`84ec5b1`**; deployed artifact id `4ad00f748d5c2d7e` — **not** a commit hash |
+| Deployment baseline (rollback source) | CI deployment baseline is the **encrypted `deploy-baseline` Actions artifact** from run `37940657467` (retention 90 days; NOT permanent). Pre-T-021 deployments used local `dist/deploy-baseline/<operationId>/` |
+| Rollback command | Retrieve/decrypt the run's `deploy-baseline` artifact, extract under `dist/deploy-baseline/<operationId>/`, then `pnpm deploy:rollback -- --operation mv117op2-dfa835d70897 --confirm` |
+| Prior deployments (superseded) | artifact `4ad00f748d5c2d7e`, operation `mv0jf68i-80ea22b4c68e`, 2026-10-09 08:54 EEST, run #6 (first automatic CI deployment); artifact `7facf7e558173e17` / `mux42oos-932ee20e6c2c`, 2026-10-06 (T-020 + HTML-conformance); artifact `779cf9f32f90f277` / `mux3032z-9200a465dd4a`; artifact `97e89b25b1edd8a9` / `mux030hl-e8032efd1883`; earlier `64c4941cba87d08c` / `mulkgfk6-0768754a1976` |
+| Source HEAD / repo-vs-deployed | source `main` at **`30eacb7`** (run #8's deployment record) / deployed from **`779822b`**; deployed artifact id `989e56bbde959a72` — **not** a commit hash |
 
 ## 2. Hosting (`owner-reported`; plan `owner-confirmed` 2026-10-06)
 
@@ -114,7 +114,7 @@ response compression, oversized displayed logo.
 | GA4 measurement ID | **G-0CR4C3KPH3** (`external`, owner-created) |
 | GTM web container | **GTM-WRBRTKRT** (`external`, owner-created) |
 | Analytics consent integration + GTM JSON | `implemented`; GTM file corrected to the **UI import format** and validated locally (`pnpm verify:gtm`) |
-| Consent-gated frontend deployed | **`deployed`** 2026-09-28 (artifact `64c4941cba87d08c`, operation `mulkgfk6-0768754a1976`; **superseded** by the current artifact `7facf7e558173e17`) |
+| Consent-gated frontend deployed | **`deployed`** 2026-09-28 (artifact `64c4941cba87d08c`, operation `mulkgfk6-0768754a1976`; **superseded** by later artifacts — current `989e56bbde959a72`) |
 | Consent Mode command format | **Fixed and deployed 2026-09-28**: consent commands are gtag **Arguments objects** (`createGtagLayerPush`), not plain Arrays. Production browser checks: fresh/Reject → **no Google requests**; Accept + restored consent → `gtm.js?id=GTM-WRBRTKRT` with `google_tag_data.ics.usedDefault:true`, `analytics_storage` granted, advertising denied |
 | GTM import (SM-Workspace) | **owner-confirmed done**: corrected container imported into **SM-Workspace**; **both tags reviewed** by the owner |
 | GTM container publication | **owner-confirmed published** 2026-09-28, version name **"GA4 – consent-gated public site"**; the **numerical version ID was not supplied** and is not asserted |
@@ -218,6 +218,14 @@ response compression, oversized displayed logo.
   **20** URLs. Two workflow defects were found and fixed during bring-up
   (fresh-runner baseline extraction destination; deploy-job checkout) — see
   commits `7d64561` and `84ec5b1`.
+- **Automatic deployment re-run on T-021 finalisation** (`re-checked`, 2026-10-09,
+  run [#8](https://github.com/marijustechin/sapiensmetric/actions/runs/37940657467)):
+  the T-021 archive commit (`779822b`) touched `scripts/verify.sh`, which the
+  conservative classifier treats as deploy-relevant, so a fresh automatic
+  deployment ran and succeeded — artifact `989e56bbde959a72`, operation
+  `mv117op2-dfa835d70897`, baseline artifact run `37940657467`, record commit
+  `30eacb7`. This redeployment is **accepted**; the classifier was **not** changed
+  to add a housekeeping exemption.
 - **Tooling gap found and fixed during deploy:** the first `apply` stopped with
   **HTTP 409** on `PUT _next/static/o_lQS7h7de0Z3kNMCfWnJ/_buildManifest.js` because
   the remote lacked that **new** collection and the tool never issued `MKCOL`. The
@@ -337,7 +345,10 @@ response compression, oversized displayed logo.
   commit `028b46c`). Independent post-checks: public routes 200, app routes 404,
   `robots.txt`/`sitemap.xml` byte-match the repository export (20 sitemap URLs).
   Two bring-up workflow defects were fixed (`7d64561`, `84ec5b1`); both failed
-  **before** any production PUT.
+  **before** any production PUT. A subsequent automatic deployment (run #8,
+  source `779822b`) succeeded — artifact `989e56bbde959a72`, operation
+  `mv117op2-dfa835d70897`, baseline run `37940657467`, record commit `30eacb7` —
+  and is the **current** deployment.
 - `checked-2026-09-27` (external): redirect, query-retention, sitemap/robots, and
   PageSpeed results above.
 - `owner-reported`: hosting, provider, `skygym.lt`, Bacloud timing, Search Console
@@ -359,6 +370,6 @@ response compression, oversized displayed logo.
   ingestion/indexing; GA4 report-level verification beyond the owner's
   Realtime view; the cause of the Realtime trailing-slash duplicate; the GTM
   numerical version ID; or a specific deployed **commit** (the current deployed
-  **artifact id** is `7facf7e558173e17`; the T-020 changes were deployed from the
+  **artifact id** is `989e56bbde959a72`; the T-020 changes were deployed from the
   working tree and are **not yet committed**; T-014/T-018/T-019 statuses are
   recorded above).

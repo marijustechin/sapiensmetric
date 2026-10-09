@@ -12,17 +12,18 @@ authorises work, and only one task is active at a time.
   `ci.yml` runs `pnpm verify` on pull requests; `deploy.yml` builds the release
   once on `main`, persists an encrypted pre-deployment baseline off-runner,
   publishes the exact verified artifact over WebDAV, verifies production and
-  records the deployment. The first automatic deployment succeeded 2026-10-09
-  (artifact `4ad00f748d5c2d7e`, operation `mv0jf68i-80ea22b4c68e`); see
-  `docs/deployment-webdav.md`.
+  records the deployment. Automatic deployments succeeded 2026-10-09 (run #6:
+  artifact `4ad00f748d5c2d7e`, operation `mv0jf68i-80ea22b4c68e`; **current**
+  run #8: artifact `989e56bbde959a72`, operation `mv117op2-dfa835d70897`); see
+  `docs/deployment-webdav.md` and `docs/publication-status.md`.
 - **T-020 (Mobile-first navigation, markup review, and
   reproducible public sitemap)** was approved and archived on 2026-10-09 (record:
   `tasks/done/2026-10-06-mobile-first-navigation-markup-sitemap.md`): the
   accessible hamburger/drawer navigation, mobile/markup review, the
   content-generated 20-URL public sitemap, two HTML-conformance fixes, and the
   bounded repository-audit corrections (`docs/audit-2026-10-09.md`). Frontend-only
-  deployed (current artifact `7facf7e558173e17`, operation
-  `mux42oos-932ee20e6c2c`); see `docs/publication-status.md`.
+  deployed (artifact `7facf7e558173e17`, operation `mux42oos-932ee20e6c2c`;
+  since superseded); see `docs/publication-status.md`.
 - **T-019 (Minimal local synthetic-assessment UI)** was
   approved and archived on 2026-10-06 (record:
   `tasks/done/2026-10-06-minimal-local-synthetic-assessment-ui.md`): a browser
@@ -66,8 +67,8 @@ authorises work, and only one task is active at a time.
   `dist/public-site/`), the consent-gated GTM→GA4 integration (D-027), and the
   WebDAV deployment tooling are complete, committed, and pushed, and the release
   is deployed to `https://sapiensmetric.eu`. The deployed artifact has since been
-  superseded; the **current** artifact is `7facf7e558173e17` (operation
-  `mux42oos-932ee20e6c2c`; T-020).
+  superseded; the **current** artifact is `989e56bbde959a72` (operation
+  `mv117op2-dfa835d70897`; automatic run #8).
 - **Current publication state: `docs/publication-status.md`.** Remaining
   operational follow-ups are tracked there and in
   `docs/publication-checklist.md`: GA4 settings review (remaining Enhanced
