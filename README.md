@@ -50,8 +50,10 @@ markup review, and reproducible public sitemap** (approved and archived
 hamburger/drawer menu, performed a focused mobile/markup review, made the sitemap
 reproducible from repository content (20 URLs, root redirect excluded), and fixed
 two HTML-conformance defects (valid global 404; no redundant consent
-`role="region"`); a bounded repository audit was folded in. There is **no active
-task**.
+`role="region"`); a bounded repository audit was folded in. **T-021 — CI and
+automatic frontend publication** (approved and archived 2026-10-09) added GitHub
+Actions CI and an automatic frontend-only publication pipeline; the first
+automatic deployment succeeded 2026-10-09. There is **no active task**.
 T-013
 (D-025/D-026) added a bilingual public website
 with original educational content about assessments, SEO metadata, a generated

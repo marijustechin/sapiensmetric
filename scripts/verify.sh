@@ -15,8 +15,8 @@
 #   3. The archived T-006..T-011 records contain their exact titles and final
 #      approved statuses; the archived T-006 record contains the required
 #      definition sections, the six exact browser routes, and the access-gate
-#      markers; the T-014..T-020 archives exist with their headings/statuses; and
-#      tasks/current.md declares T-021 active.
+#      markers; the T-014..T-021 archives exist with their headings/statuses; and
+#      tasks/current.md declares that no task is active.
 #   4. docs/decisions.md contains D-016 (heading, and section-scoped date /
 #      O-006 note / verification access gate / review-correction markers),
 #      D-017 (conventional registration), D-018 (Google OIDC), and D-019
@@ -138,9 +138,9 @@ for a in "${archives[@]}"; do
   fi
 done
 
-# --- Invariant 3: T-006..T-020 archived; T-021 active -------------------
+# --- Invariant 3: T-006..T-021 archived; no active task -----------------
 # The archived records' exact headings and final statuses are asserted
-# literally; tasks/current.md must declare T-021 active.
+# literally; tasks/current.md must declare that no task is active.
 
 t006_archive='tasks/done/2026-09-21-email-verification-and-password-reset-delivery.md'
 t006_heading='# T-006 — Email verification and password-reset delivery through generic SMTP (archived)'
@@ -382,10 +382,26 @@ else
   note_fail "T-020 archive does not contain the final approved status"
 fi
 
-if grep -qxF '# T-021 — CI and automatic frontend publication (active)' tasks/current.md; then
+t021_archive='tasks/done/2026-10-09-ci-automatic-frontend-publication.md'
+t021_heading='# T-021 — CI and automatic frontend publication (archived)'
+t021_status='- **Final status:** Approved (human review granted)'
+
+if grep -qxF -- "$t021_heading" "$t021_archive"; then
   note_pass
 else
-  note_fail "tasks/current.md does not declare T-021 as the active task"
+  note_fail "T-021 archive does not contain the exact archived heading"
+fi
+
+if grep -qxF -- "$t021_status" "$t021_archive"; then
+  note_pass
+else
+  note_fail "T-021 archive does not contain the final approved status"
+fi
+
+if grep -qxF '# No active task' tasks/current.md; then
+  note_pass
+else
+  note_fail "tasks/current.md does not declare that no task is active"
 fi
 
 t007_sections=(

@@ -6,13 +6,15 @@ authorises work, and only one task is active at a time.
 
 ## Now
 
-- **T-021 (CI and automatic frontend publication)** is the **active task** —
-  READY_FOR_HUMAN_REVIEW. GitHub Actions `ci.yml` runs `pnpm verify` on pull
-  requests; `deploy.yml` builds the release once on `main`, persists an encrypted
-  pre-deployment baseline off-runner, publishes the exact verified artifact over
-  WebDAV, verifies production and records the deployment. Automatic publication
-  awaits owner-configured `production` environment secrets; see
-  `docs/deployment-webdav.md`. Committed and pushed; not archived.
+- **No active task.** **T-021 (CI and automatic frontend publication)** was
+  approved and archived on 2026-10-09 (record:
+  `tasks/done/2026-10-09-ci-automatic-frontend-publication.md`): GitHub Actions
+  `ci.yml` runs `pnpm verify` on pull requests; `deploy.yml` builds the release
+  once on `main`, persists an encrypted pre-deployment baseline off-runner,
+  publishes the exact verified artifact over WebDAV, verifies production and
+  records the deployment. The first automatic deployment succeeded 2026-10-09
+  (artifact `4ad00f748d5c2d7e`, operation `mv0jf68i-80ea22b4c68e`); see
+  `docs/deployment-webdav.md`.
 - **T-020 (Mobile-first navigation, markup review, and
   reproducible public sitemap)** was approved and archived on 2026-10-09 (record:
   `tasks/done/2026-10-06-mobile-first-navigation-markup-sitemap.md`): the
@@ -112,6 +114,13 @@ authorises work, and only one task is active at a time.
 
 ## Next (not yet authorised)
 
+- **Versioned astronomy draft bank, review eligibility, and local
+  post-submission feedback (proposed).** A repository-managed, server-only
+  bilingual draft bank covering the owner's 25 astronomy topics, with typed
+  review-evidence/publication-eligibility metadata and post-submission
+  explanations/sources for the submitted attempt. Local-only and not
+  publication-ready; drafts remain unreviewed. Scoped in `tasks/current.md` when
+  authorised.
 - **Proposed next slice (not started or authorised): item review pipeline, form
   assembly, and pilot delivery/data design.** The two-role item review pipeline,
   session-form assembly, and the attempt-lifecycle/data-minimisation design — see

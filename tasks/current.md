@@ -1,51 +1,53 @@
-# T-021 — CI and automatic frontend publication (active)
+# No active task
 
-- **ID:** T-021
-- **Type:** CI/CD + release tooling (GitHub Actions; no application redesign, no
-  dependency upgrades).
-- **Created:** 2026-10-09
-- **Status:** Active — **READY_FOR_HUMAN_REVIEW**. Implemented, committed and
-  pushed. Automatic publication is configured **and exercised**: the first
-  push-to-`main` deployment succeeded on 2026-10-09 (run #6, source `84ec5b1`,
-  artifact `4ad00f748d5c2d7e`, operation `mv0jf68i-80ea22b4c68e`).
-- **Baseline:** T-020 archived; source HEAD at T-020 finalisation (`1b35e03`).
+No task is currently authorised. `TODO.md` is the planning index and never
+authorises work; a task must be scoped in this file and approved by a human before
+any work starts.
 
----
+## Recently completed
 
-> T-021 adds GitHub Actions CI (`pnpm verify` on pull requests) and an automatic,
-> frontend-only publication pipeline: a push to `main` builds the public release
-> **once**, captures a durable pre-deployment baseline, uploads the exact verified
-> artifact via the existing WebDAV tooling, verifies production, and records the
-> deployment. Failed prerequisite checks must prevent deployment. API deployment,
-> DNS, Google accounts and hosting configuration are out of scope.
+- **T-021 — CI and automatic frontend publication** was approved and archived on
+  **2026-10-09**. Record:
+  `tasks/done/2026-10-09-ci-automatic-frontend-publication.md`. It added GitHub
+  Actions CI (`pnpm verify` on PRs) and an automatic, frontend-only publication
+  pipeline (build once → encrypted off-runner baseline → exact-artifact WebDAV
+  upload → production verify → durable record), and the first automatic deployment
+  succeeded the same day (artifact `4ad00f748d5c2d7e`, operation
+  `mv0jf68i-80ea22b4c68e`).
+- **T-020 — Mobile-first navigation, markup review, and reproducible public
+  sitemap** was approved and archived on 2026-10-09 (record:
+  `tasks/done/2026-10-06-mobile-first-navigation-markup-sitemap.md`).
+- **T-019 — Minimal local synthetic-assessment UI** was approved and archived on
+  2026-10-06 (record: `tasks/done/2026-10-06-minimal-local-synthetic-assessment-ui.md`).
 
-## Scope
+## Proposed next task (not started or authorised)
 
-1. **CI**: PRs run `pnpm verify` and never deploy; `main` runs `pnpm verify`
-   before any deployment; a manual trigger exists for recovery/redeployment.
-2. **Build once / deploy those bytes**: the deployment job reuses the verified
-   artifact (no rebuild), keeping frontend-only scope.
-3. **Change classification**: doc-only and API-only changes must not deploy;
-   web/public assets, shared build deps, lockfile and release/deployment tooling
-   must deploy; unknown relevant changes favour deployment.
-4. **Credentials**: GitHub secrets/environment; the WebDAV tool reads them from the
-   environment without an env file and never prints values; TLS verification and
-   reserved-path protection preserved.
-5. **Recoverable backups**: baseline captured and persisted (encrypted artifact,
-   explicit retention + owner-held recovery key) before any overwrite; retrieval
-   procedure documented.
-6. **Concurrency/failure**: one production write at a time; no mid-flight cancel;
-   stale-release guard; explicit manual override; fresh operation per deployment;
-   same-operation resume only.
-7. **Verify + record**: post-deploy route/deep-link/robots/sitemap/excluded checks;
-   durable deployment record (source SHA, artifact id, operation id, backup
-   location, time, outcome).
-8. **Docs**: canonical deployment/publication/testing docs updated.
+- **Versioned astronomy draft bank, review eligibility, and local
+  post-submission feedback** — a repository-managed, server-only bilingual draft
+  bank covering the owner's 25 astronomy topics, with typed review-evidence and
+  publication-eligibility metadata and post-submission explanations/sources for
+  the submitted attempt. Drafts remain unreviewed; local-only and not
+  publication-ready. Scoped in `tasks/current.md` when authorised.
+- Later assessment slices (item review pipeline, exposure tracking, retake
+  policy) remain proposed and gated on the prerequisites below.
 
-## Reading order
+## Remaining prerequisites for a public assessment release
 
-1. `AGENTS.md`
-2. `docs/deployment-webdav.md`
-3. `docs/release-hosting.md`
-4. `docs/publication-status.md`
-5. `docs/testing.md`
+- Independent astronomy content review and independent EN/LT language review
+  (**pending**).
+- Data-protection/governance (O-006); IP review (O-007); validation/norming plan
+  (O-003).
+- **API deployment** to a Node.js-capable provider (not yet selected) for any
+  live, registered assessment.
+- The provenance **policy** was approved in T-015 (D-T015-6); this is policy
+  approval, **not** review of individual items.
+
+## Preserved follow-ups (owned outside a task)
+
+- Hosting plan (owner-confirmed 2026-10-06): frontend **vHost** is temporary;
+  planned **Bacloud** migration in ~3 months (**tentative**), no Node.js runtime;
+  backend on a separate Node.js provider (not yet selected). See
+  `docs/publication-status.md` and `docs/decisions.md` (D-026).
+- Publication/analytics items, the **webmanifest `Content-Type`**, the **custom
+  404** handling, and Search Console ingestion (unconfirmed) remain tracked in
+  `docs/publication-status.md` and `docs/publication-checklist.md`.
