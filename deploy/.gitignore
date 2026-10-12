@@ -1,0 +1,7 @@
+# Host-only deployment inputs (never commit).
+images.env
+hostenv
+*.local
+deploy-*.log
+secrets/*
+!secrets/README.md

@@ -32,11 +32,12 @@ const REQUEST_MAX_PER_IP = 3;
 const RESET_CONFIRM_WINDOW_MS = 60 * 60 * 1000;
 const RESET_CONFIRM_MAX_PER_IP = 5;
 
-/** Result of the conventional registration flow (D-017). */
+/** Result of the conventional registration flow (D-017; T-023 closed review). */
 export type RegisterOutcome =
   | { status: 'created' }
   | { status: 'duplicate' }
-  | { status: 'delivery-failed' };
+  | { status: 'delivery-failed' }
+  | { status: 'disabled' };
 
 @Injectable()
 export class AuthService {
@@ -103,6 +104,11 @@ export class AuthService {
     password: string,
     locale: Locale,
   ): Promise<RegisterOutcome> {
+    // T-023: public credentials registration can be disabled at the API boundary
+    // (closed review environment). Enforced before any account creation or email.
+    if (!this.registrationEnabled()) {
+      return { status: 'disabled' };
+    }
     const normalized = this.normalizeEmail(email);
     const existing = await this.users.findByEmail(normalized);
     if (existing) {
@@ -309,6 +315,11 @@ export class AuthService {
 
   cookieName(): string {
     return REFRESH_COOKIE_NAME;
+  }
+
+  /** T-023: whether public credentials registration is enabled in this environment. */
+  registrationEnabled(): boolean {
+    return this.config.auth.registrationEnabled;
   }
 
   cookiePath(): string {

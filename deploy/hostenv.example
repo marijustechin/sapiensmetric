@@ -1,0 +1,19 @@
+# T-023 — non-secret host environment for the SapiensMetric closed review.
+# Copy to deploy/hostenv (host-only, git-ignored) and fill in. Never put secrets
+# here; secret VALUES live in file secrets (see deploy/secrets/README.md).
+
+# --- Database (non-secret identifiers) ---
+MYSQL_DATABASE=sapiensmetric_review
+MYSQL_USER=sapiensmetric_app
+
+# --- Public origins (must be canonical, equal for CORS_ORIGIN/PUBLIC_APP_URL) ---
+CORS_ORIGIN=https://sapiensmetric.eu
+PUBLIC_APP_URL=https://sapiensmetric.eu
+
+# --- Transactional email (reuse the existing AUTHORISED SapiensMetric SMTP
+# configuration; do NOT change the sender and do NOT print values) ---
+SMTP_HOST=smtp.example.invalid
+SMTP_PORT=465
+SMTP_SECURE=true
+SMTP_USER=example
+SMTP_FROM=website@sapiensmetric.eu

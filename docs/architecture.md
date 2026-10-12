@@ -372,6 +372,34 @@ bilingual **draft** bank covering the owner's 25 astronomy topics:
   production) with distinct `astronomy-draft` routes; the synthetic flow is
   unchanged. Results remain descriptive raw counts.
 
+## T-023 closed production review on the shared Oracle host
+
+T-023 (`docs/closed-review-deployment.md`) hosts the API as a **separate Compose
+project** (`deploy/compose.yaml`, project `sapiensmetric-review`) on the shared
+`sokoladas-demo` Oracle host, next to — not inside — the Sokoladas stack. The API
+serves `https://api.sapiensmetric.eu` through the **existing** Nginx edge (the
+additive routing lives in the authoritative
+`sm-oracle-infra/deploy/proxy/nginx.conf`; no competing proxy). MySQL 8.0.46 (the
+project's supported version) runs in its own container and volume; this project
+publishes no host ports, and the API joins the existing Sokoladas edge network so
+the proxy reaches it by service name.
+
+The environment is **closed**: `REGISTRATION_ENABLED=false` disables public
+credentials registration at the API boundary (`403 REGISTRATION_DISABLED`);
+`GOOGLE_ALLOW_ACCOUNT_CREATION=false` stops Google creating accounts; the astronomy
+draft is served under `NODE_ENV=production` through the separate default-off
+`ASSESSMENT_REVIEW_ENABLED` capability and is restricted to accounts the operator
+marked `users.reviewEligible` (server-enforced; `403 REVIEW_NOT_AUTHORISED`
+otherwise). The owner account is created by the `owner:provision` operator CLI,
+never an HTTP endpoint. Secrets are file-backed via `JWT_SECRET_FILE` /
+`MYSQL_PASSWORD_FILE` / `SMTP_PASSWORD_FILE`.
+
+`/sitemap.xml` is a Yoast-style `<sitemapindex>` referencing
+`/page-sitemap.xml` and `/article-sitemap.xml`, all generated from repository
+content (canonical HTTPS non-www, truthful `lastmod`, EN/LT alternates). The
+public-only release profile and its exclusion checks are unchanged; the
+closed-release profile is separate and validated by its own script.
+
 ## T-007 Google OpenID Connect sign-in (implemented, approved, archived)
 
 T-007 adds optional Google OIDC sign-in (authorization-code flow with PKCE)

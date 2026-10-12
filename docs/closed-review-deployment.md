@@ -94,27 +94,35 @@ sapiensmetric-review project:
 - **Secrets:** root-managed files under `/etc/sapiensmetric/secrets/`, mounted
   read-only; never printed, committed, bundled, or reused from Sokoladas.
 
-## 5. Application prerequisites (in the SapiensMetric repository; not yet done)
+## 5. Application prerequisites — implemented (T-023)
 
-These do not need server access and are the next implementation work:
+Repository implementation is complete (verified by `pnpm verify`):
 
-- **No Dockerfile exists** for `apps/api` — production image + ARM64 build/publish
-  is a hard prerequisite for deployment.
-- The API config (`apps/api/src/config/env.ts`) currently requires **all** SMTP
-  values (not optional) and requires `CORS_ORIGIN == PUBLIC_APP_URL`. A closed
-  review deployment therefore needs SMTP credentials and a defined web origin.
-- **Closed-review capability:** a new default-off flag (separate from the
-  development-only `ASSESSMENT_*` flags) that enables draft review only for
-  server-enforced authorised test accounts under `NODE_ENV=production`.
-- **Public registration disabled at the API boundary**; **Google OAuth must not
-  create accounts** (leave Google disabled if no production Google config).
-- **Operator provisioning workflow** for the owner's account (no bootstrap HTTP
-  endpoint, no dev DB clone, no reused sessions).
-- **Frontend closed-release profile** publishing the EN/LT
-  login/account/admin/assessment shells (registration unavailable, CTAs removed,
-  private routes `noindex`, out of sitemap and GA4/GTM), preserving the existing
-  public-only profile and adding closed-release checks rather than deleting
-  exclusions.
+- **Production Dockerfile** `apps/api/Dockerfile` (multi-stage, non-root UID
+  10001, ARM64; emits `linux/arm64`) plus `.github/workflows/api-image.yml`
+  publishing the image to GHCR by digest.
+- **Closed-review capability** `ASSESSMENT_REVIEW_ENABLED` (default off,
+  production-capable) with **server-enforced** `users.reviewEligible`
+  (migration `1781440000006`); unauthorised accounts get `403
+  REVIEW_NOT_AUTHORISED`.
+- **Registration disabled** at the API boundary (`REGISTRATION_ENABLED` → `403
+  REGISTRATION_DISABLED`) and **Google cannot create accounts**
+  (`GOOGLE_ALLOW_ACCOUNT_CREATION`); `GET /auth/capabilities` lets the shell hide
+  the registration CTA. `GET /assessments/capabilities` hides unavailable modules.
+- **Operator provisioning** `owner:provision` (strong generated password shown
+  once; grants admin + review eligibility; no HTTP bootstrap endpoint).
+- **File-backed secrets** `JWT_SECRET_FILE` / `MYSQL_PASSWORD_FILE` /
+  `SMTP_PASSWORD_FILE`.
+- **Closed-release frontend profile** (`build:closed` / `verify:closed`) and a
+  guarded manual deploy workflow `.github/workflows/deploy-closed.yml`. The
+  existing public-only profile and its exclusion checks are unchanged.
+- **Yoast-style sitemap** (`/sitemap.xml` index → `/page-sitemap.xml`,
+  `/article-sitemap.xml`), generated from content; release tooling validates the
+  index and every child.
+- **Deployment package** `deploy/` (Compose project `sapiensmetric-review`,
+  MySQL 8.0.46 pinned by digest, secrets templates, runbook, backup/rollback) and
+  the additive `api.sapiensmetric.eu` proxy/certificate routing in the
+  authoritative `sm-oracle-infra/deploy/proxy/nginx.conf` (`nginx -t` validated).
 
 ## 6. Frontend publication plan
 
@@ -130,7 +138,9 @@ These do not need server access and are the next implementation work:
 
 ## 7. Yoast-style sitemap plan
 
-- Compare `apps/web/app/sitemap.ts` with a real Yoast-generated sitemap and the
+- Consolidate the sitemap into a Yoast-style index/child structure (implemented:
+  `/sitemap.xml` → `/page-sitemap.xml` + `/article-sitemap.xml`), compared with a
+  real
   official Yoast sitemap documentation.
 - Implement a `sitemap.xml` **index** plus child sitemaps (e.g. pages,
   articles) generated from repository content only; keep `/sitemap.xml` a valid
@@ -156,27 +166,33 @@ source commits, release identities, migrations, backup locations and rollback
 steps; update `sm-oracle-infra` docs to describe the shared server and both
 applications with ownership boundaries.
 
-## 9. Exact missing inputs
+## 9. Exact missing inputs (live install only)
 
 1. **Privileged access** on `79.76.117.246` — the `marijus` sudo password, a
-   root-capable account/key, or an agreed scoped root entry point for the
-   SapiensMetric deployment (create project dir, edit proxy template, issue
-   certificate, provision secrets).
-2. **Production secrets** for SapiensMetric: MySQL database/user/password, a
-   ≥32-character `JWT_SECRET`, and SMTP credentials (the config requires SMTP).
-3. **Operator account email** for provisioning (no password to be sent here).
-4. **Confirmations** of the Compose project name/directory, the API internal port
-   (default `3000`), and the MySQL container image choice (`mysql:8.4`).
+   root-capable account/key, or an agreed scoped root entry point (create the
+   project dir, refresh the proxy template, issue the certificate, provision
+   secrets). The scoped `sokoladas-deploy` path is not used and must not be
+   broadened.
+2. **Production secret values** provisioned into `/etc/sapiensmetric/secrets/`
+   with secure tooling (see `deploy/secrets/README.md`): MySQL root/app passwords,
+   `JWT_SECRET`, and the **existing authorised** SapiensMetric SMTP password
+   (values are never printed here or committed).
+3. **Owner account email** for `owner:provision` (no password is sent here).
+4. **A durable off-host backup destination** for SapiensMetric (only the baseline
+   procedure exists today).
 
 ## 10. Observed vs untested
 
 - **Observed:** all of §1, §2 and the existence/paths of the Sokoladas releases,
   template, state, evidence and backup directories; the DNS answers; the
   containers and listeners; the application config/absence of a Dockerfile.
-- **Untested / proposed:** everything in §4–§8 — the architecture is a proposal
-  from repository facts, not an installed or verified state. No certificate has
-  been issued for `api.sapiensmetric.eu`, no image has been built or published,
-  no secret has been provisioned, and no Sokoladas change has been made.
+- **Untested / proposed (live):** §4–§8 are **implemented in the repository** and
+  verified locally (`pnpm verify` EXIT 0; the modified proxy config passes
+  `nginx -t`). They are **not installed**: no certificate for
+  `api.sapiensmetric.eu`, no image pulled on the host, no secret provisioned, and
+  no Sokoladas change. The API image build could not be executed in the local
+  sandbox (container DNS is unavailable); it is built by
+  `.github/workflows/api-image.yml`.
 - **Not performed:** interactive browser checks, live T-023 deployment, and CI
   observation of the T-022 push (no `gh` CLI/token available; the push to the
   SapiensMetric `main` completed and is expected to trigger the existing

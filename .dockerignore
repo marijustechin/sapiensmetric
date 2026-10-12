@@ -1,0 +1,17 @@
+# Build context excludes (T-023). The API image copies only what it builds:
+# workspace manifests, the API and the two shared packages.
+**/node_modules
+**/dist
+**/.next
+**/out
+**/.turbo
+**/coverage
+.git
+.github
+docs
+tasks
+dist
+*.md
+.env
+.env.*
+!.env.example

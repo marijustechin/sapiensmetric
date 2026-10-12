@@ -279,9 +279,13 @@ response compression, oversized displayed logo.
    retention — not permanent**; the owner must keep the passphrase copy
    independently and should adopt the documented durable off-host destination
    before relying on multi-month rollback (see `docs/deployment-webdav.md`).
-9. **Yoast-style sitemap (owner request, `pending`, separate):** the owner asked
-   for a Yoast-style sitemap. This is tracked as its own future task and is **not**
-   part of T-022; no sitemap-generation change was made in the T-022 repair.
+9. **Yoast-style sitemap (`implemented`, T-023):** `/sitemap.xml` is now a
+   standards-compliant `<sitemapindex>` referencing `/page-sitemap.xml` and
+   `/article-sitemap.xml`, all generated from repository content (canonical HTTPS
+   non-www URLs, truthful `lastmod`, EN/LT alternates, 20 URLs). Release tooling
+   and verification validate the index and every child. **No causal claim** is
+   made about Search Console's earlier ingestion failure; it remains
+   `pending`/unconfirmed.
 
 > **Analytics status:** container published and Realtime views owner-confirmed;
 > Tag Assistant confirmed the consent states. Continued operation depends on the

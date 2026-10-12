@@ -41,7 +41,7 @@ else
   note_fail "cannot confirm release freshness: apps/web/out is missing (run pnpm build)"
 fi
 
-for item in index.html 404.html robots.txt sitemap.xml _next branding; do
+for item in index.html 404.html robots.txt sitemap.xml page-sitemap.xml article-sitemap.xml _next branding; do
   check "required release item missing: $item" "[ -e '$REL/$item' ]"
 done
 
@@ -104,21 +104,23 @@ else
   note_pass
 fi
 
-# sitemap/robots.
-check "sitemap missing production LT URL" "grep -q 'https://sapiensmetric.eu/lt/' '$REL/sitemap.xml'"
-if grep -Eq '/(auth|account|admin|assessment)/' "$REL/sitemap.xml"; then
-  note_fail "sitemap lists a non-public route"
+# T-023 sitemap/robots: /sitemap.xml is a <sitemapindex> over the content-
+# generated page + article children; the combined set is the approved 20 public
+# URLs, excluding private routes and the root remembered-language redirect.
+check "sitemap index missing page child" "grep -q 'https://sapiensmetric.eu/page-sitemap.xml' '$REL/sitemap.xml'"
+check "sitemap index missing article child" "grep -q 'https://sapiensmetric.eu/article-sitemap.xml' '$REL/sitemap.xml'"
+check "page sitemap missing production LT URL" "grep -q 'https://sapiensmetric.eu/lt/' '$REL/page-sitemap.xml'"
+if grep -Eq '/(auth|account|admin|assessment)/' "$REL/page-sitemap.xml" "$REL/article-sitemap.xml" 2>/dev/null; then
+  note_fail "a child sitemap lists a non-public route"
 else
   note_pass
 fi
-# T-020: the repository generator is authoritative — 20 public URLs (locale homes
-# + pages + articles), excluding the root remembered-language redirect.
-sitemap_locs="$(grep -oE '<loc>[^<]+</loc>' "$REL/sitemap.xml" 2>/dev/null | sed -E 's#</?loc>##g')"
+sitemap_locs="$(cat "$REL/page-sitemap.xml" "$REL/article-sitemap.xml" 2>/dev/null | grep -oE '<loc>[^<]+</loc>' | sed -E 's#</?loc>##g')"
 sitemap_count="$(printf '%s\n' "$sitemap_locs" | grep -c '^https://')"
 if [ "$sitemap_count" -eq 20 ]; then
   note_pass
 else
-  note_fail "sitemap must contain exactly 20 public URLs (found $sitemap_count)"
+  note_fail "sitemap children must contain exactly 20 public URLs (found $sitemap_count)"
 fi
 if printf '%s\n' "$sitemap_locs" | grep -qx 'https://sapiensmetric.eu/en/' &&
   printf '%s\n' "$sitemap_locs" | grep -qx 'https://sapiensmetric.eu/lt/'; then

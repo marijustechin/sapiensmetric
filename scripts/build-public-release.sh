@@ -77,7 +77,7 @@ done
 
 echo "==> Checking the release contents"
 failures=0
-required=(index.html 404.html robots.txt sitemap.xml _next branding)
+required=(index.html 404.html robots.txt sitemap.xml page-sitemap.xml article-sitemap.xml _next branding)
 for item in "${required[@]}"; do
   if [ ! -e "$ARTIFACT/$item" ]; then
     echo "FAIL: release is missing $item" >&2

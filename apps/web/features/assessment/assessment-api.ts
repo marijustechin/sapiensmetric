@@ -12,6 +12,7 @@ import type {
   AssessmentAttemptContent,
   AssessmentAttemptList,
   AssessmentAttemptView,
+  AssessmentCapabilities,
   AssessmentFeedback,
   AssessmentResultDto,
   AssessmentUiLocale,
@@ -26,6 +27,7 @@ const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL ?? '').replace(
 /** Stable API error codes mirrored from `docs/assessments.md`. */
 export type ApiErrorCode =
   | 'ASSESSMENT_NOT_AVAILABLE'
+  | 'REVIEW_NOT_AUTHORISED'
   | 'ATTEMPT_NOT_FOUND'
   | 'ATTEMPT_FINALISED'
   | 'REVISION_CONFLICT'
@@ -79,6 +81,10 @@ export interface AssessmentApi {
     accessToken: string,
     attemptId: string,
   ): Promise<ApiOutcome<AssessmentResultDto>>;
+  /** T-023 module availability for the current account (optional for test fakes). */
+  capabilities?(
+    accessToken: string,
+  ): Promise<ApiOutcome<AssessmentCapabilities>>;
 }
 
 function apiBaseUrl(): string {
@@ -165,6 +171,8 @@ export const assessmentApi: AssessmentApi = {
     request(`/assessments/attempts/${attemptId}/submit`, 'POST', accessToken),
   result: (accessToken, attemptId) =>
     request(`/assessments/attempts/${attemptId}/result`, 'GET', accessToken),
+  capabilities: (accessToken) =>
+    request('/assessments/capabilities', 'GET', accessToken),
 };
 
 export { apiBaseUrl };

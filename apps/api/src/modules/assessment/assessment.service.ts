@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   HttpException,
   HttpStatus,
   Inject,
@@ -16,6 +17,7 @@ import {
 import type {
   AssessmentAttemptContent,
   AssessmentAttemptList,
+  AssessmentCapabilitiesResponse,
   AssessmentFeedback,
   AssessmentResultDto,
   AssessmentUiLocale,
@@ -23,6 +25,10 @@ import type {
   ResponseEntryDto,
 } from '@sapiensmetric/contracts';
 import { APP_CONFIG, AppConfig } from '../../config/env.js';
+import {
+  USER_STORE,
+  type UserStore,
+} from '../users/user-store.js';
 import {
   ASSESSMENT_ATTEMPT_STORE,
   applySaveOps,
@@ -51,6 +57,7 @@ export class AssessmentService {
     @Inject(APP_CONFIG) private readonly config: AppConfig,
     @Inject(ASSESSMENT_ATTEMPT_STORE)
     private readonly store: AssessmentAttemptStore,
+    @Inject(USER_STORE) private readonly users: UserStore,
   ) {}
 
   private syntheticEnabled(): boolean {
@@ -65,6 +72,26 @@ export class AssessmentService {
     throw new NotFoundException(
       errorBody(HttpStatus.NOT_FOUND, 'ASSESSMENT_NOT_AVAILABLE', message),
     );
+  }
+
+  /**
+   * T-023: the closed-review capability is on, but the authenticated account is
+   * not an explicitly authorised reviewer. Server-enforced — the UI cannot grant
+   * it and hidden controls are not access control.
+   */
+  private notAuthorised(): never {
+    throw new ForbiddenException(
+      errorBody(
+        HttpStatus.FORBIDDEN,
+        'REVIEW_NOT_AUTHORISED',
+        'This account is not authorised for closed assessment review.',
+      ),
+    );
+  }
+
+  private async reviewEligible(userId: string): Promise<boolean> {
+    const user = await this.users.findById(userId);
+    return Boolean(user?.reviewEligible);
   }
 
   private notFound(): never {
@@ -130,15 +157,39 @@ export class AssessmentService {
   }
 
   /**
-   * Start an astronomy **draft** attempt. Local-review-only: gated by
-   * `ASSESSMENT_ASTRONOMY_DRAFT_ENABLED` (off by default, refused in production).
+   * Start an astronomy **draft** attempt.
+   *
+   * Local review: gated by `ASSESSMENT_ASTRONOMY_DRAFT_ENABLED` (off by default,
+   * refused in production). Closed production review (T-023): gated by
+   * `ASSESSMENT_REVIEW_ENABLED` and additionally restricted to accounts the
+   * operator explicitly marked `reviewEligible`.
    */
   async startAstronomyDraft(userId: string): Promise<ReturnType<typeof toAttemptView>> {
-    if (!this.config.assessments.astronomyDraftEnabled) {
+    const devEnabled = this.config.assessments.astronomyDraftEnabled;
+    const reviewEnabled = this.config.assessments.reviewEnabled;
+    if (!devEnabled && !reviewEnabled) {
       this.notAvailable('astronomy');
+    }
+    if (reviewEnabled && !(await this.reviewEligible(userId))) {
+      this.notAuthorised();
     }
     const attempt = await this.store.create(userId, buildAstronomySnapshot());
     return toAttemptView(attempt);
+  }
+
+  /**
+   * Client-safe availability of the assessment modules for the current account
+   * and environment (T-023). Drives the UI only; every start path re-checks the
+   * server-side gate.
+   */
+  async capabilities(userId: string): Promise<AssessmentCapabilitiesResponse> {
+    const eligible = await this.reviewEligible(userId);
+    return {
+      synthetic: this.syntheticEnabled(),
+      astronomyDraft:
+        this.config.assessments.astronomyDraftEnabled ||
+        (this.config.assessments.reviewEnabled && eligible),
+    };
   }
 
   /** Client-safe localized content for an owned attempt (no answer keys). */

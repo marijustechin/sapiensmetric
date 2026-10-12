@@ -21,6 +21,7 @@ function testConfig(google?: Partial<AppConfig['google']>): AppConfig {
       refreshSessionTtlMs: 30 * 24 * 60 * 60 * 1000,
       refreshSessionTtlSeconds: 30 * 24 * 60 * 60,
       cookieSecure: false,
+      registrationEnabled: true,
     },
     mail: {
       host: 'localhost',
@@ -33,13 +34,14 @@ function testConfig(google?: Partial<AppConfig['google']>): AppConfig {
     },
     tokens: { verificationTtlSeconds: 86400, passwordResetTtlSeconds: 1800 },
     publicAppUrl: ORIGIN,
-    assessments: { syntheticEnabled: false, astronomyDraftEnabled: false },
+    assessments: { syntheticEnabled: false, astronomyDraftEnabled: false, reviewEnabled: false },
     google: {
       clientId: 'client-123.apps.googleusercontent.com',
       clientSecret: 'client-secret-value-for-tests-0123456789',
       redirectUri: 'http://localhost:3334/auth/google/callback',
       enabled: true,
       ...google,
+      allowAccountCreation: true,
     },
   };
 }

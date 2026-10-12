@@ -11,6 +11,12 @@ export interface UserRecord {
   emailVerifiedAt: Date | null;
   role: UserRole;
   status: UserStatus;
+  /**
+   * T-023: closed-review eligibility (operator-granted; DB default `false`).
+   * Optional in this read shape so test doubles may omit it; every reader must
+   * treat a missing value as `false` (fail closed).
+   */
+  reviewEligible?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

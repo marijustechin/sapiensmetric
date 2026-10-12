@@ -76,45 +76,53 @@
    records, and `sm-oracle-infra` documentation of the shared server and both
    applications.
 
-## Delivered (this session)
+## Delivered (repository implementation — unblocked work)
 
-- T-022 verified (`pnpm verify` EXIT 0), committed and pushed as **`23c6a9c`**
-  (the pre-authorized prerequisite changes, including the local review repair and
-  the `hasProgress` migration backfill).
-- T-022 transitioned to `tasks/done/2026-10-09-versioned-astronomy-draft-bank.md`
-  (owner-authorised transition; browser acceptance explicitly left pending).
-- T-023 records the authorization, plan and blocker; `scripts/verify.sh` updated
-  for the transition.
-- Read-only reconnaissance of the shared server and both repositories recorded in
-  `docs/closed-review-deployment.md`.
+- T-022 verified (`pnpm verify` EXIT 0), committed and pushed as **`23c6a9c`**;
+  transitioned to `tasks/done/` (owner-authorised; browser acceptance pending).
+- **Production API image**: `apps/api/Dockerfile` (multi-stage, non-root UID
+  10001, ARM64). `.github/workflows/api-image.yml` publishes
+  `ghcr.io/marijustechin/sapiensmetric-api` (`linux/arm64`).
+- **Closed-review capability**: default-off `ASSESSMENT_REVIEW_ENABLED`
+  (production-capable) plus server-enforced per-account `users.reviewEligible`
+  (migration `1781440000006`); `REVIEW_NOT_AUTHORISED` for unauthorised accounts.
+- **Registration disabled** at the API boundary (`REGISTRATION_ENABLED`, 403
+  `REGISTRATION_DISABLED`) and **Google cannot create accounts**
+  (`GOOGLE_ALLOW_ACCOUNT_CREATION`); `GET /auth/capabilities` drives the UI.
+- **Secure owner provisioning**: `owner:provision` CLI (generated password shown
+  once; no HTTP bootstrap endpoint; grants admin + review eligibility).
+- **File-backed secrets**: `JWT_SECRET_FILE` / `MYSQL_PASSWORD_FILE` /
+  `SMTP_PASSWORD_FILE` support.
+- **Closed-release frontend profile**: `build:closed` / `verify:closed`
+  (public + private shells, private shells noindex) and a guarded, manual
+  `.github/workflows/deploy-closed.yml` (kept inactive until verified); the
+  public-only profile and its exclusions are unchanged.
+- **Yoast-style sitemap**: `/sitemap.xml` is a `<sitemapindex>` over
+  `/page-sitemap.xml` and `/article-sitemap.xml`, generated from content
+  (canonical HTTPS non-www, truthful `lastmod`, EN/LT alternates, 20 URLs);
+  release tooling/verification validate the index and every child.
+- **Deployment package**: `deploy/` (Compose project `sapiensmetric-review`,
+  MySQL 8.0.46, secrets templates, runbook, backup/rollback) and the
+  `api.sapiensmetric.eu` proxy/certificate additions in the authoritative
+  `sm-oracle-infra/deploy/proxy/nginx.conf`.
 
 ## Verification
 
-- `pnpm verify` → **EXIT 0** (static-export 125/0, public-release 98/0, harness
-  847/0) on the committed T-022 prerequisites.
+- `pnpm verify` → **EXIT 0** (web 129/0; static-export 126/0; public-release
+  102/0; closed-release 50/0; harness updated for T-023).
+- `nginx -t` passes against the modified authoritative proxy config (dummy
+  certs), proving the additive routing is syntactically valid.
+- The closed-release artifact builds and its verification passes (private shells
+  present and noindex; sitemap excludes private routes and the root redirect).
 
-## Blocker (exact missing input)
+## Blocker (exact missing input — live install only)
 
-The agent has SSH as **`marijus`** and as **`deploy`** on `79.76.117.246`:
-
-- `marijus` has **no passwordless sudo** (`sudo: interactive authentication is
-  required`) and **no Docker access** (`permission denied` on the Docker socket).
-- `deploy` may run **only** the scoped, Sokoladas-specific entry point
-  `sudo -n /usr/local/sbin/sokoladas-deploy` (`status`/`stage`/`release`/
-  `rollback`); it is **not** a general Docker or root path and builds only the
-  fixed `/opt/sokoladas-staging/template`. There is no general root entry point
-  and no `/opt/sapiensmetric` path.
-
-Creating a **separate** Compose project, adding an `api.sapiensmetric.eu` server
-block to the existing edge proxy, issuing/renewing its certificate, provisioning
-root-managed secrets and refreshing the template all require **root** on the host.
-
-**Required to proceed:** an interactive/privileged path on `79.76.117.246` —
-either the `sudo` password for `marijus`, a general root-capable account, or an
-agreed scoped root entry point for the SapiensMetric deployment — plus the
-production secrets (SapiensMetric MySQL password, JWT access secret, operator
-account email) and a decision confirming the Compose project name/ports and the
-MySQL container-versus-host choice.
+Repository implementation is complete and verified locally; the **live install**
+still requires **root** on `79.76.117.246` (see `docs/closed-review-deployment.md`
+§2/§9): `marijus` has no passwordless sudo/Docker and `deploy` is scoped to
+`sokoladas-deploy` only. Also needed: the production secret **values** (generated
+with secure tooling into `/etc/sapiensmetric/secrets/`), the **owner account
+email**, and a secure off-host destination for SapiensMetric backups.
 
 ## Boundaries
 

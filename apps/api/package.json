@@ -9,6 +9,7 @@
     "test": "vitest run",
     "test:integration": "vitest run --config vitest.integration.config.ts",
     "admin:promote": "tsx src/database/promote-admin.ts",
+    "owner:provision": "tsx src/database/provision-owner.ts",
     "migration:run": "tsx src/database/migrate.ts",
     "migration:show": "tsx src/database/migrate-status.ts",
     "tokens:cleanup": "tsx src/database/cleanup-action-tokens.ts",

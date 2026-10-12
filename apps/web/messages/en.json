@@ -42,6 +42,7 @@
     "confirmReset": "Change password",
     "forgotLink": "Forgot password",
     "registerLink": "Create an account",
+    "registrationDisabled": "Registration is not available in this environment.",
     "loginLink": "Back to sign in",
     "generic": "If the account is eligible, an email will arrive shortly.",
     "verified": "Email address verified. You can sign in.",
@@ -74,6 +75,7 @@
   "Assessment": {
     "title": "Assessment (development)",
     "pageIntro": "Local development view. The modules below are for local review only; their content is unreviewed and not publication-ready.",
+    "noModules": "No assessment modules are available for this account.",
     "syntheticBanner": "Synthetic content for development testing only. This is not a real assessment, it is not validated, and it is not part of the published product. Do not treat the outcome as meaningful.",
     "notAvailableSynthetic": "Synthetic assessment content is disabled in this environment.",
     "notAvailableAstronomy": "Astronomy draft content is disabled in this environment.",

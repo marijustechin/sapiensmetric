@@ -17,6 +17,7 @@ import {
   assessmentAttemptContentSchema,
   assessmentAttemptListSchema,
   assessmentAttemptViewSchema,
+  assessmentCapabilitiesResponseSchema,
   assessmentFeedbackSchema,
   assessmentResultSchema,
   assessmentUiLocaleSchema,
@@ -24,6 +25,7 @@ import {
   type AssessmentAttemptContent,
   type AssessmentAttemptList,
   type AssessmentAttemptView,
+  type AssessmentCapabilitiesResponse,
   type AssessmentFeedback,
   type AssessmentResultDto,
 } from '@sapiensmetric/contracts';
@@ -94,6 +96,19 @@ export class AssessmentController {
   ): Promise<AssessmentAttemptView> {
     return assessmentAttemptViewSchema.parse(
       await this.assessments.start(request.userId),
+    );
+  }
+
+  /**
+   * Client-safe module availability for the current account (T-023). Authenticated
+   * because astronomy eligibility is per-account; it contains no user data.
+   */
+  @Get('capabilities')
+  async capabilities(
+    @Req() request: AuthenticatedRequest,
+  ): Promise<AssessmentCapabilitiesResponse> {
+    return assessmentCapabilitiesResponseSchema.parse(
+      await this.assessments.capabilities(request.userId),
     );
   }
 

@@ -1263,7 +1263,9 @@ t013_outputs=(
   "apps/web/app/[locale]/(site)/articles/page.tsx"
   "apps/web/app/[locale]/(site)/articles/[slug]/page.tsx"
   "apps/web/app/[locale]/(app)/layout.tsx"
-  "apps/web/app/sitemap.ts"
+  "apps/web/app/sitemap.xml/route.ts"
+  "apps/web/app/page-sitemap.xml/route.ts"
+  "apps/web/app/article-sitemap.xml/route.ts"
   "apps/web/app/robots.ts"
   "apps/web/app/global-not-found.tsx"
   docs/content.md
@@ -1637,6 +1639,93 @@ if grep -qF '"lt/assessment" "en/assessment"' scripts/verify-static-export.sh &&
   note_pass
 else
   note_fail "verify-static-export.sh does not assert the assessment route/noindex"
+fi
+
+# --- Invariant 23: T-023 closed review + Yoast-style sitemap -------------
+
+# Closed-review capability, registration disable and Google no-create flags.
+if grep -qF 'ASSESSMENT_REVIEW_ENABLED' apps/api/src/config/env.ts &&
+  grep -qF 'REGISTRATION_ENABLED' apps/api/src/config/env.ts &&
+  grep -qF 'GOOGLE_ALLOW_ACCOUNT_CREATION' apps/api/src/config/env.ts; then
+  note_pass
+else
+  note_fail "the closed-review/registration/Google flags are not in env.ts"
+fi
+
+# Server-enforced per-account eligibility (migration + entity + service).
+if [ -f apps/api/src/database/migrations/1781440000006-AddUserReviewEligibility.ts ] &&
+  grep -qF 'reviewEligible' apps/api/src/modules/users/user.entity.ts &&
+  grep -qF 'AddUserReviewEligibility1781440000006' apps/api/src/database/data-source.ts &&
+  grep -qF 'REVIEW_NOT_AUTHORISED' apps/api/src/modules/assessment/assessment.service.ts; then
+  note_pass
+else
+  note_fail "closed-review eligibility (migration/entity/service) is incomplete"
+fi
+
+# Registration disabled at the API boundary + Google cannot create accounts.
+if grep -qF 'REGISTRATION_DISABLED' apps/api/src/modules/auth/auth.controller.ts &&
+  grep -qF 'registration_disabled' apps/api/src/modules/auth/google/google-auth.service.ts; then
+  note_pass
+else
+  note_fail "registration disable / Google no-create is not enforced"
+fi
+
+# Operator provisioning workflow (no HTTP bootstrap endpoint).
+if [ -f apps/api/src/database/provision-owner.ts ] &&
+  [ -f apps/api/src/database/provision-owner.logic.ts ] &&
+  grep -qF '"owner:provision"' apps/api/package.json; then
+  note_pass
+else
+  note_fail "the secure owner-account provisioning workflow is missing"
+fi
+
+# Production API image (ARM64-capable) exists.
+if [ -f apps/api/Dockerfile ] && grep -qF 'USER 10001:10001' apps/api/Dockerfile; then
+  note_pass
+else
+  note_fail "the production API Dockerfile is missing or not non-root"
+fi
+
+# Closed-release profile exists and keeps the public profile/exclusions intact.
+if [ -f scripts/build-closed-release.sh ] && [ -f scripts/verify-closed-release.sh ] &&
+  grep -qF 'EXCLUDED_ROUTES=(auth account admin assessment)' scripts/build-public-release.sh; then
+  note_pass
+else
+  note_fail "the closed-release profile is missing or the public exclusions were changed"
+fi
+
+# Private shells are noindex and analytics stays off the assessment data path.
+if grep -qF 'noindexMetadata' "apps/web/app/[locale]/(app)/account/page.tsx" &&
+  grep -qF 'noindexMetadata' "apps/web/app/[locale]/(app)/admin/page.tsx"; then
+  note_pass
+else
+  note_fail "private application shells are not noindex"
+fi
+
+# Yoast-style sitemap: index + children, generated from content.
+if [ -f apps/web/shared/content/sitemap-xml.ts ] &&
+  [ -f apps/web/app/sitemap.xml/route.ts ] &&
+  [ -f apps/web/app/page-sitemap.xml/route.ts ] &&
+  [ -f apps/web/app/article-sitemap.xml/route.ts ]; then
+  note_pass
+else
+  note_fail "the Yoast-style sitemap index/children are missing"
+fi
+
+# Auth capabilities endpoint + client wiring (registration CTA removal).
+if grep -qF "@Get('capabilities')" apps/api/src/modules/auth/auth.controller.ts &&
+  grep -qF 'registrationDisabled' apps/web/messages/en.json &&
+  grep -qF 'registrationDisabled' apps/web/messages/lt.json; then
+  note_pass
+else
+  note_fail "the auth capabilities endpoint or localized registration-disabled copy is missing"
+fi
+
+# The closed-review deployment record exists.
+if [ -f docs/closed-review-deployment.md ]; then
+  note_pass
+else
+  note_fail "docs/closed-review-deployment.md is missing"
 fi
 
 # --- Summary -----------------------------------------------------------

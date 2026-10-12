@@ -33,7 +33,9 @@ bash scripts/verify-public-release.sh
   plus the production sitemap URL, and **no `Host` directive** (Google no longer
   supports `Host`). A normal `pnpm build:public` reproduces the intended file; do
   **not** copy production `robots.txt` back into the artifact.
-- `sitemap.xml` is generated from **`apps/web/app/sitemap.ts`** via
+- `sitemap.xml` is generated from the sitemap route handlers
+  (**`apps/web/app/sitemap.xml/route.ts`** index, plus
+  `page-sitemap.xml/route.ts` and `article-sitemap.xml/route.ts`) via
   `shared/content/sitemap.ts` (content-derived; no fixed URL ceiling). Under the
   owner-approved T-020 policy it lists the **20** public EN/LT URLs (both locale
   homes + public pages + articles) and **excludes the root remembered-language

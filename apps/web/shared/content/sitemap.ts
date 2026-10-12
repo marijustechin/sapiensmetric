@@ -1,5 +1,6 @@
 /**
- * Public sitemap entries (T-013, made reproducible by T-020).
+ * Public sitemap entries (T-013, made reproducible by T-020; split into page and
+ * article groups for the Yoast-style index in T-023).
  *
  * The URL set is derived entirely from repository content:
  * - every published public page path for every locale (including the locale
@@ -36,7 +37,8 @@ function alternatesFor(origin: string, path: string): Record<string, string> {
   );
 }
 
-export function publicSitemapEntries(
+/** Public pages (including the locale homes and the articles index). */
+export function publicPageSitemapEntries(
   origin: string = SITE_ORIGIN,
 ): PublicSitemapEntry[] {
   const entries: PublicSitemapEntry[] = [];
@@ -70,8 +72,18 @@ export function publicSitemapEntries(
       priority: 0.6,
       alternates: alternatesFor(origin, 'articles'),
     });
+  }
 
-    // Every article.
+  return entries;
+}
+
+/** Every article (one entry per article slug per locale). */
+export function publicArticleSitemapEntries(
+  origin: string = SITE_ORIGIN,
+): PublicSitemapEntry[] {
+  const entries: PublicSitemapEntry[] = [];
+
+  for (const locale of LOCALES) {
     for (const slug of articleSlugs()) {
       const article = ARTICLES[locale].find((item) => item.slug === slug);
       if (!article) continue;
@@ -86,4 +98,14 @@ export function publicSitemapEntries(
   }
 
   return entries;
+}
+
+/** The full flat public URL set (pages then articles). */
+export function publicSitemapEntries(
+  origin: string = SITE_ORIGIN,
+): PublicSitemapEntry[] {
+  return [
+    ...publicPageSitemapEntries(origin),
+    ...publicArticleSitemapEntries(origin),
+  ];
 }

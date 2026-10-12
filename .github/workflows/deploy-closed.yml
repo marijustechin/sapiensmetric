@@ -1,0 +1,125 @@
+name: Deploy closed review frontend
+
+# T-023 — closed production-review frontend profile.
+#
+# This workflow is MANUAL ONLY (workflow_dispatch) and requires an explicit
+# `confirm: activate` input, so it can never activate automatically. Deploying it
+# adds the private application shells (login/register/account/admin/assessment)
+# to the public host for direct access; that is only correct AFTER the production
+# API readiness and closed-access enforcement are verified. See
+# docs/closed-review-deployment.md.
+#
+# It reuses the same WebDAV deploy tool and baseline protection as the public
+# release, but validates the closed profile instead of the public-only one.
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "activate" to deploy the closed review profile'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-frontend
+  cancel-in-progress: false
+
+env:
+  NEXT_PUBLIC_API_BASE_URL: ${{ vars.NEXT_PUBLIC_API_BASE_URL || 'https://api.sapiensmetric.eu' }}
+  WEBDAV_URL: ${{ vars.WEBDAV_URL || 'https://sapiensmetric.eu:2078/' }}
+  PUBLIC_SITE_URL: ${{ vars.PUBLIC_SITE_URL || 'https://sapiensmetric.eu' }}
+
+jobs:
+  deploy-closed:
+    name: Build and deploy the closed review profile
+    if: inputs.confirm == 'activate'
+    environment: production
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Build and verify the closed release profile
+        run: |
+          set -euo pipefail
+          pnpm --filter @sapiensmetric/contracts build
+          pnpm --filter @sapiensmetric/assessment build
+          pnpm build:closed
+          pnpm verify:closed
+      - name: Upload the verified closed artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: closed-site
+          path: dist/closed-site
+          retention-days: 30
+          if-no-files-found: error
+      - name: Capture the pre-deployment baseline (read-only)
+        id: prepare
+        env:
+          WEBDAV_USERNAME: ${{ secrets.WEBDAV_USERNAME }}
+          WEBDAV_PASSWORD: ${{ secrets.WEBDAV_PASSWORD }}
+        run: |
+          set -euo pipefail
+          node scripts/deploy-webdav.mjs baseline --ci \
+            --remote-base "$WEBDAV_URL" \
+            --artifact dist/closed-site | tee baseline.log
+          OP=$(grep -E '^OPERATION=' baseline.log | cut -d= -f2)
+          AID=$(grep -E '^ARTIFACT_ID=' baseline.log | cut -d= -f2)
+          test -n "$OP" || { echo "no operation id produced"; exit 1; }
+          echo "operation=$OP" >> "$GITHUB_OUTPUT"
+          echo "artifact_id=$AID" >> "$GITHUB_OUTPUT"
+      - name: Encrypt the baseline for off-runner persistence
+        env:
+          BACKUP_ENCRYPTION_PASSPHRASE: ${{ secrets.BACKUP_ENCRYPTION_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+          OP="${{ steps.prepare.outputs.operation }}"
+          mkdir -p baseline-artifact
+          tar -C dist/deploy-baseline -czf baseline-artifact/baseline.tar.gz "$OP"
+          openssl enc -aes-256-cbc -pbkdf2 -iter 200000 -salt \
+            -in baseline-artifact/baseline.tar.gz \
+            -out baseline-artifact/baseline.enc \
+            -pass env:BACKUP_ENCRYPTION_PASSPHRASE
+          ( cd baseline-artifact && sha256sum baseline.enc > baseline.enc.sha256 )
+          rm -f baseline-artifact/baseline.tar.gz
+      - name: Upload the encrypted baseline (before any overwrite)
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: deploy-baseline-closed
+          path: baseline-artifact
+          retention-days: 90
+          if-no-files-found: error
+      - name: Upload the exact verified closed artifact (no rebuild)
+        env:
+          WEBDAV_USERNAME: ${{ secrets.WEBDAV_USERNAME }}
+          WEBDAV_PASSWORD: ${{ secrets.WEBDAV_PASSWORD }}
+        run: |
+          set -euo pipefail
+          node scripts/deploy-webdav.mjs apply --confirm --ci \
+            --remote-base "$WEBDAV_URL" \
+            --operation "${{ steps.prepare.outputs.operation }}"
+      - name: Verify the closed review surfaces on production
+        run: |
+          set -euo pipefail
+          base="$PUBLIC_SITE_URL"
+          check() { code=$(curl -s -o /dev/null -w '%{http_code}' "$1"); echo "$code $1"; test "$code" = "200"; }
+          # Public pages must still work.
+          check "$base/en/"
+          check "$base/lt/"
+          # Private shells must now be directly reachable.
+          check "$base/en/auth/login/"
+          check "$base/en/account/"
+          check "$base/en/assessment/"
+          # And they must be noindex.
+          curl -s "$base/en/auth/login/" | grep -qiE '<meta[^>]+name="robots"[^>]+noindex'
+      - name: Summary
+        run: |
+          echo "Closed review profile deployed (operation ${{ steps.prepare.outputs.operation }}, artifact ${{ steps.prepare.outputs.artifact_id }})." >> "$GITHUB_STEP_SUMMARY"
+          echo "Rollback: restore the encrypted 'deploy-baseline-closed' artifact and run 'node scripts/deploy-webdav.mjs rollback --confirm --operation ${{ steps.prepare.outputs.operation }}'." >> "$GITHUB_STEP_SUMMARY"

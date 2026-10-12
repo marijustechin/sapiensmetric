@@ -1,9 +1,37 @@
 import { config as loadDotenv } from 'dotenv';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { z } from 'zod';
 
 export const APP_CONFIG = Symbol('APP_CONFIG');
+
+/**
+ * File-backed secret variables (T-023). A container/orchestrator can mount a
+ * secret at a path and set `<NAME>_FILE` instead of putting the value in the
+ * environment. The file value wins only when the plain variable is absent; a
+ * readable file is required and its single trailing newline is tolerated.
+ */
+const SECRET_FILE_VARS: ReadonlyArray<readonly [string, string]> = [
+  ['JWT_SECRET', 'JWT_SECRET_FILE'],
+  ['MYSQL_PASSWORD', 'MYSQL_PASSWORD_FILE'],
+  ['SMTP_PASSWORD', 'SMTP_PASSWORD_FILE'],
+];
+
+function expandSecretFiles(source: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
+  const expanded: NodeJS.ProcessEnv = { ...source };
+  for (const [name, fileVar] of SECRET_FILE_VARS) {
+    const filePath = expanded[fileVar];
+    if (!filePath || expanded[name]) {
+      continue;
+    }
+    try {
+      expanded[name] = readFileSync(filePath, 'utf8').replace(/\r?\n$/, '');
+    } catch {
+      throw new Error(`Could not read ${fileVar} (${filePath}).`);
+    }
+  }
+  return expanded;
+}
 
 /**
  * Validate and canonicalise an exact HTTP(S) origin. Rejects wildcard,
@@ -119,6 +147,21 @@ const envSchema = z.object({
   // T-022 — the astronomy **draft** bank is a local-review-only feature. It is
   // OFF by default and must never be enabled in production (enforced below).
   ASSESSMENT_ASTRONOMY_DRAFT_ENABLED: z.enum(['true', 'false']).default('false'),
+
+  // T-023 — closed production review. A separate, default-off capability that
+  // enables the astronomy draft ONLY for accounts explicitly marked
+  // `reviewEligible`. Unlike the development flags above, it is intended to run
+  // under `NODE_ENV=production`; eligibility is enforced server-side per user.
+  ASSESSMENT_REVIEW_ENABLED: z.enum(['true', 'false']).default('false'),
+
+  // T-023 — public credentials registration. Enabled by default to preserve the
+  // existing public behaviour; the closed review environment sets it to `false`.
+  REGISTRATION_ENABLED: z.enum(['true', 'false']).default('true'),
+
+  // T-023 — whether Google OAuth may create a NEW account. Enabled by default to
+  // preserve existing behaviour; the closed review environment sets it to `false`
+  // so Google can only sign in to an already-linked account.
+  GOOGLE_ALLOW_ACCOUNT_CREATION: z.enum(['true', 'false']).default('true'),
 });
 
 export interface AppConfig {
@@ -143,6 +186,8 @@ export interface AppConfig {
     refreshSessionTtlMs: number;
     refreshSessionTtlSeconds: number;
     cookieSecure: boolean;
+    /** T-023: public credentials registration (closed review sets this false). */
+    registrationEnabled: boolean;
   };
   mail: {
     host: string;
@@ -163,12 +208,20 @@ export interface AppConfig {
     syntheticEnabled: boolean;
     /** Local-review-only astronomy draft bank. Off unless explicitly enabled. */
     astronomyDraftEnabled: boolean;
+    /**
+     * T-023 closed production-review capability. Off by default; when on, the
+     * astronomy draft is available ONLY to `reviewEligible` accounts and may run
+     * in production.
+     */
+    reviewEnabled: boolean;
   };
   google: {
     clientId: string | null;
     clientSecret: string | null;
     redirectUri: string | null;
     enabled: boolean;
+    /** T-023: whether Google may create a new account (closed review: false). */
+    allowAccountCreation: boolean;
   };
 }
 
@@ -204,7 +257,7 @@ export function loadAppConfig(env?: NodeJS.ProcessEnv): AppConfig {
       loadDotenv({ path: envPath });
     }
   }
-  const parsed = envSchema.parse(provided);
+  const parsed = envSchema.parse(expandSecretFiles(provided));
 
   // Binding public-origin policy: PUBLIC_APP_URL and CORS_ORIGIN must each be a
   // strict canonical HTTP(S) origin and must be equal after canonicalisation.
@@ -262,6 +315,7 @@ export function loadAppConfig(env?: NodeJS.ProcessEnv): AppConfig {
         parsed.REFRESH_SESSION_TTL_DAYS * 24 * 60 * 60 * 1000,
       refreshSessionTtlSeconds: parsed.REFRESH_SESSION_TTL_DAYS * 24 * 60 * 60,
       cookieSecure: parsed.NODE_ENV === 'production',
+      registrationEnabled: parsed.REGISTRATION_ENABLED === 'true',
     },
     mail: {
       host: parsed.SMTP_HOST,
@@ -280,6 +334,7 @@ export function loadAppConfig(env?: NodeJS.ProcessEnv): AppConfig {
     assessments: {
       syntheticEnabled: parsed.ASSESSMENT_SYNTHETIC_ENABLED === 'true',
       astronomyDraftEnabled: parsed.ASSESSMENT_ASTRONOMY_DRAFT_ENABLED === 'true',
+      reviewEnabled: parsed.ASSESSMENT_REVIEW_ENABLED === 'true',
     },
     google: {
       clientId: parsed.GOOGLE_CLIENT_ID ?? null,
@@ -290,6 +345,7 @@ export function loadAppConfig(env?: NodeJS.ProcessEnv): AppConfig {
           parsed.GOOGLE_CLIENT_SECRET &&
           parsed.GOOGLE_REDIRECT_URI,
       ),
+      allowAccountCreation: parsed.GOOGLE_ALLOW_ACCOUNT_CREATION === 'true',
     },
   };
 }

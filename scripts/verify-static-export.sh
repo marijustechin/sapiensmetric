@@ -364,20 +364,27 @@ else
   note_fail "public home pages do not state that assessments are not available"
 fi
 
-# sitemap.xml: production URLs, public pages only.
-if [ -f "$OUT_DIR/sitemap.xml" ] &&
-  grep -q 'https://sapiensmetric.eu/en/' "$OUT_DIR/sitemap.xml" &&
-  grep -q 'https://sapiensmetric.eu/lt/' "$OUT_DIR/sitemap.xml" &&
-  grep -q 'https://sapiensmetric.eu/en/privacy/' "$OUT_DIR/sitemap.xml" &&
-  grep -q 'https://sapiensmetric.eu/en/articles/' "$OUT_DIR/sitemap.xml"; then
+# T-023 Yoast-style sitemap: /sitemap.xml is a <sitemapindex> referencing the
+# content-generated page + article children; /sitemap.xml stays a valid entry
+# point. The combined child URL set is the approved public set.
+CHILD_SITEMAPS=("$OUT_DIR/page-sitemap.xml" "$OUT_DIR/article-sitemap.xml")
+
+if [ -f "$OUT_DIR/sitemap.xml" ] && grep -q '<sitemapindex' "$OUT_DIR/sitemap.xml" &&
+  grep -q 'https://sapiensmetric.eu/page-sitemap.xml' "$OUT_DIR/sitemap.xml" &&
+  grep -q 'https://sapiensmetric.eu/article-sitemap.xml' "$OUT_DIR/sitemap.xml"; then
   note_pass
 else
-  note_fail "sitemap.xml is missing expected production URLs"
+  note_fail "sitemap.xml must be an index referencing the page and article sitemaps"
 fi
 
-if [ -f "$OUT_DIR/sitemap.xml" ] &&
-  grep -Eq '/(auth|account|admin|assessment)/' "$OUT_DIR/sitemap.xml"; then
-  note_fail "sitemap.xml includes a non-public auth/account/admin/assessment route"
+if [ -f "$OUT_DIR/page-sitemap.xml" ] && [ -f "$OUT_DIR/article-sitemap.xml" ]; then
+  note_pass
+else
+  note_fail "page-sitemap.xml / article-sitemap.xml are missing"
+fi
+
+if grep -Eq '/(auth|account|admin|assessment)/' "$OUT_DIR/page-sitemap.xml" "$OUT_DIR/article-sitemap.xml" 2>/dev/null; then
+  note_fail "a child sitemap includes a non-public auth/account/admin/assessment route"
 else
   note_pass
 fi
@@ -386,7 +393,7 @@ fi
 # EN/LT URLs (locale homes + pages + articles). The root remembered-language
 # redirect is excluded, every URL is canonical HTTPS non-www with a trailing
 # slash, and every entry carries both reciprocal alternates.
-sitemap_locs="$(grep -oE '<loc>[^<]+</loc>' "$OUT_DIR/sitemap.xml" 2>/dev/null | sed -E 's#</?loc>##g')"
+sitemap_locs="$(cat "${CHILD_SITEMAPS[@]}" 2>/dev/null | grep -oE '<loc>[^<]+</loc>' | sed -E 's#</?loc>##g')"
 sitemap_count="$(printf '%s\n' "$sitemap_locs" | grep -c '^https://')"
 if [ "$sitemap_count" -eq 20 ]; then
   note_pass
@@ -422,13 +429,13 @@ else
 fi
 
 # Reciprocal alternates: each public path must advertise both locales.
-if grep -q 'hreflang="en"' "$OUT_DIR/sitemap.xml" &&
-  grep -q 'hreflang="lt"' "$OUT_DIR/sitemap.xml" &&
-  grep -q 'href="https://sapiensmetric.eu/en/"' "$OUT_DIR/sitemap.xml" &&
-  grep -q 'href="https://sapiensmetric.eu/lt/"' "$OUT_DIR/sitemap.xml"; then
+if grep -q 'hreflang="en"' "$OUT_DIR/page-sitemap.xml" &&
+  grep -q 'hreflang="lt"' "$OUT_DIR/page-sitemap.xml" &&
+  grep -q 'href="https://sapiensmetric.eu/en/"' "$OUT_DIR/page-sitemap.xml" &&
+  grep -q 'href="https://sapiensmetric.eu/lt/"' "$OUT_DIR/page-sitemap.xml"; then
   note_pass
 else
-  note_fail "sitemap.xml is missing reciprocal EN/LT alternates"
+  note_fail "the page sitemap is missing reciprocal EN/LT alternates"
 fi
 
 # robots.txt is generated from source (`app/robots.ts`): allow crawling, point at

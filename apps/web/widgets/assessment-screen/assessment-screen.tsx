@@ -82,6 +82,10 @@ export function AssessmentScreen() {
   }, [status, refreshHistory]);
 
   useEffect(() => {
+    if (status === 'authenticated') void store.loadCapabilities();
+  }, [status, store]);
+
+  useEffect(() => {
     if (status !== 'authenticated') return;
     if (attemptId) {
       void store.loadAttempt(attemptId);
@@ -271,32 +275,43 @@ export function AssessmentScreen() {
       ) : null}
 
       <div className="flex flex-col gap-3">
-        <div className="flex flex-col gap-2 rounded border border-gray-300 p-3">
-          <div>
-            <button
-              type="button"
-              onClick={() => void onStart()}
-              disabled={state.startStatus === 'starting'}
-              className="min-h-[44px] border border-gray-700 bg-gray-800 px-3 py-1 text-white disabled:opacity-40"
-            >
-              {state.startStatus === 'starting' ? t('starting') : t('start')}
-            </button>
+        {state.capabilities?.synthetic ? (
+          <div className="flex flex-col gap-2 rounded border border-gray-300 p-3">
+            <div>
+              <button
+                type="button"
+                onClick={() => void onStart()}
+                disabled={state.startStatus === 'starting'}
+                className="min-h-[44px] border border-gray-700 bg-gray-800 px-3 py-1 text-white disabled:opacity-40"
+              >
+                {state.startStatus === 'starting' ? t('starting') : t('start')}
+              </button>
+            </div>
+            <p className="text-xs text-gray-600">{t('syntheticBanner')}</p>
           </div>
-          <p className="text-xs text-gray-600">{t('syntheticBanner')}</p>
-        </div>
-        <div className="flex flex-col gap-2 rounded border border-gray-300 p-3">
-          <div>
-            <button
-              type="button"
-              onClick={() => void onStartAstronomy()}
-              disabled={state.startStatus === 'starting'}
-              className="min-h-[44px] border border-gray-500 px-3 py-1 disabled:opacity-40"
-            >
-              {t('startAstronomy')}
-            </button>
+        ) : null}
+        {state.capabilities?.astronomyDraft ? (
+          <div className="flex flex-col gap-2 rounded border border-gray-300 p-3">
+            <div>
+              <button
+                type="button"
+                onClick={() => void onStartAstronomy()}
+                disabled={state.startStatus === 'starting'}
+                className="min-h-[44px] border border-gray-500 px-3 py-1 disabled:opacity-40"
+              >
+                {t('startAstronomy')}
+              </button>
+            </div>
+            <p className="text-xs text-gray-600">{t('astronomyNote')}</p>
           </div>
-          <p className="text-xs text-gray-600">{t('astronomyNote')}</p>
-        </div>
+        ) : null}
+        {state.capabilities &&
+        !state.capabilities.synthetic &&
+        !state.capabilities.astronomyDraft ? (
+          <p className="text-sm text-gray-600" role="note">
+            {t('noModules')}
+          </p>
+        ) : null}
       </div>
 
       {attemptId ? (

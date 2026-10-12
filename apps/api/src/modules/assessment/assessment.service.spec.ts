@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import type { AppConfig } from '../../config/env.js';
+import type { UserStore } from '../users/user-store.js';
 import { AssessmentService } from './assessment.service.js';
 import { buildSyntheticForm } from './synthetic-form.js';
 import type {
@@ -19,9 +20,14 @@ function configWith(
   astronomyDraftEnabled = false,
 ): AppConfig {
   return {
-    assessments: { syntheticEnabled, astronomyDraftEnabled },
+    assessments: { syntheticEnabled, astronomyDraftEnabled, reviewEnabled: false },
   } as unknown as AppConfig;
 }
+
+/** Closed-review eligibility is off in these synthetic-availability tests. */
+const users = {
+  findById: async () => null,
+} as unknown as UserStore;
 
 function attemptRecord(overrides: Partial<AttemptRecord> = {}): AttemptRecord {
   const when = new Date('2026-01-01T10:00:00.000Z');
@@ -67,14 +73,14 @@ class StubStore implements AssessmentAttemptStore {
 
 describe('AssessmentService — availability', () => {
   it('refuses to start when synthetic content is disabled', async () => {
-    const service = new AssessmentService(configWith(false), new StubStore());
+    const service = new AssessmentService(configWith(false), new StubStore(), users);
     await expect(service.start('user-1')).rejects.toBeInstanceOf(
       NotFoundException,
     );
   });
 
   it('starts an attempt and returns a public form without keys', async () => {
-    const service = new AssessmentService(configWith(true), new StubStore());
+    const service = new AssessmentService(configWith(true), new StubStore(), users);
     const view = await service.start('user-1');
     expect(view.form.items).toHaveLength(4);
     const serialized = JSON.stringify(view);
@@ -86,7 +92,7 @@ describe('AssessmentService — availability', () => {
 describe('AssessmentService — saves and validation', () => {
   it('rejects malformed answers before persisting', async () => {
     const store = new StubStore();
-    const service = new AssessmentService(configWith(true), store);
+    const service = new AssessmentService(configWith(true), store, users);
     await expect(
       service.saveAnswers('user-1', 'attempt-1', 0, [
         {
@@ -100,7 +106,7 @@ describe('AssessmentService — saves and validation', () => {
   it('rejects saves to a finalised attempt', async () => {
     const store = new StubStore();
     store.findResult = attemptRecord({ status: 'finalised' });
-    const service = new AssessmentService(configWith(true), store);
+    const service = new AssessmentService(configWith(true), store, users);
     await expect(
       service.saveAnswers('user-1', 'attempt-1', 0, []),
     ).rejects.toBeInstanceOf(ConflictException);
@@ -109,7 +115,7 @@ describe('AssessmentService — saves and validation', () => {
   it('surfaces a revision conflict', async () => {
     const store = new StubStore();
     store.saveResult = { status: 'conflict', currentRevision: 3 };
-    const service = new AssessmentService(configWith(true), store);
+    const service = new AssessmentService(configWith(true), store, users);
     await expect(
       service.saveAnswers('user-1', 'attempt-1', 2, []),
     ).rejects.toBeInstanceOf(ConflictException);
@@ -118,7 +124,7 @@ describe('AssessmentService — saves and validation', () => {
   it('hides attempts owned by another user (404)', async () => {
     const store = new StubStore();
     store.findResult = null;
-    const service = new AssessmentService(configWith(true), store);
+    const service = new AssessmentService(configWith(true), store, users);
     await expect(service.get('user-2', 'attempt-1')).rejects.toBeInstanceOf(
       NotFoundException,
     );
@@ -149,12 +155,12 @@ describe('AssessmentService — submission', () => {
       status: 'already',
       attempt: attemptRecord({ status: 'finalised', result }),
     };
-    const service = new AssessmentService(configWith(true), store);
+    const service = new AssessmentService(configWith(true), store, users);
     await expect(service.submit('user-1', 'attempt-1')).resolves.toEqual(result);
   });
 
   it('refuses to return a result for an unfinalised attempt', async () => {
-    const service = new AssessmentService(configWith(true), new StubStore());
+    const service = new AssessmentService(configWith(true), new StubStore(), users);
     await expect(
       service.result('user-1', 'attempt-1'),
     ).rejects.toBeInstanceOf(ConflictException);

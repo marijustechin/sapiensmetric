@@ -175,6 +175,11 @@ export class GoogleAuthService {
       // Never auto-link to an unverified local credentials account.
       throw new GoogleAuthError('unverified_local_account');
     }
+    // T-023: in the closed review environment Google may only sign in to an
+    // already-linked account; it must never create a new one.
+    if (!user && !this.config.google.allowAccountCreation) {
+      throw new GoogleAuthError('registration_disabled');
+    }
     if (!user) {
       const passwordHash = await this.passwords.hash(
         randomBytes(32).toString('base64url'),

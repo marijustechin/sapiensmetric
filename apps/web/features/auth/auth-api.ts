@@ -80,6 +80,16 @@ export function googleStatus(): Promise<FetchOutcome<{ available: boolean }>> {
   return request('/auth/google/status', { method: 'GET' });
 }
 
+/** Public, non-secret auth feature availability (T-023). */
+export interface AuthCapabilities {
+  google: boolean;
+  registration: boolean;
+}
+
+export function getCapabilities(): Promise<FetchOutcome<AuthCapabilities>> {
+  return request('/auth/capabilities', { method: 'GET' });
+}
+
 export interface AcceptedResponse {
   status: 'accepted';
 }

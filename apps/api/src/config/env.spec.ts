@@ -99,3 +99,55 @@ describe('dotenv isolation', () => {
     expect(process.env).toEqual(before);
   });
 });
+
+describe('T-023 closed-review and registration flags', () => {
+  it('defaults to public behaviour (registration on, Google create on, review off)', () => {
+    const config = loadAppConfig(baseEnv({}));
+    expect(config.auth.registrationEnabled).toBe(true);
+    expect(config.google.allowAccountCreation).toBe(true);
+    expect(config.assessments.reviewEnabled).toBe(false);
+  });
+
+  it('reads the closed-review settings without refusing under NODE_ENV=production', () => {
+    const config = loadAppConfig(
+      baseEnv({
+        NODE_ENV: 'production',
+        REGISTRATION_ENABLED: 'false',
+        GOOGLE_ALLOW_ACCOUNT_CREATION: 'false',
+        ASSESSMENT_REVIEW_ENABLED: 'true',
+      }),
+    );
+    expect(config.auth.registrationEnabled).toBe(false);
+    expect(config.google.allowAccountCreation).toBe(false);
+    expect(config.assessments.reviewEnabled).toBe(true);
+  });
+
+  it('still refuses the development astronomy gate in production', () => {
+    expect(() =>
+      loadAppConfig(baseEnv({ NODE_ENV: 'production', ASSESSMENT_ASTRONOMY_DRAFT_ENABLED: 'true' })),
+    ).toThrow(/must not be enabled in production/);
+  });
+});
+
+describe('T-023 file-backed secrets', () => {
+  it('expands a *_FILE variable into the plain secret', async () => {
+    const { mkdtempSync, writeFileSync } = await import('node:fs');
+    const { tmpdir } = await import('node:os');
+    const { join } = await import('node:path');
+    const dir = mkdtempSync(join(tmpdir(), 'sm-env-'));
+    const file = join(dir, 'jwt');
+    writeFileSync(file, 'file-backed-secret-value-that-is-long-enough\n');
+    const env = baseEnv({ JWT_SECRET: '' });
+    delete (env as Record<string, string>).JWT_SECRET;
+    env.JWT_SECRET_FILE = file;
+    const config = loadAppConfig(env);
+    expect(config.jwt.secret).toBe('file-backed-secret-value-that-is-long-enough');
+  });
+
+  it('throws clearly when a *_FILE path is unreadable', () => {
+    const env = baseEnv({ JWT_SECRET: '' });
+    delete (env as Record<string, string>).JWT_SECRET;
+    env.JWT_SECRET_FILE = '/nonexistent/path/for/tests';
+    expect(() => loadAppConfig(env)).toThrow(/Could not read JWT_SECRET_FILE/);
+  });
+});

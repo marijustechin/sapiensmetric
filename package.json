@@ -18,6 +18,8 @@
     "verify:fsd": "node scripts/verify-fsd-boundaries.mjs",
     "build:public": "bash scripts/build-public-release.sh",
     "verify:public-release": "bash scripts/verify-public-release.sh",
+    "build:closed": "bash scripts/build-closed-release.sh",
+    "verify:closed": "bash scripts/verify-closed-release.sh",
     "deploy:check": "node scripts/deploy-webdav.mjs check",
     "deploy:plan": "node scripts/deploy-webdav.mjs plan",
     "deploy:baseline": "node scripts/deploy-webdav.mjs baseline",
@@ -27,7 +29,7 @@
     "test:deploy": "node --test scripts/deploy-webdav.test.mjs scripts/ci-should-deploy.test.mjs scripts/restore-baseline.test.mjs",
     "verify:gtm": "node scripts/verify-gtm-container.mjs",
     "verify:consent-runtime": "node scripts/verify-consent-gtm-runtime.mjs",
-    "verify": "pnpm lint && pnpm typecheck && pnpm test && pnpm test:deploy && pnpm verify:gtm && node scripts/verify-fsd-boundaries.mjs && pnpm build && bash scripts/build-public-release.sh --no-build && bash scripts/verify-static-export.sh && bash scripts/verify-public-release.sh && bash scripts/verify.sh"
+    "verify": "pnpm lint && pnpm typecheck && pnpm test && pnpm test:deploy && pnpm verify:gtm && node scripts/verify-fsd-boundaries.mjs && pnpm build && bash scripts/build-public-release.sh --no-build && bash scripts/verify-static-export.sh && bash scripts/verify-public-release.sh && bash scripts/build-closed-release.sh --no-build && bash scripts/verify-closed-release.sh && bash scripts/verify.sh"
   },
   "devDependencies": {
     "@eslint/js": "9.13.0",

@@ -21,7 +21,7 @@ import { isHistoryVisible, toAttemptSummary } from './assessment-view.js';
 
 function config(): AppConfig {
   return {
-    assessments: { syntheticEnabled: false, astronomyDraftEnabled: false },
+    assessments: { syntheticEnabled: false, astronomyDraftEnabled: false, reviewEnabled: false },
   } as unknown as AppConfig;
 }
 
@@ -76,7 +76,7 @@ describe('assessment history visibility (T-022 correction)', () => {
     const storage = new ListStore([
       record({ id: 'untouched', hasProgress: false, revision: 0 }),
     ]);
-    const service = new AssessmentService(config(), storage);
+    const service = new AssessmentService(config(), storage, { findById: async () => null } as never);
     const list = await service.list('user-1');
     expect(list.items).toHaveLength(0);
   });
@@ -85,7 +85,7 @@ describe('assessment history visibility (T-022 correction)', () => {
     const storage = new ListStore([
       record({ id: 'saved', hasProgress: true, revision: 1, answers: [] }),
     ]);
-    const service = new AssessmentService(config(), storage);
+    const service = new AssessmentService(config(), storage, { findById: async () => null } as never);
     const list = await service.list('user-1');
     expect(list.items.map((i) => i.attemptId)).toEqual(['saved']);
   });
@@ -99,7 +99,7 @@ describe('assessment history visibility (T-022 correction)', () => {
         finalisedAt: new Date('2026-10-10T10:05:00.000Z'),
       }),
     ]);
-    const service = new AssessmentService(config(), storage);
+    const service = new AssessmentService(config(), storage, { findById: async () => null } as never);
     const list = await service.list('user-1');
     expect(list.items.map((i) => i.attemptId)).toEqual(['submitted']);
   });

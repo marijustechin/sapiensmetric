@@ -590,6 +590,27 @@ submit (correct 3 / incorrect 1 / skipped 21) → feedback (200, `answerOptionId
 explanation, sources). Browser rendering was not captured (no interactive
 browser); see `docs/astronomy-draft-bank.md` §6.
 
+## T-023 closed review and sitemap gates
+
+- `apps/web/shared/content/sitemap-xml.test.ts` — the index references both
+  children; children are `<urlset>` documents whose combined set is the 20 public
+  URLs; canonical HTTPS non-www; no private routes/root redirect; EN/LT
+  alternates; content `lastmod`.
+- `apps/api/src/config/env.spec.ts` — closed-review/registration/Google flags and
+  `*_FILE` secret expansion.
+- `apps/api/src/database/provision-owner.spec.ts` — argument parsing, email
+  validation, strong-password generation.
+- `apps/api/src/modules/assessment/astronomy/astronomy.service.spec.ts` — closed
+  review allows an authorised reviewer, refuses an unauthorised one with
+  `REVIEW_NOT_AUTHORISED`, and reports per-account capabilities.
+- `apps/api/src/health.controller.spec.ts` — `/health/ready` is 200 when the DB
+  answers and 503 when it does not.
+- `scripts/build-closed-release.sh` / `scripts/verify-closed-release.sh` — build
+  and check the closed frontend profile (private shells present and noindex;
+  sitemap excludes private routes and the root redirect).
+- `pnpm verify` runs the closed build/verify (`--no-build`) after the public
+  release, so both profiles are checked without deleting the public exclusions.
+
 ## Workflow expectations
 
 - Every task must state how its work is verified (tests, script, or manual

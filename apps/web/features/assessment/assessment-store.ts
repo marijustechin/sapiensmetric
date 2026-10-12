@@ -25,6 +25,7 @@ import {
 import type {
   AssessmentAttemptStatus,
   AssessmentAttemptView,
+  AssessmentCapabilities,
   AssessmentResultDto,
   ItemResponseDto,
   PublicAssessmentForm,
@@ -68,6 +69,8 @@ export interface RunnerState {
   startError: LoadErrorKind | null;
   /** Which module the last start targeted (for module-specific messages). */
   startErrorModule: 'synthetic' | 'astronomy' | null;
+  /** T-023 module availability for this account; null until loaded. */
+  capabilities: AssessmentCapabilities | null;
 }
 
 export type SubmitOutcome =
@@ -103,6 +106,8 @@ export interface AssessmentStore {
   keepLocalEdits(): Promise<void>;
   /** Check the server after an ambiguous submit; loads the result if finalised. */
   reconcile(): Promise<void>;
+  /** T-023: load the module availability for the current account. */
+  loadCapabilities(): Promise<void>;
   /** Leave the current attempt without touching the server. */
   reset(): void;
 }
@@ -129,6 +134,7 @@ export function initialRunnerState(): RunnerState {
     startStatus: 'idle',
     startError: null,
     startErrorModule: null,
+    capabilities: null,
   };
 }
 
@@ -493,6 +499,20 @@ export function createAssessmentStore(
     emit();
   }
 
+  async function loadCapabilities(): Promise<void> {
+    if (!api.capabilities) return;
+    const token = getAccessToken();
+    if (!token) return;
+    const outcome = await api.capabilities(token);
+    // Fail closed on any non-success outcome: expose no module.
+    patch({
+      capabilities:
+        outcome.kind === 'success'
+          ? outcome.data
+          : { synthetic: false, astronomyDraft: false },
+    });
+  }
+
   return {
     getState: () => state,
     subscribe: (listener) => {
@@ -508,6 +528,7 @@ export function createAssessmentStore(
     reloadFromServer,
     keepLocalEdits,
     reconcile,
+    loadCapabilities,
     reset,
   };
 }

@@ -179,6 +179,33 @@ export type AssessmentNotAvailableResponse = z.infer<
   typeof assessmentNotAvailableResponseSchema
 >;
 
+/**
+ * T-023: the closed-review capability is enabled, but the authenticated account
+ * is not an authorised reviewer (`users.reviewEligible = false`). Server-enforced
+ * eligibility — hidden UI is not access control.
+ */
+export const assessmentNotAuthorisedResponseSchema = z.object({
+  statusCode: z.literal(403),
+  code: z.literal('REVIEW_NOT_AUTHORISED'),
+  message: z.string(),
+});
+export type AssessmentNotAuthorisedResponse = z.infer<
+  typeof assessmentNotAuthorisedResponseSchema
+>;
+
+/**
+ * Client-safe availability of assessment modules for the current account plus
+ * environment (T-023). `synthetic` is the local/test module; `astronomyDraft` is
+ * the gated draft review module. No keys or user data are included.
+ */
+export const assessmentCapabilitiesResponseSchema = z.object({
+  synthetic: z.boolean(),
+  astronomyDraft: z.boolean(),
+});
+export type AssessmentCapabilitiesResponse = z.infer<
+  typeof assessmentCapabilitiesResponseSchema
+>;
+
 /** Supported UI locales for localized content/feedback (T-022). */
 export const assessmentUiLocaleSchema = z.enum(['en', 'lt']);
 export type AssessmentUiLocale = z.infer<typeof assessmentUiLocaleSchema>;

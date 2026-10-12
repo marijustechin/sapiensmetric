@@ -13,6 +13,7 @@ import {
 } from './register-feedback';
 import { useAuth } from './auth-provider';
 import { GoogleSignInButton } from './google-sign-in-button';
+import { useAuthCapabilities } from './use-auth-capabilities';
 
 /** Read the action token from the URL fragment only; never from a query string. */
 function useFragmentToken(): { token: string | null; ready: boolean } {
@@ -41,6 +42,7 @@ export function LoginForm() {
   const locale = useLocale() as AppLocale;
   const { login } = useAuth();
   const router = useRouter();
+  const capabilities = useAuthCapabilities();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
@@ -111,7 +113,9 @@ export function LoginForm() {
       </button>
       {message ? <p role="alert">{message}</p> : null}
       <p className="flex gap-3 text-sm">
-        <Link href="/auth/register">{t('registerLink')}</Link>
+        {capabilities?.registration ? (
+          <Link href="/auth/register">{t('registerLink')}</Link>
+        ) : null}
         <Link href="/auth/forgot-password">{t('forgotLink')}</Link>
       </p>
       <GoogleSignInButton returnTo={returnTo} />
@@ -124,6 +128,7 @@ export function RegisterForm() {
   const feedbackT = useTranslations('RegisterFeedback');
   const locale = useLocale() as AppLocale;
   const { register } = useAuth();
+  const capabilities = useAuthCapabilities();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [feedback, setFeedback] = useState<RegisterFeedback | null>(null);
@@ -141,6 +146,17 @@ export function RegisterForm() {
     setBusy(false);
     setFeedback(registerFeedback(result.kind));
   };
+
+  // T-023: in the closed review environment the API disables registration.
+  // Fail closed until the capability is known.
+  if (capabilities && !capabilities.registration) {
+    return (
+      <section className="flex max-w-sm flex-col gap-3">
+        <p role="status">{t('registrationDisabled')}</p>
+        <Link href="/auth/login">{t('loginLink')}</Link>
+      </section>
+    );
+  }
 
   return (
     <form onSubmit={onSubmit} className="flex max-w-sm flex-col gap-3">

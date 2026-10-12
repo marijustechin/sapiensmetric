@@ -135,3 +135,29 @@ export const googleUnavailableResponseSchema = z.object({
 export type GoogleUnavailableResponse = z.infer<
   typeof googleUnavailableResponseSchema
 >;
+
+// --- T-023: closed-review capabilities and disabled registration ----------
+
+/**
+ * Registration is disabled at the API boundary in the closed review
+ * environment. The client uses the capability endpoint to hide registration.
+ */
+export const registerDisabledResponseSchema = z.object({
+  statusCode: z.literal(403),
+  code: z.literal('REGISTRATION_DISABLED'),
+  message: z.string(),
+});
+
+export type RegisterDisabledResponse = z.infer<
+  typeof registerDisabledResponseSchema
+>;
+
+/** Public, non-secret availability of auth features (T-023). */
+export const authCapabilitiesResponseSchema = z.object({
+  google: z.boolean(),
+  registration: z.boolean(),
+});
+
+export type AuthCapabilitiesResponse = z.infer<
+  typeof authCapabilitiesResponseSchema
+>;

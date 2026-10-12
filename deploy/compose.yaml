@@ -1,0 +1,188 @@
+# T-023 — SapiensMetric closed production-review deployment.
+#
+# A SEPARATE Compose project on the shared Oracle host (sokoladas-demo). It hosts
+# the SapiensMetric API and its own MySQL, alongside — not inside — the existing
+# Sokoladas stack.
+#
+# Networking:
+#   * `edge` is the EXISTING `sokoladas-staging_edge` network (external). Joining
+#     it lets the existing Nginx proxy reach `sapiensmetric-api:3000` by service
+#     name, with no competing proxy and no change to the Sokoladas compose.
+#   * `db` is private/internal (API + MySQL only); `egress` gives the API the
+#     outbound access SMTP requires. Nothing here publishes a host port.
+#
+# Images are supplied by the host-only `images.env` (immutable @sha256: digests):
+#   API_IMAGE  = ghcr.io/marijustechin/sapiensmetric-api@sha256:...
+#   MYSQL_IMAGE= mysql:8.0.46@sha256:...   (the project's supported MySQL 8.0.46)
+#
+# Secrets are file-backed under /etc/sapiensmetric/secrets/ (root-managed) and
+# read by the API via *_FILE variables. No secret value lives in this file.
+name: sapiensmetric-review
+
+services:
+  api:
+    image: ${API_IMAGE:?set API_IMAGE in images.env}
+    platform: linux/arm64
+    user: '10001:10001'
+    init: true
+    restart: unless-stopped
+    networks: [edge, db, egress]
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      API_PORT: '3000'
+      DB_HOST: db
+      DB_PORT: '3306'
+      MYSQL_DATABASE: ${MYSQL_DATABASE:?set in hostenv}
+      MYSQL_USER: ${MYSQL_USER:?set in hostenv}
+      MYSQL_PASSWORD_FILE: /run/secrets/mysql_password
+      JWT_SECRET_FILE: /run/secrets/jwt_secret
+      CORS_ORIGIN: ${CORS_ORIGIN:?set in hostenv}
+      PUBLIC_APP_URL: ${PUBLIC_APP_URL:?set in hostenv}
+      # Closed review: astronomy draft for reviewEligible accounts only.
+      ASSESSMENT_REVIEW_ENABLED: 'true'
+      REGISTRATION_ENABLED: 'false'
+      GOOGLE_ALLOW_ACCOUNT_CREATION: 'false'
+      SMTP_HOST: ${SMTP_HOST:?set in hostenv}
+      SMTP_PORT: ${SMTP_PORT:?set in hostenv}
+      SMTP_SECURE: ${SMTP_SECURE:?set in hostenv}
+      SMTP_USER: ${SMTP_USER:?set in hostenv}
+      SMTP_PASSWORD_FILE: /run/secrets/smtp_password
+      SMTP_FROM: ${SMTP_FROM:?set in hostenv}
+    secrets:
+      - mysql_password
+      - jwt_secret
+      - smtp_password
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          node -e "fetch('http://127.0.0.1:'+(process.env.API_PORT||3000)+'/health/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+  db:
+    image: ${MYSQL_IMAGE:?set MYSQL_IMAGE in images.env}
+    platform: linux/arm64
+    restart: unless-stopped
+    networks: [db]
+    environment:
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_root_password
+      MYSQL_DATABASE: ${MYSQL_DATABASE:?set in hostenv}
+      MYSQL_USER: ${MYSQL_USER:?set in hostenv}
+      MYSQL_PASSWORD_FILE: /run/secrets/mysql_password
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_0900_ai_ci
+    secrets:
+      - mysql_root_password
+      - mysql_password
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - mysqladmin ping -h 127.0.0.1 -u"$$MYSQL_USER" -p"$$(cat /run/secrets/mysql_password)"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # One-shot schema migration (reuses the API image). Explicit; the runtime never
+  # synchronizes. Run before starting a new API image.
+  migrate:
+    image: ${API_IMAGE:?set API_IMAGE in images.env}
+    platform: linux/arm64
+    user: '10001:10001'
+    restart: 'no'
+    profiles: [tools]
+    networks: [db]
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      DB_HOST: db
+      DB_PORT: '3306'
+      MYSQL_DATABASE: ${MYSQL_DATABASE:?set in hostenv}
+      MYSQL_USER: ${MYSQL_USER:?set in hostenv}
+      MYSQL_PASSWORD_FILE: /run/secrets/mysql_password
+      JWT_SECRET_FILE: /run/secrets/jwt_secret
+      CORS_ORIGIN: ${CORS_ORIGIN:?set in hostenv}
+      PUBLIC_APP_URL: ${PUBLIC_APP_URL:?set in hostenv}
+      SMTP_HOST: ${SMTP_HOST:?set in hostenv}
+      SMTP_PORT: ${SMTP_PORT:?set in hostenv}
+      SMTP_SECURE: ${SMTP_SECURE:?set in hostenv}
+      SMTP_USER: ${SMTP_USER:?set in hostenv}
+      SMTP_PASSWORD_FILE: /run/secrets/smtp_password
+      SMTP_FROM: ${SMTP_FROM:?set in hostenv}
+    command: ['node', 'dist/database/migrate.js']
+    secrets:
+      - mysql_password
+      - jwt_secret
+      - smtp_password
+
+  # Operator-only: create/update the owner account and grant review eligibility.
+  # Never exposed as an HTTP endpoint. Run explicitly (see deploy/README.md).
+  provision:
+    image: ${API_IMAGE:?set API_IMAGE in images.env}
+    platform: linux/arm64
+    user: '10001:10001'
+    restart: 'no'
+    profiles: [tools]
+    networks: [db]
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      DB_HOST: db
+      DB_PORT: '3306'
+      MYSQL_DATABASE: ${MYSQL_DATABASE:?set in hostenv}
+      MYSQL_USER: ${MYSQL_USER:?set in hostenv}
+      MYSQL_PASSWORD_FILE: /run/secrets/mysql_password
+      JWT_SECRET_FILE: /run/secrets/jwt_secret
+      CORS_ORIGIN: ${CORS_ORIGIN:?set in hostenv}
+      PUBLIC_APP_URL: ${PUBLIC_APP_URL:?set in hostenv}
+      SMTP_HOST: ${SMTP_HOST:?set in hostenv}
+      SMTP_PORT: ${SMTP_PORT:?set in hostenv}
+      SMTP_SECURE: ${SMTP_SECURE:?set in hostenv}
+      SMTP_USER: ${SMTP_USER:?set in hostenv}
+      SMTP_PASSWORD_FILE: /run/secrets/smtp_password
+      SMTP_FROM: ${SMTP_FROM:?set in hostenv}
+    command: ['node', 'dist/database/provision-owner.js']
+    secrets:
+      - mysql_password
+      - jwt_secret
+      - smtp_password
+
+networks:
+  # The EXISTING Sokoladas edge network; the proxy is already attached to it.
+  edge:
+    external: true
+    name: sokoladas-staging_edge
+  db:
+    driver: bridge
+    internal: true
+    enable_ipv6: false
+  egress:
+    driver: bridge
+    enable_ipv6: false
+
+volumes:
+  mysql_data:
+    name: sapiensmetric-review_mysql_data
+
+secrets:
+  mysql_root_password:
+    file: /etc/sapiensmetric/secrets/mysql_root_password
+  mysql_password:
+    file: /etc/sapiensmetric/secrets/mysql_password
+  jwt_secret:
+    file: /etc/sapiensmetric/secrets/jwt_secret
+  smtp_password:
+    file: /etc/sapiensmetric/secrets/smtp_password

@@ -46,6 +46,7 @@ function config(): AppConfig {
       refreshSessionTtlMs: 30 * 24 * 60 * 60 * 1000,
       refreshSessionTtlSeconds: 30 * 24 * 60 * 60,
       cookieSecure: false,
+      registrationEnabled: true,
     },
     mail: {
       host: 'localhost',
@@ -58,12 +59,13 @@ function config(): AppConfig {
     },
     tokens: { verificationTtlSeconds: 86400, passwordResetTtlSeconds: 1800 },
     publicAppUrl: ORIGIN,
-    assessments: { syntheticEnabled: false, astronomyDraftEnabled: false },
+    assessments: { syntheticEnabled: false, astronomyDraftEnabled: false, reviewEnabled: false },
     google: {
       clientId: CLIENT_ID,
       clientSecret: 'local-secret-value-0123456789abcdef',
       redirectUri: 'http://localhost:3334/auth/google/callback',
       enabled: true,
+      allowAccountCreation: true,
     },
   };
 }

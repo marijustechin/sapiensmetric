@@ -17,6 +17,7 @@ import {
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import {
   acceptedResponseSchema,
+  authCapabilitiesResponseSchema,
   emailVerificationRequestSchema,
   loginRequestSchema,
   meResponseSchema,
@@ -26,11 +27,13 @@ import {
   passwordResetResponseSchema,
   registerConflictResponseSchema,
   registerDeliveryFailureResponseSchema,
+  registerDisabledResponseSchema,
   registerRequestSchema,
   registerResponseSchema,
   verificationConfirmRequestSchema,
   verifiedResponseSchema,
 } from '@sapiensmetric/contracts';
+import { APP_CONFIG, AppConfig } from '../../config/env.js';
 import { AuthService } from './auth.service.js';
 import { AccessTokenGuard, AuthenticatedRequest } from './access-token.guard.js';
 
@@ -46,6 +49,7 @@ type CookieReply = FastifyReply & {
 @Controller('auth')
 export class AuthController {
   constructor(
+    @Inject(APP_CONFIG) private readonly config: AppConfig,
     @Inject(AuthService) private readonly auth: AuthService,
   ) {}
 
@@ -74,6 +78,18 @@ export class AuthController {
   async register(
     @Body() body: unknown,
   ): Promise<typeof registerResponseSchema._type> {
+    // T-023: closed review disables public registration at the API boundary
+    // before the request body is even considered.
+    if (!this.auth.registrationEnabled()) {
+      throw new HttpException(
+        registerDisabledResponseSchema.parse({
+          statusCode: 403,
+          code: 'REGISTRATION_DISABLED',
+          message: 'Registration is not available in this environment.',
+        }),
+        HttpStatus.FORBIDDEN,
+      );
+    }
     const parsed = registerRequestSchema.safeParse(body);
     if (!parsed.success) {
       throw new BadRequestException();
@@ -107,7 +123,29 @@ export class AuthController {
         HttpStatus.BAD_GATEWAY,
       );
     }
+    if (outcome.status === 'disabled') {
+      throw new HttpException(
+        registerDisabledResponseSchema.parse({
+          statusCode: 403,
+          code: 'REGISTRATION_DISABLED',
+          message: 'Registration is not available in this environment.',
+        }),
+        HttpStatus.FORBIDDEN,
+      );
+    }
     return registerResponseSchema.parse({ status: 'accepted' });
+  }
+
+  /**
+   * Public, non-secret availability of auth features (T-023). Lets the closed
+   * login shell hide registration without exposing any configuration values.
+   */
+  @Get('capabilities')
+  async capabilities(): Promise<typeof authCapabilitiesResponseSchema._type> {
+    return authCapabilitiesResponseSchema.parse({
+      google: this.config.google.enabled,
+      registration: this.auth.registrationEnabled(),
+    });
   }
 
   @Post('login')

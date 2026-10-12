@@ -8,6 +8,7 @@ import { APP_CONFIG, AppConfig } from '../../config/env.js';
 import { AssessmentController } from './assessment.controller.js';
 import { AssessmentService } from './assessment.service.js';
 import { AccessTokenGuard } from '../auth/access-token.guard.js';
+import { USER_STORE } from '../users/user-store.js';
 import {
   ASSESSMENT_ATTEMPT_STORE,
   applySaveOps,
@@ -50,6 +51,7 @@ function testConfig(): AppConfig {
       refreshSessionTtlMs: 30 * 24 * 60 * 60 * 1000,
       refreshSessionTtlSeconds: 30 * 24 * 60 * 60,
       cookieSecure: false,
+      registrationEnabled: true,
     },
     mail: {
       host: '127.0.0.1',
@@ -62,8 +64,8 @@ function testConfig(): AppConfig {
     },
     tokens: { verificationTtlSeconds: 86400, passwordResetTtlSeconds: 1800 },
     publicAppUrl: ORIGIN,
-    assessments: { syntheticEnabled: false, astronomyDraftEnabled: false },
-    google: { clientId: null, clientSecret: null, redirectUri: null, enabled: false },
+    assessments: { syntheticEnabled: false, astronomyDraftEnabled: false, reviewEnabled: false },
+    google: { clientId: null, clientSecret: null, redirectUri: null, enabled: false, allowAccountCreation: true },
   };
 }
 
@@ -148,6 +150,7 @@ async function buildHarness(record: AttemptRecord) {
       AssessmentService,
       { provide: ASSESSMENT_ATTEMPT_STORE, useValue: store },
       { provide: APP_CONFIG, useValue: testConfig() },
+      { provide: USER_STORE, useValue: { findById: async () => null } },
     ],
   })
     .overrideGuard(AccessTokenGuard)

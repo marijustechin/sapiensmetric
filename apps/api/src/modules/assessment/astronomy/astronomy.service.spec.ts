@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import {
   ConflictException,
+  ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
 import {
@@ -9,6 +10,7 @@ import {
   type ResponseEntry,
 } from '@sapiensmetric/assessment';
 import type { AppConfig } from '../../../config/env.js';
+import type { UserStore } from '../../users/user-store.js';
 import { AssessmentService } from '../assessment.service.js';
 import type {
   AssessmentAttemptStore,
@@ -21,10 +23,24 @@ import { ASTRONOMY_ITEMS } from './astronomy-bank.js';
 const ATTEMPT_ID = '22222222-2222-4222-8222-222222222222';
 const USER = 'user-1';
 
-function config(astronomyDraftEnabled: boolean): AppConfig {
+function config(
+  astronomyDraftEnabled: boolean,
+  reviewEnabled = false,
+): AppConfig {
   return {
-    assessments: { syntheticEnabled: false, astronomyDraftEnabled },
+    assessments: { syntheticEnabled: false, astronomyDraftEnabled, reviewEnabled },
   } as unknown as AppConfig;
+}
+
+/** Eligible reviewer by default; override per test via `usersWith`. */
+const users: UserStore = {
+  findById: async () => ({ reviewEligible: true }),
+} as unknown as UserStore;
+
+function usersWith(reviewEligible: boolean): UserStore {
+  return {
+    findById: async () => ({ reviewEligible }),
+  } as unknown as UserStore;
 }
 
 class FakeStore implements AssessmentAttemptStore {
@@ -112,7 +128,7 @@ describe('astronomy draft gating and access (T-022)', () => {
   });
 
   it('refuses to start the draft when the gate is off, identifying astronomy (not synthetic)', async () => {
-    const service = new AssessmentService(config(false), store);
+    const service = new AssessmentService(config(false), store, users);
     await expect(service.startAstronomyDraft(USER)).rejects.toBeInstanceOf(NotFoundException);
     await service.startAstronomyDraft(USER).catch((e) => {
       expect(errorCode(e)).toBe('ASSESSMENT_NOT_AVAILABLE');
@@ -122,7 +138,7 @@ describe('astronomy draft gating and access (T-022)', () => {
   });
 
   it('identifies the synthetic module when synthetic is disabled', async () => {
-    const service = new AssessmentService(config(false), store);
+    const service = new AssessmentService(config(false), store, users);
     await service.start(USER).catch((e) => {
       expect(errorCode(e)).toBe('ASSESSMENT_NOT_AVAILABLE');
       expect(errorMessage(e)).toMatch(/Synthetic assessment/);
@@ -131,7 +147,7 @@ describe('astronomy draft gating and access (T-022)', () => {
   });
 
   it('starts an astronomy-draft attempt when the gate is on', async () => {
-    const service = new AssessmentService(config(true), store);
+    const service = new AssessmentService(config(true), store, users);
     const view = await service.startAstronomyDraft(USER);
     expect(view.assessmentId).toBe('astronomy-draft');
     expect(view.form.items).toHaveLength(25);
@@ -140,7 +156,7 @@ describe('astronomy draft gating and access (T-022)', () => {
   });
 
   it('serves localized content without keys for an owned attempt', async () => {
-    const service = new AssessmentService(config(true), store);
+    const service = new AssessmentService(config(true), store, users);
     await service.startAstronomyDraft(USER);
     const content = await service.content(USER, ATTEMPT_ID, 'lt');
     expect(content.locale).toBe('lt');
@@ -149,7 +165,7 @@ describe('astronomy draft gating and access (T-022)', () => {
   });
 
   it('refuses feedback before submission', async () => {
-    const service = new AssessmentService(config(true), store);
+    const service = new AssessmentService(config(true), store, users);
     await service.startAstronomyDraft(USER);
     await service.feedback(USER, ATTEMPT_ID, 'en').then(
       () => {
@@ -163,12 +179,72 @@ describe('astronomy draft gating and access (T-022)', () => {
   });
 
   it('serves feedback after submission, with explanations and sources', async () => {
-    const service = new AssessmentService(config(true), store);
+    const service = new AssessmentService(config(true), store, users);
     await service.startAstronomyDraft(USER);
     await store.finalise(USER, ATTEMPT_ID);
     const feedback = await service.feedback(USER, ATTEMPT_ID, 'en');
     expect(feedback.totals.correct).toBe(1);
     expect(feedback.items[0].explanation).toBe(ASTRONOMY_ITEMS[0].explanation.en);
     expect(feedback.items[0].sources.length).toBeGreaterThan(0);
+  });
+});
+
+describe('closed-review eligibility (T-023)', () => {
+  let store: FakeStore;
+
+  beforeEach(() => {
+    store = new FakeStore();
+  });
+
+  it('allows an explicitly authorised reviewer when the review capability is on', async () => {
+    const service = new AssessmentService(
+      config(false, true),
+      store,
+      usersWith(true),
+    );
+    const view = await service.startAstronomyDraft(USER);
+    expect(view.assessmentId).toBe('astronomy-draft');
+    expect(view.form.items).toHaveLength(25);
+  });
+
+  it('refuses an unauthorised account with a distinct 403 (not "not available")', async () => {
+    const service = new AssessmentService(
+      config(false, true),
+      store,
+      usersWith(false),
+    );
+    await service.startAstronomyDraft(USER).then(
+      () => {
+        throw new Error('unauthorised review must be refused');
+      },
+      (error) => {
+        expect(error).toBeInstanceOf(ForbiddenException);
+        expect(errorCode(error)).toBe('REVIEW_NOT_AUTHORISED');
+      },
+    );
+  });
+
+  it('still refuses when neither the dev gate nor the review capability is on', async () => {
+    const service = new AssessmentService(
+      config(false, false),
+      store,
+      usersWith(true),
+    );
+    await service.startAstronomyDraft(USER).catch((e) => {
+      expect(errorCode(e)).toBe('ASSESSMENT_NOT_AVAILABLE');
+    });
+  });
+
+  it('reports capabilities per account: eligible reviewer sees the draft, others do not', async () => {
+    const eligible = new AssessmentService(config(false, true), store, usersWith(true));
+    const other = new AssessmentService(config(false, true), store, usersWith(false));
+    expect(await eligible.capabilities(USER)).toEqual({
+      synthetic: false,
+      astronomyDraft: true,
+    });
+    expect(await other.capabilities(USER)).toEqual({
+      synthetic: false,
+      astronomyDraft: false,
+    });
   });
 });

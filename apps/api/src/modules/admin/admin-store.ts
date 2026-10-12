@@ -17,6 +17,8 @@ export const ADMIN_AUDIT_ACTIONS = {
   reactivated: 'user.reactivated',
   sessionsRevoked: 'user.sessions_revoked',
   promotedAdmin: 'user.promoted_admin',
+  provisionedOwner: 'user.provisioned_owner',
+  reviewEligibilityChanged: 'user.review_eligibility_changed',
 } as const;
 
 export interface AdminActor {

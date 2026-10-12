@@ -59,6 +59,12 @@ export interface SaveAnswersRequest {
   answers: ResponseEntryDto[];
 }
 
+/** T-023: module availability for the current account (no user data). */
+export interface AssessmentCapabilities {
+  synthetic: boolean;
+  astronomyDraft: boolean;
+}
+
 export type AssessmentAttemptStatus = 'in_progress' | 'finalised';
 
 export interface ItemOutcomeDto {

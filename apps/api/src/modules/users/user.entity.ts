@@ -28,6 +28,15 @@ export class User {
   @Column({ type: 'varchar', length: 16, default: 'active' })
   status!: 'active' | 'suspended';
 
+  /**
+   * T-023 closed-review eligibility. Defaults to `false` and is never settable
+   * through public registration or Google sign-in; only the operator
+   * provisioning workflow grants it. Enforced server-side for the astronomy
+   * draft in the closed review environment.
+   */
+  @Column({ type: 'boolean', default: false })
+  reviewEligible!: boolean;
+
   @CreateDateColumn()
   createdAt!: Date;
 

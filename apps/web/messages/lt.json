@@ -42,6 +42,7 @@
     "confirmReset": "Pakeisti slaptažodį",
     "forgotLink": "Pamiršau slaptažodį",
     "registerLink": "Sukurti paskyrą",
+    "registrationDisabled": "Registracija šioje aplinkoje neprieinama.",
     "loginLink": "Grįžti į prisijungimą",
     "generic": "Jei paskyra atitinka sąlygas, netrukus gausite el. laišką.",
     "verified": "El. pašto adresas patvirtintas. Galite prisijungti.",
@@ -74,6 +75,7 @@
   "Assessment": {
     "title": "Vertinimas (kūrimo režimas)",
     "pageIntro": "Vietinė kūrimo peržiūra. Toliau esantys moduliai skirti tik vietinei peržiūrai; jų turinys neperžiūrėtas ir netinkamas publikavimui.",
+    "noModules": "Šiai paskyrai nėra prieinamų vertinimo modulių.",
     "syntheticBanner": "Sintetinis turinys, skirtas tik kūrimo testavimui. Tai nėra tikras vertinimas, jis nėra validuotas ir nėra publikuojamo produkto dalis. Nelaikykite rezultato reikšmingu.",
     "notAvailableSynthetic": "Sintetinio vertinimo turinys šioje aplinkoje išjungtas.",
     "notAvailableAstronomy": "Astronomijos juodraščio turinys šioje aplinkoje išjungtas.",
