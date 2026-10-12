@@ -173,6 +173,15 @@ unobserved.
   the installer now also prints a best-effort upstream-resolution diagnosis.
   Re-running the installer after re-staging is idempotent (DB/volume/secrets and
   the certificate already exist).
+- **Second live run (owner, 2026-10-13) confirmed the alias fix** — the API
+  became reachable (`/health` 200, `/health/ready` 200,
+  `/auth/capabilities` → `{"google":false,"registration":false}`, `POST /auth/register`
+  → 403) and Sokoladas stayed 200. It then failed at provisioning with
+  `node: bad option: --email`: `docker compose run provision --email …` **replaces**
+  a service's `command`, and the Node image entrypoint prepends `node` to
+  arguments starting with `-`. Fixed by giving the `provision` service an
+  `entrypoint` instead of `command`, and the installer now asserts the generated
+  credential file exists (failing closed otherwise).
 - The verified image was built and run locally (AMD64); the published ARM64
   digest was pulled and inspected. T-022 browser acceptance remains pending.
 

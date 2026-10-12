@@ -236,6 +236,7 @@ step "Provision the owner account (credential never printed)"
 if [ "$DRY_RUN" -eq 0 ]; then
   compose run --rm --user 0:0 provision \
     --email "$OWNER_EMAIL" --apply --password-out /run/sm-out/owner-initial-password
+  [ -s "$INITIAL_DIR/owner-initial-password" ] || die "provisioning did not produce $INITIAL_DIR/owner-initial-password. Check the run output; the provision service must use 'entrypoint', not 'command'."
   chmod 0400 "$INITIAL_DIR/owner-initial-password"
   chown 0:0 "$INITIAL_DIR/owner-initial-password"
 fi

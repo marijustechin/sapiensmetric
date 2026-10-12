@@ -162,7 +162,10 @@ services:
       SMTP_USER: ${SMTP_USER:?set in hostenv}
       SMTP_PASSWORD_FILE: /run/secrets/smtp_password
       SMTP_FROM: ${SMTP_FROM:?set in hostenv}
-    command: ['node', 'dist/database/provision-owner.js']
+    # `entrypoint`, not `command`: `docker compose run provision --email ...`
+    # appends the arguments to the entrypoint, whereas a `command` would be
+    # replaced by them (the node image entrypoint then mis-reads `--email`).
+    entrypoint: ['node', 'dist/database/provision-owner.js']
     volumes:
       # Host-only directory for a generated initial credential (never printed).
       - /etc/sapiensmetric/initial-credentials:/run/sm-out
