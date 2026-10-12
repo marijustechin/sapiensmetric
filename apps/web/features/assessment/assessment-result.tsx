@@ -8,67 +8,79 @@ interface AssessmentResultViewProps {
 }
 
 /**
- * Renders the raw server scoring output for a finalised attempt. It shows only
- * what the API returns (correct/incorrect/skipped, a raw score, and objective
- * totals) and explicitly avoids any validated/percentile/IQ framing.
+ * Raw server scoring output for a finalised attempt. Shows only what the API
+ * returns (correct/incorrect/skipped, a raw score, and objective totals) and
+ * explicitly avoids any validated/percentile/IQ framing. Laid out as stacked
+ * label/value groups so it stays usable and free of page-level horizontal scroll
+ * at narrow widths (320/360/390px).
  */
 export function AssessmentResultView({ result }: AssessmentResultViewProps) {
   const t = useTranslations('Assessment');
 
+  const metrics: { label: string; value: number }[] = [
+    { label: t('totalItems'), value: result.totalItems },
+    { label: t('correct'), value: result.correct },
+    { label: t('incorrect'), value: result.incorrect },
+    { label: t('skipped'), value: result.skipped },
+    { label: t('score'), value: result.score },
+  ];
+
   return (
-    <section className="flex flex-col gap-4">
+    <section className="flex min-w-0 flex-col gap-4">
       <div className="rounded border border-gray-300 bg-gray-50 p-4 text-sm">
         {t('resultSynthetic')}
       </div>
 
-      <dl className="grid max-w-md grid-cols-2 gap-x-4 gap-y-1">
-        <dt>{t('totalItems')}</dt>
-        <dd className="font-mono">{result.totalItems}</dd>
-        <dt>{t('correct')}</dt>
-        <dd className="font-mono">{result.correct}</dd>
-        <dt>{t('incorrect')}</dt>
-        <dd className="font-mono">{result.incorrect}</dd>
-        <dt>{t('skipped')}</dt>
-        <dd className="font-mono">{result.skipped}</dd>
-        <dt>{t('score')}</dt>
-        <dd className="font-mono">{result.score}</dd>
+      <dl className="grid grid-cols-2 gap-x-4 gap-y-1 sm:max-w-md">
+        {metrics.map((metric) => (
+          <div key={metric.label} className="col-span-2 flex justify-between gap-4 sm:col-span-1 sm:flex-col sm:gap-0">
+            <dt className="text-slate-600">{metric.label}</dt>
+            <dd className="font-mono">{metric.value}</dd>
+          </div>
+        ))}
       </dl>
 
-      <div>
+      <div className="min-w-0">
         <h3 className="font-semibold">{t('objectives')}</h3>
-        <table className="mt-1 text-sm">
-          <thead>
-            <tr className="text-left">
-              <th className="pr-4">{t('objectiveHeader')}</th>
-              <th className="pr-4">{t('correct')}</th>
-              <th className="pr-4">{t('incorrect')}</th>
-              <th className="pr-4">{t('skipped')}</th>
-              <th>{t('totalItems')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {result.objectives.map((objective) => (
-              <tr key={objective.objectiveId}>
-                <td className="pr-4 font-mono">{objective.objectiveId}</td>
-                <td className="pr-4 font-mono">{objective.correct}</td>
-                <td className="pr-4 font-mono">{objective.incorrect}</td>
-                <td className="pr-4 font-mono">{objective.skipped}</td>
-                <td className="font-mono">{objective.items}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <ul className="mt-2 flex min-w-0 flex-col gap-2">
+          {result.objectives.map((objective) => (
+            <li
+              key={objective.objectiveId}
+              className="min-w-0 rounded border border-slate-200 p-3 text-sm"
+            >
+              <p className="break-all font-mono text-slate-800">
+                {objective.objectiveId}
+              </p>
+              <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1">
+                <div className="flex justify-between gap-2">
+                  <dt className="text-slate-600">{t('correct')}</dt>
+                  <dd className="font-mono">{objective.correct}</dd>
+                </div>
+                <div className="flex justify-between gap-2">
+                  <dt className="text-slate-600">{t('incorrect')}</dt>
+                  <dd className="font-mono">{objective.incorrect}</dd>
+                </div>
+                <div className="flex justify-between gap-2">
+                  <dt className="text-slate-600">{t('skipped')}</dt>
+                  <dd className="font-mono">{objective.skipped}</dd>
+                </div>
+                <div className="flex justify-between gap-2">
+                  <dt className="text-slate-600">{t('totalItems')}</dt>
+                  <dd className="font-mono">{objective.items}</dd>
+                </div>
+              </dl>
+            </li>
+          ))}
+        </ul>
       </div>
 
-      <div>
+      <div className="min-w-0">
         <h3 className="font-semibold">{t('itemsBreakdown')}</h3>
-        <ul className="mt-1 text-sm">
+        <ul className="mt-2 flex min-w-0 flex-col gap-1 text-sm">
           {result.items.map((item) => (
-            <li key={item.itemId} className="flex gap-2">
-              <span className="font-mono">{item.itemId}</span>
-              <span className="text-gray-600">
-                {t(`outcome.${item.outcome}`)}
-              </span>
+            <li key={item.itemId} className="flex flex-wrap gap-x-2">
+              <span className="break-all font-mono">{item.itemId}</span>
+              <span className="text-gray-600">{t(`outcome.${item.outcome}`)}</span>
             </li>
           ))}
         </ul>

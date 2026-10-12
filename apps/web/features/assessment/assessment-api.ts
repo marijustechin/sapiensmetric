@@ -9,9 +9,12 @@
  */
 
 import type {
+  AssessmentAttemptContent,
   AssessmentAttemptList,
   AssessmentAttemptView,
+  AssessmentFeedback,
   AssessmentResultDto,
+  AssessmentUiLocale,
   SaveAnswersRequest,
 } from './assessment-types';
 
@@ -42,6 +45,22 @@ export type ApiOutcome<T> =
  */
 export interface AssessmentApi {
   start(accessToken: string): Promise<ApiOutcome<AssessmentAttemptView>>;
+  /** Start the local astronomy **draft** module (gated server-side). */
+  startAstronomyDraft(
+    accessToken: string,
+  ): Promise<ApiOutcome<AssessmentAttemptView>>;
+  /** Client-safe localized content for an owned attempt (no keys). */
+  getAttemptContent(
+    accessToken: string,
+    attemptId: string,
+    locale: AssessmentUiLocale,
+  ): Promise<ApiOutcome<AssessmentAttemptContent>>;
+  /** Post-submission feedback for a finalised attempt. */
+  getAttemptFeedback(
+    accessToken: string,
+    attemptId: string,
+    locale: AssessmentUiLocale,
+  ): Promise<ApiOutcome<AssessmentFeedback>>;
   list(accessToken: string): Promise<ApiOutcome<AssessmentAttemptList>>;
   getAttempt(
     accessToken: string,
@@ -123,6 +142,20 @@ async function request<T>(
 export const assessmentApi: AssessmentApi = {
   start: (accessToken) =>
     request('/assessments/attempts', 'POST', accessToken),
+  startAstronomyDraft: (accessToken) =>
+    request('/assessments/attempts/astronomy-draft', 'POST', accessToken),
+  getAttemptContent: (accessToken, attemptId, locale) =>
+    request(
+      `/assessments/attempts/${attemptId}/content?locale=${locale}`,
+      'GET',
+      accessToken,
+    ),
+  getAttemptFeedback: (accessToken, attemptId, locale) =>
+    request(
+      `/assessments/attempts/${attemptId}/feedback?locale=${locale}`,
+      'GET',
+      accessToken,
+    ),
   list: (accessToken) => request('/assessments/attempts', 'GET', accessToken),
   getAttempt: (accessToken, attemptId) =>
     request(`/assessments/attempts/${attemptId}`, 'GET', accessToken),

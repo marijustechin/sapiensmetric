@@ -115,6 +115,10 @@ const envSchema = z.object({
   // T-017 — synthetic assessment content is a local/test-only feature. It is
   // OFF by default and must never be enabled in production (enforced below).
   ASSESSMENT_SYNTHETIC_ENABLED: z.enum(['true', 'false']).default('false'),
+
+  // T-022 — the astronomy **draft** bank is a local-review-only feature. It is
+  // OFF by default and must never be enabled in production (enforced below).
+  ASSESSMENT_ASTRONOMY_DRAFT_ENABLED: z.enum(['true', 'false']).default('false'),
 });
 
 export interface AppConfig {
@@ -157,6 +161,8 @@ export interface AppConfig {
   assessments: {
     /** Local/test-only synthetic assessment content. Off unless explicitly enabled. */
     syntheticEnabled: boolean;
+    /** Local-review-only astronomy draft bank. Off unless explicitly enabled. */
+    astronomyDraftEnabled: boolean;
   };
   google: {
     clientId: string | null;
@@ -222,6 +228,17 @@ export function loadAppConfig(env?: NodeJS.ProcessEnv): AppConfig {
     );
   }
 
+  // T-022: the astronomy draft bank is local-review-only and must never be
+  // enabled in production.
+  if (
+    parsed.ASSESSMENT_ASTRONOMY_DRAFT_ENABLED === 'true' &&
+    parsed.NODE_ENV === 'production'
+  ) {
+    throw new Error(
+      'ASSESSMENT_ASTRONOMY_DRAFT_ENABLED must not be enabled in production.',
+    );
+  }
+
   return {
     api: {
       port: parsed.API_PORT,
@@ -262,6 +279,7 @@ export function loadAppConfig(env?: NodeJS.ProcessEnv): AppConfig {
     publicAppUrl: parsed.PUBLIC_APP_URL,
     assessments: {
       syntheticEnabled: parsed.ASSESSMENT_SYNTHETIC_ENABLED === 'true',
+      astronomyDraftEnabled: parsed.ASSESSMENT_ASTRONOMY_DRAFT_ENABLED === 'true',
     },
     google: {
       clientId: parsed.GOOGLE_CLIENT_ID ?? null,

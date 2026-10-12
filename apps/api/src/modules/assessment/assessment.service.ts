@@ -14,8 +14,11 @@ import {
   type ResponseEntry,
 } from '@sapiensmetric/assessment';
 import type {
+  AssessmentAttemptContent,
   AssessmentAttemptList,
+  AssessmentFeedback,
   AssessmentResultDto,
+  AssessmentUiLocale,
   ItemResponseDto,
   ResponseEntryDto,
 } from '@sapiensmetric/contracts';
@@ -27,7 +30,16 @@ import {
   type AttemptRecord,
 } from './assessment-attempt.store.js';
 import { buildSyntheticForm } from './synthetic-form.js';
-import { toAttemptList, toAttemptView } from './assessment-view.js';
+import { buildAstronomySnapshot } from './astronomy/astronomy-bank.js';
+import {
+  buildAttemptContent,
+  buildAttemptFeedback,
+} from './astronomy/astronomy-feedback.js';
+import {
+  isHistoryVisible,
+  toAttemptList,
+  toAttemptView,
+} from './assessment-view.js';
 
 function errorBody(statusCode: number, code: string, message: string) {
   return { statusCode, code, message };
@@ -45,13 +57,13 @@ export class AssessmentService {
     return this.config.assessments.syntheticEnabled;
   }
 
-  private notAvailable(): never {
+  private notAvailable(module: 'synthetic' | 'astronomy'): never {
+    const message =
+      module === 'astronomy'
+        ? 'Astronomy draft content is disabled in this environment.'
+        : 'Synthetic assessment content is disabled in this environment.';
     throw new NotFoundException(
-      errorBody(
-        HttpStatus.NOT_FOUND,
-        'ASSESSMENT_NOT_AVAILABLE',
-        'Assessments are not available.',
-      ),
+      errorBody(HttpStatus.NOT_FOUND, 'ASSESSMENT_NOT_AVAILABLE', message),
     );
   }
 
@@ -100,18 +112,73 @@ export class AssessmentService {
   /** Start a synthetic attempt. Only available when explicitly enabled locally. */
   async start(userId: string): Promise<ReturnType<typeof toAttemptView>> {
     if (!this.syntheticEnabled()) {
-      this.notAvailable();
+      this.notAvailable('synthetic');
     }
     const attempt = await this.store.create(userId, buildSyntheticForm());
     return toAttemptView(attempt);
   }
 
   async list(userId: string): Promise<AssessmentAttemptList> {
-    return toAttemptList(await this.store.listOwned(userId));
+    const attempts = await this.store.listOwned(userId);
+    // Normal history hides untouched drafts (no saved progress, not submitted).
+    // They remain retrievable by id for snapshot/ownership integrity.
+    return toAttemptList(attempts.filter(isHistoryVisible));
   }
 
   async get(userId: string, attemptId: string): Promise<ReturnType<typeof toAttemptView>> {
     return toAttemptView(await this.ownedOrThrow(userId, attemptId));
+  }
+
+  /**
+   * Start an astronomy **draft** attempt. Local-review-only: gated by
+   * `ASSESSMENT_ASTRONOMY_DRAFT_ENABLED` (off by default, refused in production).
+   */
+  async startAstronomyDraft(userId: string): Promise<ReturnType<typeof toAttemptView>> {
+    if (!this.config.assessments.astronomyDraftEnabled) {
+      this.notAvailable('astronomy');
+    }
+    const attempt = await this.store.create(userId, buildAstronomySnapshot());
+    return toAttemptView(attempt);
+  }
+
+  /** Client-safe localized content for an owned attempt (no answer keys). */
+  async content(
+    userId: string,
+    attemptId: string,
+    locale: AssessmentUiLocale,
+  ): Promise<AssessmentAttemptContent> {
+    const attempt = await this.ownedOrThrow(userId, attemptId);
+    return {
+      ...buildAttemptContent(attempt.snapshot, locale),
+      attemptId: attempt.id,
+    };
+  }
+
+  /**
+   * Post-submission feedback (correctness, explanations, sources) for a
+   * **finalised** owned attempt. Not available before submission.
+   */
+  async feedback(
+    userId: string,
+    attemptId: string,
+    locale: AssessmentUiLocale,
+  ): Promise<AssessmentFeedback> {
+    const attempt = await this.ownedOrThrow(userId, attemptId);
+    if (attempt.status !== 'finalised' || !attempt.result) {
+      throw new ConflictException(
+        errorBody(
+          HttpStatus.CONFLICT,
+          'ATTEMPT_NOT_FINALISED',
+          'Feedback is available only after the attempt has been submitted.',
+        ),
+      );
+    }
+    return buildAttemptFeedback(
+      attempt.snapshot,
+      attempt.answers,
+      attempt.result,
+      locale,
+    );
   }
 
   async saveAnswers(

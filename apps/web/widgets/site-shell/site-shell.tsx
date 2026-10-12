@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { SiteHeader } from '../site-header/site-header';
 import { SiteFooter } from '../site-footer/site-footer';
 import { ConsentBanner } from '../../features/analytics/consent-banner';
+import { BackToTop } from '../../shared/ui/back-to-top';
 import { UI_STRINGS } from '../../shared/content/site';
 import type { AppLocale } from '../../shared/lib/locale-navigation';
 
@@ -40,6 +41,7 @@ export function SiteShell({
       </main>
       <SiteFooter locale={locale} />
       <ConsentBanner />
+      <BackToTop label={strings.backToTop} />
     </div>
   );
 }

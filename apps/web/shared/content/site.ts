@@ -133,6 +133,7 @@ export const UI_STRINGS: Record<
     menu: string;
     openMenu: string;
     closeMenu: string;
+    backToTop: string;
   }
 > = {
   en: {
@@ -162,6 +163,7 @@ export const UI_STRINGS: Record<
     menu: 'Menu',
     openMenu: 'Open menu',
     closeMenu: 'Close menu',
+    backToTop: 'Back to top',
   },
   lt: {
     siteTagline: 'Mokomoji medžiaga apie vertinimus',
@@ -190,6 +192,7 @@ export const UI_STRINGS: Record<
     menu: 'Meniu',
     openMenu: 'Atidaryti meniu',
     closeMenu: 'Uždaryti meniu',
+    backToTop: 'Į viršų',
   },
 };
 

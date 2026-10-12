@@ -16,7 +16,11 @@
     "assessment": "Assessment",
     "signOut": "Sign out",
     "switchToEnglish": "English",
-    "switchToLithuanian": "Lietuviškai"
+    "switchToLithuanian": "Lietuviškai",
+    "backToTop": "Back to top",
+    "menu": "Menu",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu"
   },
   "Auth": {
     "title": {
@@ -68,8 +72,11 @@
     "backHome": "Home"
   },
   "Assessment": {
-    "title": "Synthetic assessment (development)",
+    "title": "Assessment (development)",
+    "pageIntro": "Local development view. The modules below are for local review only; their content is unreviewed and not publication-ready.",
     "syntheticBanner": "Synthetic content for development testing only. This is not a real assessment, it is not validated, and it is not part of the published product. Do not treat the outcome as meaningful.",
+    "notAvailableSynthetic": "Synthetic assessment content is disabled in this environment.",
+    "notAvailableAstronomy": "Astronomy draft content is disabled in this environment.",
     "loading": "Checking session…",
     "authError": "Could not check your session. Please try again.",
     "retry": "Retry",
@@ -138,7 +145,32 @@
       "correct": "Correct",
       "incorrect": "Incorrect",
       "skipped": "Skipped"
-    }
+    },
+    "startAstronomy": "Start astronomy draft (local review)",
+    "astronomyNote": "Astronomy draft module — local review only; items are unreviewed and not publication-ready.",
+    "loadingContent": "Loading content…",
+    "feedbackTitle": "Feedback",
+    "feedbackDraftNote": "Draft feedback for local review only. This is not a validated result.",
+    "feedbackYourAnswer": "your answer",
+    "feedbackUnavailable": "This item's explanation version is no longer available.",
+    "feedbackOutcome": {
+      "correct": "Correct",
+      "incorrect": "Incorrect",
+      "skipped": "Skipped"
+    },
+    "cancel": "Cancel",
+    "discardTitle": "Discard unsaved changes?",
+    "discardConfirmAction": "Discard",
+    "submitConfirmTitle": "Submit this attempt?",
+    "savedToast": "Answers saved.",
+    "submittedToast": "Attempt submitted.",
+    "refresh": "Refresh",
+    "moduleSynthetic": "Synthetic assessment",
+    "moduleAstronomy": "Astronomy draft",
+    "moduleUnknown": "Assessment",
+    "historyItems": "{count} items",
+    "details": "Details",
+    "attemptIdLabel": "Attempt ID"
   },
   "Google": {
     "button": "Sign in with Google",
@@ -147,6 +179,8 @@
   "Admin": {
     "title": "Administration",
     "subtitle": "User roles, account status, and audit history.",
+    "confirmTitle": "Confirm action",
+    "cancel": "Cancel",
     "nav": {
       "account": "Account",
       "home": "Home"

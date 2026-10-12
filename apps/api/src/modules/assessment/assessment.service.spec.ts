@@ -14,8 +14,13 @@ import type {
   SaveAnswersOutcome,
 } from './assessment-attempt.store.js';
 
-function configWith(syntheticEnabled: boolean): AppConfig {
-  return { assessments: { syntheticEnabled } } as unknown as AppConfig;
+function configWith(
+  syntheticEnabled: boolean,
+  astronomyDraftEnabled = false,
+): AppConfig {
+  return {
+    assessments: { syntheticEnabled, astronomyDraftEnabled },
+  } as unknown as AppConfig;
 }
 
 function attemptRecord(overrides: Partial<AttemptRecord> = {}): AttemptRecord {
@@ -26,6 +31,7 @@ function attemptRecord(overrides: Partial<AttemptRecord> = {}): AttemptRecord {
     snapshot: buildSyntheticForm(),
     answers: [],
     status: 'in_progress',
+    hasProgress: false,
     revision: 0,
     result: null,
     createdAt: when,

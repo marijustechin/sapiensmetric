@@ -11,6 +11,7 @@ import { CreateEmailActionTokens1781440000001 } from './migrations/1781440000001
 import { CreateUserIdentities1781440000002 } from './migrations/1781440000002-CreateUserIdentities.js';
 import { CreateRolesAndAdminAudit1781440000003 } from './migrations/1781440000003-CreateRolesAndAdminAudit.js';
 import { CreateAssessmentAttempts1781440000004 } from './migrations/1781440000004-CreateAssessmentAttempts.js';
+import { AddAssessmentAttemptProgress1781440000005 } from './migrations/1781440000005-AddAssessmentAttemptProgress.js';
 
 export function createDataSource(config: AppConfig): DataSource {
   return new DataSource({
@@ -36,6 +37,7 @@ export function createDataSource(config: AppConfig): DataSource {
       CreateUserIdentities1781440000002,
       CreateRolesAndAdminAudit1781440000003,
       CreateAssessmentAttempts1781440000004,
+      AddAssessmentAttemptProgress1781440000005,
     ],
     migrationsTableName: 'migrations',
   });

@@ -16,7 +16,7 @@
 #      approved statuses; the archived T-006 record contains the required
 #      definition sections, the six exact browser routes, and the access-gate
 #      markers; the T-014..T-021 archives exist with their headings/statuses; and
-#      tasks/current.md declares that no task is active.
+#      tasks/current.md declares T-022 active.
 #   4. docs/decisions.md contains D-016 (heading, and section-scoped date /
 #      O-006 note / verification access gate / review-correction markers),
 #      D-017 (conventional registration), D-018 (Google OIDC), and D-019
@@ -138,9 +138,9 @@ for a in "${archives[@]}"; do
   fi
 done
 
-# --- Invariant 3: T-006..T-021 archived; no active task -----------------
+# --- Invariant 3: T-006..T-021 archived; T-022 active -------------------
 # The archived records' exact headings and final statuses are asserted
-# literally; tasks/current.md must declare that no task is active.
+# literally; tasks/current.md must declare T-022 active.
 
 t006_archive='tasks/done/2026-09-21-email-verification-and-password-reset-delivery.md'
 t006_heading='# T-006 — Email verification and password-reset delivery through generic SMTP (archived)'
@@ -398,10 +398,10 @@ else
   note_fail "T-021 archive does not contain the final approved status"
 fi
 
-if grep -qxF '# No active task' tasks/current.md; then
+if grep -qxF '# T-022 — Versioned astronomy draft bank, review eligibility, and local post-submission feedback (active)' tasks/current.md; then
   note_pass
 else
-  note_fail "tasks/current.md does not declare that no task is active"
+  note_fail "tasks/current.md does not declare T-022 as the active task"
 fi
 
 t007_sections=(

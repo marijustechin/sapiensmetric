@@ -7,12 +7,20 @@ import { useAuth } from '../../features/auth/auth-provider';
 import { loginHref } from '../../features/auth/auth-navigation';
 import { assessmentApi } from '../../features/assessment/assessment-api';
 import { pendingEntries } from '../../features/assessment/assessment-answers';
-import type { AssessmentAttemptSummary } from '../../features/assessment/assessment-types';
+import type {
+  AssessmentAttemptSummary,
+  AssessmentContentItem,
+  AssessmentFeedback,
+} from '../../features/assessment/assessment-types';
+import { AssessmentFeedbackView } from '../../features/assessment/assessment-feedback';
 import { AssessmentHistory } from '../../features/assessment/assessment-history';
 import { AssessmentRunner } from '../../features/assessment/assessment-runner';
 import { AssessmentResultView } from '../../features/assessment/assessment-result';
 import { useAssessmentStore } from './use-assessment-store';
 import { useAttemptParam } from './use-attempt-param';
+import { useConfirm } from '../../shared/ui/confirm-dialog';
+import { confirmThen } from '../../features/assessment/confirm-guard';
+import { useUnsavedChangesWarning } from '../../shared/lib/use-unsaved-changes-warning';
 import type { AppLocale } from '../../shared/lib/locale-navigation';
 
 interface HistoryState {
@@ -37,11 +45,16 @@ export function AssessmentScreen() {
     store.getState,
   );
   const { attemptId, selectAttempt } = useAttemptParam();
+  const confirm = useConfirm();
 
   const [history, setHistory] = useState<HistoryState>({
     status: 'loading',
     items: [],
   });
+  const [content, setContent] = useState<
+    Record<string, AssessmentContentItem> | null
+  >(null);
+  const [feedback, setFeedback] = useState<AssessmentFeedback | null>(null);
 
   useEffect(() => {
     if (status !== 'unauthenticated') return;
@@ -83,36 +96,117 @@ export function AssessmentScreen() {
     if (state.status === 'finalised') void refreshHistory();
   }, [state.status, refreshHistory]);
 
+  const isAstronomy = state.form?.assessmentId === 'astronomy-draft';
+
+  // Localized content for the astronomy draft module (no answer keys).
+  useEffect(() => {
+    setContent(null);
+    if (
+      status !== 'authenticated' ||
+      !state.attemptId ||
+      state.form?.assessmentId !== 'astronomy-draft'
+    ) {
+      return;
+    }
+    const token = getAccessToken();
+    if (!token) return;
+    let cancelled = false;
+    void (async () => {
+      const outcome = await assessmentApi.getAttemptContent(
+        token,
+        state.attemptId as string,
+        locale,
+      );
+      if (!cancelled && outcome.kind === 'success') {
+        setContent(
+          Object.fromEntries(outcome.data.items.map((item) => [item.itemId, item])),
+        );
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [status, state.attemptId, state.form?.assessmentId, locale]);
+
+  // Feedback is only fetched after submission (server enforces this too).
+  useEffect(() => {
+    setFeedback(null);
+    if (
+      status !== 'authenticated' ||
+      !state.attemptId ||
+      state.form?.assessmentId !== 'astronomy-draft' ||
+      state.status !== 'finalised'
+    ) {
+      return;
+    }
+    const token = getAccessToken();
+    if (!token) return;
+    let cancelled = false;
+    void (async () => {
+      const outcome = await assessmentApi.getAttemptFeedback(
+        token,
+        state.attemptId as string,
+        locale,
+      );
+      if (!cancelled && outcome.kind === 'success') setFeedback(outcome.data);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [status, state.attemptId, state.form?.assessmentId, state.status, locale]);
+
   const hasPending =
     pendingEntries(state.draft, state.saved, state.editedIds).length > 0;
 
-  const confirmDiscard = useCallback((): boolean => {
-    return !hasPending || window.confirm(t('discardConfirm'));
-  }, [hasPending, t]);
+  // Browser-level protection (tab close/reload) cannot be a custom dialog.
+  useUnsavedChangesWarning(hasPending);
 
-  const onStart = useCallback(async () => {
-    if (!confirmDiscard()) return;
-    const id = await store.startNew();
-    if (id) {
-      selectAttempt(id);
-      void refreshHistory();
-    }
-  }, [confirmDiscard, store, selectAttempt, refreshHistory]);
-
-  const onSelect = useCallback(
-    (id: string) => {
-      if (!confirmDiscard()) return;
-      selectAttempt(id);
-    },
-    [confirmDiscard, selectAttempt],
+  const confirmDiscard = useCallback(
+    () =>
+      confirm({
+        title: t('discardTitle'),
+        body: t('discardConfirm'),
+        confirmLabel: t('discardConfirmAction'),
+        cancelLabel: t('cancel'),
+        destructive: true,
+      }),
+    [confirm, t],
   );
 
-  const onBack = useCallback(() => {
-    if (!confirmDiscard()) return;
-    selectAttempt(null);
-    store.reset();
-    void refreshHistory();
-  }, [confirmDiscard, selectAttempt, store, refreshHistory]);
+  const onStart = useCallback(async () => {
+    await confirmThen(hasPending, confirmDiscard, async () => {
+      const id = await store.startNew();
+      if (id) {
+        selectAttempt(id);
+        void refreshHistory();
+      }
+    });
+  }, [hasPending, confirmDiscard, store, selectAttempt, refreshHistory]);
+
+  const onStartAstronomy = useCallback(async () => {
+    await confirmThen(hasPending, confirmDiscard, async () => {
+      const id = await store.startNew('astronomy');
+      if (id) {
+        selectAttempt(id);
+        void refreshHistory();
+      }
+    });
+  }, [hasPending, confirmDiscard, store, selectAttempt, refreshHistory]);
+
+  const onSelect = useCallback(
+    async (id: string) => {
+      await confirmThen(hasPending, confirmDiscard, () => selectAttempt(id));
+    },
+    [hasPending, confirmDiscard, selectAttempt],
+  );
+
+  const onBack = useCallback(async () => {
+    await confirmThen(hasPending, confirmDiscard, () => {
+      selectAttempt(null);
+      store.reset();
+      void refreshHistory();
+    });
+  }, [hasPending, confirmDiscard, selectAttempt, store, refreshHistory]);
 
   const loadErrorMessage = (kind: string | null): string => {
     switch (kind) {
@@ -162,25 +256,47 @@ export function AssessmentScreen() {
           className="rounded border border-amber-400 bg-amber-50 p-3 text-sm"
           role="note"
         >
-          {t('syntheticBanner')}
+          {t('pageIntro')}
         </p>
       </header>
 
       {state.startError ? (
         <p role="alert" className="text-sm text-red-700">
-          {loadErrorMessage(state.startError)}
+          {state.startError === 'not-available'
+            ? state.startErrorModule === 'astronomy'
+              ? t('notAvailableAstronomy')
+              : t('notAvailableSynthetic')
+            : loadErrorMessage(state.startError)}
         </p>
       ) : null}
 
-      <div>
-        <button
-          type="button"
-          onClick={() => void onStart()}
-          disabled={state.startStatus === 'starting'}
-          className="border border-gray-700 bg-gray-800 px-3 py-1 text-white disabled:opacity-40"
-        >
-          {state.startStatus === 'starting' ? t('starting') : t('start')}
-        </button>
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-2 rounded border border-gray-300 p-3">
+          <div>
+            <button
+              type="button"
+              onClick={() => void onStart()}
+              disabled={state.startStatus === 'starting'}
+              className="min-h-[44px] border border-gray-700 bg-gray-800 px-3 py-1 text-white disabled:opacity-40"
+            >
+              {state.startStatus === 'starting' ? t('starting') : t('start')}
+            </button>
+          </div>
+          <p className="text-xs text-gray-600">{t('syntheticBanner')}</p>
+        </div>
+        <div className="flex flex-col gap-2 rounded border border-gray-300 p-3">
+          <div>
+            <button
+              type="button"
+              onClick={() => void onStartAstronomy()}
+              disabled={state.startStatus === 'starting'}
+              className="min-h-[44px] border border-gray-500 px-3 py-1 disabled:opacity-40"
+            >
+              {t('startAstronomy')}
+            </button>
+          </div>
+          <p className="text-xs text-gray-600">{t('astronomyNote')}</p>
+        </div>
       </div>
 
       {attemptId ? (
@@ -206,10 +322,23 @@ export function AssessmentScreen() {
               </button>
             </div>
           </div>
-        ) : state.status === 'finalised' && state.result ? (
-          <AssessmentResultView result={state.result} />
+        ) : state.status === 'finalised' ? (
+          isAstronomy ? (
+            feedback ? (
+              <AssessmentFeedbackView feedback={feedback} />
+            ) : (
+              <p>{t('loading')}</p>
+            )
+          ) : state.result ? (
+            <AssessmentResultView result={state.result} />
+          ) : null
         ) : (
-          <AssessmentRunner state={state} store={store} onBack={onBack} />
+          <AssessmentRunner
+            state={state}
+            store={store}
+            onBack={onBack}
+            content={content ?? undefined}
+          />
         )
       ) : (
         <AssessmentHistory

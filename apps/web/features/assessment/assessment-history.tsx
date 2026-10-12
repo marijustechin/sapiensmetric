@@ -14,9 +14,12 @@ interface AssessmentHistoryProps {
 }
 
 /**
- * The participant's own attempts. Presented as raw records (status, revision,
- * timestamps) with links to resume or view the result — never as validated
- * progress or achievement.
+ * The participant's own attempts (T-022 correction).
+ *
+ * Identity leads with a translated **module title** (mapped from the attempt's
+ * client-safe `assessmentId`, never guessed from the item count) plus status,
+ * date and item count; technical ids/revision are secondary. Presented as raw
+ * records, never as validated progress.
  */
 export function AssessmentHistory({
   locale,
@@ -28,6 +31,12 @@ export function AssessmentHistory({
 }: AssessmentHistoryProps) {
   const t = useTranslations('Assessment');
 
+  const moduleTitle = (assessmentId: string): string => {
+    if (assessmentId === 'synthetic-demo') return t('moduleSynthetic');
+    if (assessmentId === 'astronomy-draft') return t('moduleAstronomy');
+    return t('moduleUnknown');
+  };
+
   const formatDate = (value: string): string => {
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return value;
@@ -35,13 +44,13 @@ export function AssessmentHistory({
   };
 
   return (
-    <section className="flex flex-col gap-3">
-      <div className="flex items-center gap-3">
+    <section className="flex min-w-0 flex-col gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <h2 className="text-lg font-semibold">{t('historyTitle')}</h2>
         <button
           type="button"
           onClick={onRefresh}
-          className="border border-gray-500 px-2 py-1 text-sm"
+          className="min-h-[44px] border border-gray-500 px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           {t('refresh')}
         </button>
@@ -54,38 +63,64 @@ export function AssessmentHistory({
       ) : null}
 
       {status === 'ready' && items.length > 0 ? (
-        <ul className="flex flex-col gap-2">
+        <ul className="flex min-w-0 flex-col gap-2">
           {items.map((attempt) => {
             const finalised = attempt.status === 'finalised';
             return (
               <li
                 key={attempt.attemptId}
-                className={`flex flex-wrap items-center gap-3 rounded border p-3 ${
-                  attempt.attemptId === activeId
-                    ? 'border-gray-800'
-                    : 'border-gray-300'
+                className={`flex min-w-0 flex-col gap-2 rounded border p-3 ${
+                  attempt.attemptId === activeId ? 'border-gray-800' : 'border-gray-300'
                 }`}
               >
-                <span className="font-mono text-xs">{attempt.attemptId}</span>
-                <span className="text-sm">
-                  {finalised ? t('statusFinalised') : t('statusInProgress')}
-                </span>
-                <span className="text-xs text-gray-600">
-                  {t('revision', { n: attempt.revision })}
-                </span>
-                <span className="text-xs text-gray-600">
-                  {t('created')}: {formatDate(attempt.createdAt)}
-                </span>
-                <span className="text-xs text-gray-600">
-                  {t('updated')}: {formatDate(attempt.updatedAt)}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => onSelect(attempt.attemptId)}
-                  className="ml-auto border border-gray-500 px-2 py-1 text-sm"
-                >
-                  {finalised ? t('viewResult') : t('resume')}
-                </button>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-semibold text-slate-900">
+                    {moduleTitle(attempt.assessmentId)}
+                  </span>
+                  <span
+                    className={`rounded px-2 py-0.5 text-xs font-medium ${
+                      finalised
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-amber-100 text-amber-800'
+                    }`}
+                  >
+                    {finalised ? t('statusFinalised') : t('statusInProgress')}
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-600">
+                  <span>
+                    {t('historyItems', { count: attempt.itemCount })}
+                  </span>
+                  <span>
+                    {t('created')}: {formatDate(attempt.createdAt)}
+                  </span>
+                  <span>
+                    {t('updated')}: {formatDate(attempt.updatedAt)}
+                  </span>
+                </div>
+                <div className="flex flex-wrap items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => onSelect(attempt.attemptId)}
+                    className="min-h-[44px] border border-gray-500 px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    {finalised ? t('viewResult') : t('resume')}
+                  </button>
+                  <details className="text-xs text-slate-500">
+                    <summary className="cursor-pointer">{t('details')}</summary>
+                    <dl className="mt-1 flex flex-col gap-0.5">
+                      <div className="flex gap-2">
+                        <dt>{t('attemptIdLabel')}:</dt>
+                        <dd className="break-all font-mono">
+                          {attempt.attemptId}
+                        </dd>
+                      </div>
+                      <div className="flex gap-2">
+                        <dt>{t('revision', { n: attempt.revision })}</dt>
+                      </div>
+                    </dl>
+                  </details>
+                </div>
               </li>
             );
           })}

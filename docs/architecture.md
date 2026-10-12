@@ -356,6 +356,22 @@ reproducible from repository content.
   styles, and the shared icon/manifest metadata). HTML conformance is checked by
   `scripts/verify-html-conformance.mjs` (Nu HTML Checker).
 
+## T-022 astronomy draft bank, review eligibility, and local feedback
+
+T-022 (`docs/astronomy-draft-bank.md`) adds a repository-managed, server-only,
+bilingual **draft** bank covering the owner's 25 astronomy topics:
+
+- `apps/api/src/modules/assessment/astronomy/astronomy-bank.ts` — 25 single-answer
+  draft items, the revised five-objective astronomy blueprint (8/5/4/6/2 items,
+  superseding the T-015 Solar-System blueprint), and the keyed engine snapshot.
+- `astronomy-review.ts` — typed content/language review evidence, hash-bound
+  approval invalidation, publication eligibility, and bank validation.
+- `astronomy-feedback.ts` — client-safe localized content (no keys) and
+  post-submission feedback resolved by the attempt's `itemId`+`itemVersion`.
+- Gated by `ASSESSMENT_ASTRONOMY_DRAFT_ENABLED` (default off; refused in
+  production) with distinct `astronomy-draft` routes; the synthetic flow is
+  unchanged. Results remain descriptive raw counts.
+
 ## T-007 Google OpenID Connect sign-in (implemented, approved, archived)
 
 T-007 adds optional Google OIDC sign-in (authorization-code flow with PKCE)

@@ -153,6 +153,8 @@ export const assessmentAttemptSummarySchema = z.object({
   formId: z.string().min(1),
   status: assessmentAttemptStatusSchema,
   revision: z.number().int().nonnegative(),
+  /** Number of items in the attempt's versioned form (client-safe). */
+  itemCount: z.number().int().nonnegative(),
   createdAt: z.string(),
   updatedAt: z.string(),
   finalisedAt: z.string().nullable(),
@@ -176,3 +178,93 @@ export const assessmentNotAvailableResponseSchema = z.object({
 export type AssessmentNotAvailableResponse = z.infer<
   typeof assessmentNotAvailableResponseSchema
 >;
+
+/** Supported UI locales for localized content/feedback (T-022). */
+export const assessmentUiLocaleSchema = z.enum(['en', 'lt']);
+export type AssessmentUiLocale = z.infer<typeof assessmentUiLocaleSchema>;
+
+export const assessmentContentOptionSchema = z.object({
+  id: z.string().min(1),
+  text: z.string().min(1),
+});
+export type AssessmentContentOption = z.infer<
+  typeof assessmentContentOptionSchema
+>;
+
+/**
+ * Client-safe localized content for an attempt's items (T-022). Contains NO
+ * answer keys: it may be served for in-progress attempts.
+ */
+export const assessmentContentItemSchema = z.object({
+  itemId: z.string().min(1),
+  itemVersion: z.string().min(1),
+  objectiveId: z.string().min(1),
+  kind: assessmentItemKindSchema,
+  languageScope: assessmentLanguageScopeSchema,
+  unit: z.string().min(1).optional(),
+  prompt: z.string().min(1),
+  options: z.array(assessmentContentOptionSchema),
+  relevance: z.string().min(1),
+});
+export type AssessmentContentItem = z.infer<typeof assessmentContentItemSchema>;
+
+export const assessmentAttemptContentSchema = z.object({
+  attemptId: z.string().uuid(),
+  assessmentId: z.string().min(1),
+  formId: z.string().min(1),
+  locale: assessmentUiLocaleSchema,
+  items: z.array(assessmentContentItemSchema),
+});
+export type AssessmentAttemptContent = z.infer<
+  typeof assessmentAttemptContentSchema
+>;
+
+export const assessmentFeedbackSourceSchema = z.object({
+  id: z.string().min(1),
+  label: z.string().min(1),
+  url: z.string().min(1),
+});
+export type AssessmentFeedbackSource = z.infer<
+  typeof assessmentFeedbackSourceSchema
+>;
+
+/**
+ * Per-item feedback for a FINALISED (submitted) attempt (T-022). Includes the
+ * correct option ids and explanation; never served for in-progress attempts.
+ */
+export const assessmentFeedbackItemSchema = z.object({
+  itemId: z.string().min(1),
+  itemVersion: z.string().min(1),
+  objectiveId: z.string().min(1),
+  outcome: z.enum(['correct', 'incorrect', 'skipped']),
+  selectedOptionIds: z.array(z.string()),
+  /**
+   * The correct option ids for this **submitted** attempt. Named distinctly from
+   * the server-internal keyed field so the keyed-material guard can stay strict
+   * (this projection is only ever served after finalisation).
+   */
+  answerOptionIds: z.array(z.string()),
+  explanation: z.string().min(1),
+  options: z.array(assessmentContentOptionSchema),
+  sources: z.array(assessmentFeedbackSourceSchema),
+  /** True when the attempt's item version is no longer in the bank. */
+  unavailable: z.boolean().optional(),
+});
+export type AssessmentFeedbackItem = z.infer<
+  typeof assessmentFeedbackItemSchema
+>;
+
+export const assessmentFeedbackSchema = z.object({
+  attemptId: z.string().uuid(),
+  assessmentId: z.string().min(1),
+  formId: z.string().min(1),
+  locale: assessmentUiLocaleSchema,
+  totals: z.object({
+    totalItems: z.number().int().nonnegative(),
+    correct: z.number().int().nonnegative(),
+    incorrect: z.number().int().nonnegative(),
+    skipped: z.number().int().nonnegative(),
+  }),
+  items: z.array(assessmentFeedbackItemSchema),
+});
+export type AssessmentFeedback = z.infer<typeof assessmentFeedbackSchema>;

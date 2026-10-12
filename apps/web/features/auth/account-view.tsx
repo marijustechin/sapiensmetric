@@ -6,6 +6,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { Link } from '../../shared/i18n/navigation';
 import { useAuth } from './auth-provider';
 import { loginHref } from './auth-navigation';
+import { signOutToHome } from './sign-out';
 import type { AppLocale } from '../../shared/lib/locale-navigation';
 
 export function AccountView() {
@@ -46,8 +47,7 @@ export function AccountView() {
   }
 
   const onSignOut = async () => {
-    await logout();
-    router.replace(`/${locale}`);
+    await signOutToHome(logout, locale);
   };
 
   return (

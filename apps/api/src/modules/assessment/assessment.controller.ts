@@ -9,16 +9,22 @@ import {
   Param,
   Post,
   Put,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
 import {
+  assessmentAttemptContentSchema,
   assessmentAttemptListSchema,
   assessmentAttemptViewSchema,
+  assessmentFeedbackSchema,
   assessmentResultSchema,
+  assessmentUiLocaleSchema,
   saveAnswersRequestSchema,
+  type AssessmentAttemptContent,
   type AssessmentAttemptList,
   type AssessmentAttemptView,
+  type AssessmentFeedback,
   type AssessmentResultDto,
 } from '@sapiensmetric/contracts';
 import {
@@ -45,6 +51,42 @@ export class AssessmentController {
     @Inject(AssessmentService) private readonly assessments: AssessmentService,
   ) {}
 
+  private parseLocale(value: unknown): 'en' | 'lt' {
+    const parsed = assessmentUiLocaleSchema.safeParse(value ?? 'en');
+    if (!parsed.success) {
+      throw new BadRequestException({
+        statusCode: HttpStatus.BAD_REQUEST,
+        code: 'INVALID_LOCALE',
+        message: 'locale must be "en" or "lt".',
+      });
+    }
+    return parsed.data;
+  }
+
+  /** Client-safe localized content for an owned attempt (no answer keys). */
+  @Get('attempts/:id/content')
+  async content(
+    @Req() request: AuthenticatedRequest,
+    @Param('id') id: string,
+    @Query('locale') locale: string | undefined,
+  ): Promise<AssessmentAttemptContent> {
+    return assessmentAttemptContentSchema.parse(
+      await this.assessments.content(request.userId, id, this.parseLocale(locale)),
+    );
+  }
+
+  /** Post-submission feedback for a finalised owned attempt. */
+  @Get('attempts/:id/feedback')
+  async feedback(
+    @Req() request: AuthenticatedRequest,
+    @Param('id') id: string,
+    @Query('locale') locale: string | undefined,
+  ): Promise<AssessmentFeedback> {
+    return assessmentFeedbackSchema.parse(
+      await this.assessments.feedback(request.userId, id, this.parseLocale(locale)),
+    );
+  }
+
   @Post('attempts')
   @HttpCode(HttpStatus.CREATED)
   async start(
@@ -52,6 +94,20 @@ export class AssessmentController {
   ): Promise<AssessmentAttemptView> {
     return assessmentAttemptViewSchema.parse(
       await this.assessments.start(request.userId),
+    );
+  }
+
+  /**
+   * Start an astronomy **draft** attempt (local-review-only; gated). Distinct
+   * path from `POST attempts` so the synthetic flow is unchanged.
+   */
+  @Post('attempts/astronomy-draft')
+  @HttpCode(HttpStatus.CREATED)
+  async startAstronomyDraft(
+    @Req() request: AuthenticatedRequest,
+  ): Promise<AssessmentAttemptView> {
+    return assessmentAttemptViewSchema.parse(
+      await this.assessments.startAstronomyDraft(request.userId),
     );
   }
 

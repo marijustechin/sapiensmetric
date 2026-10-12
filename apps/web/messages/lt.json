@@ -16,7 +16,11 @@
     "assessment": "Vertinimas",
     "signOut": "Atsijungti",
     "switchToEnglish": "English",
-    "switchToLithuanian": "Lietuviškai"
+    "switchToLithuanian": "Lietuviškai",
+    "backToTop": "Į viršų",
+    "menu": "Meniu",
+    "openMenu": "Atidaryti meniu",
+    "closeMenu": "Uždaryti meniu"
   },
   "Auth": {
     "title": {
@@ -68,8 +72,11 @@
     "backHome": "Į pradžią"
   },
   "Assessment": {
-    "title": "Sintetinis vertinimas (kūrimo režimas)",
+    "title": "Vertinimas (kūrimo režimas)",
+    "pageIntro": "Vietinė kūrimo peržiūra. Toliau esantys moduliai skirti tik vietinei peržiūrai; jų turinys neperžiūrėtas ir netinkamas publikavimui.",
     "syntheticBanner": "Sintetinis turinys, skirtas tik kūrimo testavimui. Tai nėra tikras vertinimas, jis nėra validuotas ir nėra publikuojamo produkto dalis. Nelaikykite rezultato reikšmingu.",
+    "notAvailableSynthetic": "Sintetinio vertinimo turinys šioje aplinkoje išjungtas.",
+    "notAvailableAstronomy": "Astronomijos juodraščio turinys šioje aplinkoje išjungtas.",
     "loading": "Tikrinama sesija…",
     "authError": "Nepavyko patikrinti sesijos. Bandykite dar kartą.",
     "retry": "Bandyti dar kartą",
@@ -138,7 +145,32 @@
       "correct": "Teisingas",
       "incorrect": "Neteisingas",
       "skipped": "Praleistas"
-    }
+    },
+    "startAstronomy": "Pradėti astronomijos juodraštį (vietinei peržiūrai)",
+    "astronomyNote": "Astronomijos juodraščio modulis – tik vietinei peržiūrai; klausimai neperžiūrėti ir netinkami publikavimui.",
+    "loadingContent": "Įkeliamas turinys…",
+    "feedbackTitle": "Atsiliepimas",
+    "feedbackDraftNote": "Juodraštinis atsiliepimas tik vietinei peržiūrai. Tai nėra validuotas rezultatas.",
+    "feedbackYourAnswer": "jūsų atsakymas",
+    "feedbackUnavailable": "Šio klausimo paaiškinimo versija nebeprieinama.",
+    "feedbackOutcome": {
+      "correct": "Teisingas",
+      "incorrect": "Neteisingas",
+      "skipped": "Praleistas"
+    },
+    "cancel": "Atšaukti",
+    "discardTitle": "Atmesti neišsaugotus pakeitimus?",
+    "discardConfirmAction": "Atmesti",
+    "submitConfirmTitle": "Pateikti šį bandymą?",
+    "savedToast": "Atsakymai išsaugoti.",
+    "submittedToast": "Bandymas pateiktas.",
+    "refresh": "Atnaujinti",
+    "moduleSynthetic": "Sintetinis vertinimas",
+    "moduleAstronomy": "Astronomijos juodraštis",
+    "moduleUnknown": "Vertinimas",
+    "historyItems": "{count} klausimai",
+    "details": "Išsami informacija",
+    "attemptIdLabel": "Bandymo ID"
   },
   "Google": {
     "button": "Prisijungti su Google",
@@ -147,6 +179,8 @@
   "Admin": {
     "title": "Administravimas",
     "subtitle": "Naudotojų vaidmenys, paskyros būsena ir audito istorija.",
+    "confirmTitle": "Patvirtinti veiksmą",
+    "cancel": "Atšaukti",
     "nav": {
       "account": "Paskyra",
       "home": "Pradžia"

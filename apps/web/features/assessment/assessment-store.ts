@@ -66,6 +66,8 @@ export interface RunnerState {
   /** Starting a new attempt (explicit action only). */
   startStatus: 'idle' | 'starting';
   startError: LoadErrorKind | null;
+  /** Which module the last start targeted (for module-specific messages). */
+  startErrorModule: 'synthetic' | 'astronomy' | null;
 }
 
 export type SubmitOutcome =
@@ -81,8 +83,11 @@ export interface AssessmentStore {
   subscribe(listener: () => void): () => void;
   /** Load (resume/view) an owned attempt. */
   loadAttempt(attemptId: string): Promise<void>;
-  /** Start a new attempt via an explicit action; returns its id or null. */
-  startNew(): Promise<string | null>;
+  /**
+   * Start a new attempt via an explicit action; returns its id or null.
+   * `kind: 'astronomy'` starts the gated local astronomy draft module.
+   */
+  startNew(kind?: 'synthetic' | 'astronomy'): Promise<string | null>;
   setAnswer(itemId: string, response: ItemResponseDto): void;
   clearAnswer(itemId: string): void;
   /** Persist pending answers. Resolves true only when the server accepted them. */
@@ -123,6 +128,7 @@ export function initialRunnerState(): RunnerState {
     sessionExpired: false,
     startStatus: 'idle',
     startError: null,
+    startErrorModule: null,
   };
 }
 
@@ -227,21 +233,30 @@ export function createAssessmentStore(
     patch({ load: 'error', loadError: mapLoadError(outcome) });
   }
 
-  async function startNew(): Promise<string | null> {
+  async function startNew(
+    kind: 'synthetic' | 'astronomy' = 'synthetic',
+  ): Promise<string | null> {
     if (isBusy()) return null;
-    patch({ startStatus: 'starting', startError: null });
+    patch({ startStatus: 'starting', startError: null, startErrorModule: kind });
     const token = requireToken();
     if (!token) {
       patch({ startStatus: 'idle', startError: 'unauthorized' });
       return null;
     }
-    const outcome = await api.start(token);
+    const outcome =
+      kind === 'astronomy'
+        ? await api.startAstronomyDraft(token)
+        : await api.start(token);
     if (outcome.kind === 'success') {
-      patch({ startStatus: 'idle', startError: null });
+      patch({ startStatus: 'idle', startError: null, startErrorModule: null });
       hydrate(outcome.data);
       return outcome.data.attemptId;
     }
-    patch({ startStatus: 'idle', startError: mapLoadError(outcome) });
+    patch({
+      startStatus: 'idle',
+      startError: mapLoadError(outcome),
+      startErrorModule: kind,
+    });
     return null;
   }
 

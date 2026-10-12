@@ -162,6 +162,10 @@ function makeHarness(partial: Partial<Handlers> = {}): {
       calls.start += 1;
       return handlers.start();
     },
+    // Astronomy draft endpoints are not exercised by these store tests.
+    startAstronomyDraft: () => Promise.resolve({ kind: 'networkError' }),
+    getAttemptContent: () => Promise.resolve({ kind: 'networkError' }),
+    getAttemptFeedback: () => Promise.resolve({ kind: 'networkError' }),
     list: () => {
       calls.list += 1;
       return handlers.list();

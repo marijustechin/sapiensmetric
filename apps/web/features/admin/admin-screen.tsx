@@ -23,6 +23,7 @@ import { RoleBadge } from '../../entities/user/ui/role-badge';
 import { StatusBadge } from '../../entities/user/ui/status-badge';
 import { VerifiedBadge } from '../../entities/user/ui/verified-badge';
 import { LoadingScreen } from '../../shared/ui/loading-screen';
+import { useConfirm } from '../../shared/ui/confirm-dialog';
 import type { AppLocale } from '../../shared/lib/locale-navigation';
 import type {
   AuditEntry,
@@ -34,6 +35,7 @@ import type {
 
 export function AdminScreen() {
   const t = useTranslations('Admin');
+  const confirm = useConfirm();
   const locale = useLocale();
   const router = useRouter();
   const { status, getAccessToken, retryBootstrap } = useAuth();
@@ -412,9 +414,15 @@ export function AdminScreen() {
                 value={detail.role}
                 disabled={busy}
                 className="ml-2 rounded border border-gray-400 px-2 py-1"
-                onChange={(e) => {
+                onChange={async (e) => {
                   const role = e.target.value as UserDetail['role'];
-                  if (!window.confirm(t('actions.confirmRole', { role }))) return;
+                  const ok = await confirm({
+                    title: t('confirmTitle'),
+                    body: t('actions.confirmRole', { role }),
+                    confirmLabel: t('actions.changeRole'),
+                    cancelLabel: t('cancel'),
+                  });
+                  if (!ok) return;
                   void applyAction(
                     () => adminApi.changeRole(getAccessToken()!, detail.id, role),
                     'actions.roleUpdated',
@@ -431,8 +439,15 @@ export function AdminScreen() {
                 type="button"
                 disabled={busy}
                 className="rounded border border-red-300 px-3 py-1 text-sm text-red-700"
-                onClick={() => {
-                  if (!window.confirm(t('actions.confirmSuspend'))) return;
+                onClick={async () => {
+                  const ok = await confirm({
+                    title: t('confirmTitle'),
+                    body: t('actions.confirmSuspend'),
+                    confirmLabel: t('actions.suspend'),
+                    cancelLabel: t('cancel'),
+                    destructive: true,
+                  });
+                  if (!ok) return;
                   void applyAction(
                     () => adminApi.changeStatus(getAccessToken()!, detail.id, 'suspended'),
                     'actions.suspended',
@@ -460,8 +475,15 @@ export function AdminScreen() {
               type="button"
               disabled={busy}
               className="rounded border border-gray-400 px-3 py-1 text-sm"
-              onClick={() => {
-                if (!window.confirm(t('actions.confirmRevoke'))) return;
+              onClick={async () => {
+                const ok = await confirm({
+                  title: t('confirmTitle'),
+                  body: t('actions.confirmRevoke'),
+                  confirmLabel: t('actions.revokeSessions'),
+                  cancelLabel: t('cancel'),
+                  destructive: true,
+                });
+                if (!ok) return;
                 void applyAction(
                   () => adminApi.revokeSessions(getAccessToken()!, detail.id),
                   'actions.revoked',

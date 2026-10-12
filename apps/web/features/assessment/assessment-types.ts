@@ -116,6 +116,7 @@ export interface AssessmentAttemptSummary {
   formId: string;
   status: AssessmentAttemptStatus;
   revision: number;
+  itemCount: number;
   createdAt: string;
   updatedAt: string;
   finalisedAt: string | null;
@@ -123,4 +124,61 @@ export interface AssessmentAttemptSummary {
 
 export interface AssessmentAttemptList {
   items: AssessmentAttemptSummary[];
+}
+
+export type AssessmentUiLocale = 'en' | 'lt';
+
+/** Client-safe localized content (T-022) — no answer keys. */
+export interface AssessmentContentItem {
+  itemId: string;
+  itemVersion: string;
+  objectiveId: string;
+  kind: AssessmentItemKind;
+  languageScope: AssessmentLanguageScope;
+  unit?: string;
+  prompt: string;
+  options: { id: string; text: string }[];
+  relevance: string;
+}
+
+export interface AssessmentAttemptContent {
+  attemptId: string;
+  assessmentId: string;
+  formId: string;
+  locale: AssessmentUiLocale;
+  items: AssessmentContentItem[];
+}
+
+export interface AssessmentFeedbackSource {
+  id: string;
+  label: string;
+  url: string;
+}
+
+/** Post-submission feedback (T-022) — finalised attempts only. */
+export interface AssessmentFeedbackItem {
+  itemId: string;
+  itemVersion: string;
+  objectiveId: string;
+  outcome: 'correct' | 'incorrect' | 'skipped';
+  selectedOptionIds: string[];
+  answerOptionIds: string[];
+  explanation: string;
+  options: { id: string; text: string }[];
+  sources: AssessmentFeedbackSource[];
+  unavailable?: boolean;
+}
+
+export interface AssessmentFeedback {
+  attemptId: string;
+  assessmentId: string;
+  formId: string;
+  locale: AssessmentUiLocale;
+  totals: {
+    totalItems: number;
+    correct: number;
+    incorrect: number;
+    skipped: number;
+  };
+  items: AssessmentFeedbackItem[];
 }

@@ -65,6 +65,22 @@ pnpm --filter @sapiensmetric/api migration:run     # apply committed migrations
 pnpm --filter @sapiensmetric/api migration:show    # list executed/pending
 ```
 
+T-022 exposes synthetic **and** astronomy **draft** content only for local review,
+behind `ASSESSMENT_SYNTHETIC_ENABLED` and `ASSESSMENT_ASTRONOMY_DRAFT_ENABLED`
+(both default **false**; the API refuses to start with them enabled in
+production). Use the documented review profile:
+
+```bash
+pnpm --filter @sapiensmetric/api build
+pnpm dev:api:review         # sets both flags, starts the API on :3334
+pnpm --filter @sapiensmetric/web dev   # web on :3333
+```
+
+Alternatively set both flags in the git-ignored root `.env` (repeatable across
+restarts). Open `http://localhost:3333/en/assessment/`; each module starts from
+its own button (synthetic = 4 items, astronomy draft = 25 items). See
+`docs/astronomy-draft-bank.md`.
+
 T-012 adds `1781440000003-CreateRolesAndAdminAudit` (`users.role`,
 `users.status`, `admin_audit_log`), and T-017 adds
 `1781440000004-CreateAssessmentAttempts` (`assessment_attempts`, synthetic

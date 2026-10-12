@@ -564,6 +564,32 @@ detailed step list.
   configure the `production` environment secrets (see `docs/deployment-webdav.md`).
   Until then the deploy workflow fails safely before any production write.
 
+## T-022 astronomy draft-bank checks
+
+In `apps/api` (vitest unit; Docker-free), part of `pnpm test`:
+
+- `astronomy-bank.spec.ts` — the bank validates (structure, 25 topics, objectives,
+  distractor rationales, no answer-revealing prompt); every draft is unreviewed and
+  NOT publication-eligible; keys appear only in the server snapshot and are absent
+  from `toPublicForm`.
+- `astronomy-review.spec.ts` — eligibility requires current content **and**
+  language evidence; changing reviewed content invalidates the approval; an
+  invalidated status is ineligible; invented/backfilled evidence on a draft is
+  rejected by the validator.
+- `astronomy-feedback.spec.ts` — localized content carries no keys; feedback
+  reports outcomes/correct options/explanations/sources; an absent item version is
+  marked `unavailable` rather than substituted (version pinning).
+- `astronomy.service.spec.ts` — the draft start is refused when the gate is off
+  (`ASSESSMENT_NOT_AVAILABLE`) and succeeds when on; content is localized and
+  key-free; feedback is refused before submission (`ATTEMPT_NOT_FINALISED`) and
+  served after it.
+
+Live local journey (HTTP, with `ASSESSMENT_ASTRONOMY_DRAFT_ENABLED=true`): start →
+`content?locale=lt` (localized, no keys) → feedback-before-submit (409) → save →
+submit (correct 3 / incorrect 1 / skipped 21) → feedback (200, `answerOptionIds`,
+explanation, sources). Browser rendering was not captured (no interactive
+browser); see `docs/astronomy-draft-bank.md` §6.
+
 ## Workflow expectations
 
 - Every task must state how its work is verified (tests, script, or manual

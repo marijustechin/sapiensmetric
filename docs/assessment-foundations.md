@@ -13,6 +13,14 @@ Companion documents produced by T-015:
 - `docs/pilot-item-samples.md` — 6–8 original bilingual review drafts.
 - `docs/assessment-sources.md` — the T-015 source register (S-008…S-013).
 
+> **Revised by T-022 (2026-10-09).** The five-objective **Solar-System** blueprint
+> proposed here (with the intent of "five items per objective") is **superseded**
+> by the broader astronomy blueprint in `docs/astronomy-draft-bank.md`
+> (objectives with 8/5/4/6/2 items covering the owner's 25 topics). Do **not**
+> retain the "five items per objective" reporting and do **not** imply
+> comparability with this earlier proposal. The T-015 draft items remain
+> **unreviewed**; T-022's bank items are separate drafts and are also unreviewed.
+
 Binding context that this document must stay within: `AGENTS.md`,
 `docs/product-brief.md`, `docs/assessment-principles.md`,
 `docs/claims-ladder.md`, `docs/validation-norming-gap.md`,

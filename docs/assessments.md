@@ -164,7 +164,22 @@ Synthetic content proves the **plumbing only**. It is not reviewed, calibrated, 
 validated, and it is not the astronomy pilot. Publication remains gated on the
 prerequisites below.
 
-## 11. Remaining prerequisites (unchanged)
+## 11. Astronomy draft module (T-022, local review only)
+
+T-022 adds a **server-only** astronomy **draft** bank with a separate, gated
+attempt type and post-submission feedback:
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `POST` | `/assessments/attempts/astronomy-draft` | Start a draft attempt (gate `ASSESSMENT_ASTRONOMY_DRAFT_ENABLED`, default off, refused in production). |
+| `GET` | `/assessments/attempts/:id/content?locale=en\|lt` | Localized prompts/options, no answer keys. |
+| `GET` | `/assessments/attempts/:id/feedback?locale=en\|lt` | Correctness, explanation and sources — **finalised attempts only** (otherwise `409 ATTEMPT_NOT_FINALISED`). |
+
+The synthetic flow (`POST /assessments/attempts`) is unchanged. See
+`docs/astronomy-draft-bank.md` for the revised blueprint, review-eligibility
+rules, local instructions and release blockers.
+
+## 12. Remaining prerequisites (unchanged)
 
 - Independent astronomy content review and independent EN/LT language review
   (**pending**).

@@ -18,6 +18,8 @@ export interface AttemptRecord {
   answers: ResponseEntry[];
   status: AttemptStatus;
   revision: number;
+  /** Meaningful saved progress (or submission); false for an untouched draft. */
+  hasProgress: boolean;
   result: ScoringResult | null;
   createdAt: Date;
   updatedAt: Date;
@@ -87,6 +89,7 @@ function toRecord(row: AssessmentAttempt): AttemptRecord {
     answers: (row.answers as ResponseEntry[]) ?? [],
     status: row.status,
     revision: row.revision,
+    hasProgress: row.hasProgress,
     result: (row.result as ScoringResult | null) ?? null,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
@@ -119,6 +122,7 @@ export class TypeOrmAssessmentAttemptStore implements AssessmentAttemptStore {
       answers: [],
       status: 'in_progress',
       revision: 0,
+      hasProgress: false,
       result: null,
       finalisedAt: null,
     });
@@ -170,6 +174,11 @@ export class TypeOrmAssessmentAttemptStore implements AssessmentAttemptStore {
 
       row.answers = applySaveOps((row.answers as ResponseEntry[]) ?? [], ops);
       row.revision += 1;
+      // Only an actually-applied answer operation marks meaningful progress;
+      // this is not derived from the revision counter (an empty save can bump it).
+      if (ops.length > 0) {
+        row.hasProgress = true;
+      }
       return { status: 'ok', attempt: toRecord(await repo.save(row)) };
     });
   }
@@ -202,6 +211,7 @@ export class TypeOrmAssessmentAttemptStore implements AssessmentAttemptStore {
       row.status = 'finalised';
       row.result = result;
       row.finalisedAt = new Date();
+      row.hasProgress = true;
       row.revision += 1;
       return { status: 'ok', attempt: toRecord(await repo.save(row)) };
     });

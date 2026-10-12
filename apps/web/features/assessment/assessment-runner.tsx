@@ -4,11 +4,16 @@ import { useTranslations } from 'next-intl';
 import { answeredCount, pendingEntries } from './assessment-answers';
 import { AssessmentItem } from './assessment-item';
 import type { AssessmentStore, RunnerState } from './assessment-store';
+import type { AssessmentContentItem } from './assessment-types';
+import { useConfirm } from '../../shared/ui/confirm-dialog';
+import { useToast } from '../../shared/ui/toast';
 
 interface AssessmentRunnerProps {
   state: RunnerState;
   store: AssessmentStore;
   onBack: () => void;
+  /** Optional localized content by itemId (T-022 draft module). */
+  content?: Record<string, AssessmentContentItem>;
 }
 
 /**
@@ -16,8 +21,15 @@ interface AssessmentRunnerProps {
  * explicit Save / Submit. The server stays authoritative; this component only
  * orchestrates the store.
  */
-export function AssessmentRunner({ state, store, onBack }: AssessmentRunnerProps) {
+export function AssessmentRunner({
+  state,
+  store,
+  onBack,
+  content,
+}: AssessmentRunnerProps) {
   const t = useTranslations('Assessment');
+  const confirm = useConfirm();
+  const toast = useToast();
 
   const total = state.form?.items.length ?? 0;
   const answered = answeredCount(state.draft);
@@ -26,24 +38,32 @@ export function AssessmentRunner({ state, store, onBack }: AssessmentRunnerProps
   const saving = state.saveStatus === 'saving';
   const submitting = state.submitStatus === 'submitting';
 
-  const onSave = () => {
-    void store.save();
+  const onSave = async () => {
+    const ok = await store.save();
+    if (ok) toast(t('savedToast'));
   };
 
-  const onSubmit = () => {
-    if (typeof window !== 'undefined' && !window.confirm(t('submitConfirm'))) {
-      return;
-    }
-    void store.submit();
+  const onSubmit = async () => {
+    const confirmed = await confirm({
+      title: t('submitConfirmTitle'),
+      body: t('submitConfirm'),
+      confirmLabel: t('submit'),
+      cancelLabel: t('cancel'),
+    });
+    if (!confirmed) return;
+    const outcome = await store.submit();
+    if (outcome.kind === 'finalised') toast(t('submittedToast'));
   };
 
-  const onReload = () => {
-    if (
-      typeof window === 'undefined' ||
-      window.confirm(t('discardConfirm'))
-    ) {
-      void store.reloadFromServer();
-    }
+  const onReload = async () => {
+    const confirmed = await confirm({
+      title: t('reloadServer'),
+      body: t('discardConfirm'),
+      confirmLabel: t('reloadServer'),
+      cancelLabel: t('cancel'),
+      destructive: true,
+    });
+    if (confirmed) void store.reloadFromServer();
   };
 
   return (
@@ -83,7 +103,7 @@ export function AssessmentRunner({ state, store, onBack }: AssessmentRunnerProps
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
-              onClick={onReload}
+              onClick={() => void onReload()}
               className="border border-gray-600 bg-white px-3 py-1 text-sm"
             >
               {t('reloadServer')}
@@ -107,6 +127,7 @@ export function AssessmentRunner({ state, store, onBack }: AssessmentRunnerProps
             index={index + 1}
             draft={state.draft}
             disabled={state.status === 'finalised' || state.conflict}
+            content={content?.[item.itemId]}
             onAnswer={(itemId, response) => store.setAnswer(itemId, response)}
             onClear={(itemId) => store.clearAnswer(itemId)}
           />
@@ -117,7 +138,7 @@ export function AssessmentRunner({ state, store, onBack }: AssessmentRunnerProps
         <div className="flex flex-wrap items-center gap-3">
           <button
             type="button"
-            onClick={onSave}
+            onClick={() => void onSave()}
             disabled={saving || submitting || state.conflict}
             className="border border-gray-600 px-3 py-1 disabled:opacity-40"
           >
@@ -125,7 +146,7 @@ export function AssessmentRunner({ state, store, onBack }: AssessmentRunnerProps
           </button>
           <button
             type="button"
-            onClick={onSubmit}
+            onClick={() => void onSubmit()}
             disabled={submitting || saving || state.conflict}
             className="border border-gray-800 bg-gray-800 px-3 py-1 text-white disabled:opacity-40"
           >

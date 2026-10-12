@@ -37,6 +37,7 @@ export function toAttemptSummary(attempt: AttemptRecord): AssessmentAttemptSumma
     formId: attempt.snapshot.formId,
     status: attempt.status,
     revision: attempt.revision,
+    itemCount: attempt.snapshot.items.length,
     createdAt: attempt.createdAt.toISOString(),
     updatedAt: attempt.updatedAt.toISOString(),
     finalisedAt: attempt.finalisedAt ? attempt.finalisedAt.toISOString() : null,
@@ -45,4 +46,22 @@ export function toAttemptSummary(attempt: AttemptRecord): AssessmentAttemptSumma
 
 export function toAttemptList(attempts: AttemptRecord[]): AssessmentAttemptList {
   return { items: attempts.map(toAttemptSummary) };
+}
+
+/**
+ * History visibility rule (T-022 correction).
+ *
+ * A normal attempt history omits an **untouched draft** — one the caller started
+ * but never saved any answers to and never submitted. The draft still exists
+ * server-side for snapshot/ownership integrity and can be resumed by id.
+ *
+ * Meaningful progress is an explicit `hasProgress` flag set when a save actually
+ * applies answer operations; it is NOT derived from the revision counter (an
+ * empty save can increment it). This is not exposure tracking: hiding an empty
+ * draft says nothing about which items were presented.
+ */
+export function isHistoryVisible(
+  attempt: Pick<AttemptRecord, 'hasProgress' | 'status'>,
+): boolean {
+  return attempt.hasProgress || attempt.status === 'finalised';
 }

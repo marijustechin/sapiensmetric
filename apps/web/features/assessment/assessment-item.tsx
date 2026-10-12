@@ -7,13 +7,19 @@ import {
   responseFor,
   type AnswerDraft,
 } from './assessment-answers';
-import type { ItemResponseDto, PublicAssessmentItem } from './assessment-types';
+import type {
+  AssessmentContentItem,
+  ItemResponseDto,
+  PublicAssessmentItem,
+} from './assessment-types';
 
 interface AssessmentItemProps {
   item: PublicAssessmentItem;
   index: number;
   draft: AnswerDraft;
   disabled: boolean;
+  /** Optional localized text (T-022 draft module); falls back to item IDs. */
+  content?: AssessmentContentItem;
   onAnswer: (itemId: string, response: ItemResponseDto) => void;
   onClear: (itemId: string) => void;
 }
@@ -29,6 +35,7 @@ export function AssessmentItem({
   index,
   draft,
   disabled,
+  content,
   onAnswer,
   onClear,
 }: AssessmentItemProps) {
@@ -36,7 +43,11 @@ export function AssessmentItem({
   const response = responseFor(draft, item);
   const optionIds = item.optionIds ?? [];
   const name = `item-${item.itemId}`;
-  const heading = t('itemLabel', { index, id: item.itemId });
+  const heading = content
+    ? `${index}. ${content.prompt}`
+    : t('itemLabel', { index, id: item.itemId });
+  const optionText = (optionId: string): string =>
+    content?.options.find((o) => o.id === optionId)?.text ?? optionId;
 
   const answered = response.kind !== 'skipped';
 
@@ -51,9 +62,13 @@ export function AssessmentItem({
           {t(`kind.${item.kind}`)}
         </span>
       </legend>
-      <p className="text-xs text-gray-600">
-        {t('objective', { id: item.objectiveId })}
-      </p>
+      {content?.relevance ? (
+        <p className="text-xs text-gray-600">{content.relevance}</p>
+      ) : (
+        <p className="text-xs text-gray-600">
+          {t('objective', { id: item.objectiveId })}
+        </p>
+      )}
 
       {item.kind === 'single-answer' ? (
         <div className="flex flex-col gap-1">
@@ -74,7 +89,7 @@ export function AssessmentItem({
                   })
                 }
               />
-              <span className="font-mono">{optionId}</span>
+              <span className={content ? '' : 'font-mono'}>{optionText(optionId)}</span>
             </label>
           ))}
         </div>
@@ -109,7 +124,7 @@ export function AssessmentItem({
                     });
                   }}
                 />
-                <span className="font-mono">{optionId}</span>
+                <span className={content ? '' : 'font-mono'}>{optionText(optionId)}</span>
               </label>
             );
           })}
@@ -129,7 +144,7 @@ export function AssessmentItem({
                     <span className="w-6 text-xs text-gray-600">
                       {position + 1}
                     </span>
-                    <span className="font-mono">{optionId}</span>
+                    <span className={content ? '' : 'font-mono'}>{optionText(optionId)}</span>
                     <span className="ml-auto flex gap-1">
                       <button
                         type="button"

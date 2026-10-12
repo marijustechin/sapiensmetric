@@ -60,7 +60,7 @@ function testConfig(): AppConfig {
     },
     tokens: { verificationTtlSeconds: 86400, passwordResetTtlSeconds: 1800 },
     publicAppUrl: ORIGIN,
-    assessments: { syntheticEnabled: false },
+    assessments: { syntheticEnabled: false, astronomyDraftEnabled: false },
     google: { clientId: null, clientSecret: null, redirectUri: null, enabled: false },
   };
 }

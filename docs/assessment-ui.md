@@ -1,5 +1,12 @@
 # Synthetic-assessment UI — T-019 (local/development only)
 
+> **T-022 addition (local review only).** The same screen exposes an
+> **astronomy draft** module behind `ASSESSMENT_ASTRONOMY_DRAFT_ENABLED`
+> (default off; refused in production): "Start astronomy draft (local review)",
+> localized EN/LT prompts and options, and a feedback panel (correctness,
+> explanation, sources) after submission. Drafts are unreviewed and not
+> publication-ready. See `docs/astronomy-draft-bank.md`.
+
 Status: **T-019 approved and archived (2026-10-06)**; the owner tested the
 synthetic assessment in the browser and confirmed the expected behaviour (no
 specific device/browser/accessibility checks are asserted). A minimal browser

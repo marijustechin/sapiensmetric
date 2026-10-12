@@ -81,7 +81,7 @@ function testConfig(googleEnabled = true): AppConfig {
     },
     tokens: { verificationTtlSeconds: 86400, passwordResetTtlSeconds: 1800 },
     publicAppUrl: ORIGIN,
-    assessments: { syntheticEnabled: false },
+    assessments: { syntheticEnabled: false, astronomyDraftEnabled: false },
     google: {
       clientId: 'client-123.apps.googleusercontent.com',
       clientSecret: 'client-secret-value-for-tests-0123456789',

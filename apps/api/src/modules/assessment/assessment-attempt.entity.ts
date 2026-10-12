@@ -63,6 +63,15 @@ export class AssessmentAttempt {
   @Column({ type: 'int', default: 0 })
   revision!: number;
 
+  /**
+   * True once the caller has actually saved at least one answer operation (or
+   * submitted). Distinguishes meaningful progress from an untouched draft, which
+   * remains hidden from normal history but is retained for snapshot/ownership
+   * integrity. Not a proxy for exposure (see docs/astronomy-draft-bank.md).
+   */
+  @Column({ type: 'boolean', default: false })
+  hasProgress!: boolean;
+
   /** Stored scoring result (confidential-adjacent; contains no keys). */
   @Column({ type: 'json', nullable: true })
   result!: unknown | null;
