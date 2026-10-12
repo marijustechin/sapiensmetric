@@ -547,6 +547,45 @@ where noted. Update this file when a decision is made or changed.
 - Status: decided. Authorises only the explicitly scoped analytics work within
   T-014.
 
+### D-028 — Closed production-review environment on the shared Oracle host
+- The owner authorises a **closed** SapiensMetric production-review environment
+  on the existing Oracle host `79.76.117.246` (shared with the Sokoladas staging
+  stack), under task T-023. This is a **private** review environment, not a public
+  launch.
+- Backend origin: **https://api.sapiensmetric.eu** (DNS confirmed pointing at the
+  shared host). The API runs as a **separate Compose project with a separate MySQL
+  database**, reusing the **existing** Nginx/Certbot edge (no competing proxy and
+  no wholesale Sokoladas configuration replacement).
+- **Closed access:** public credentials registration is disabled at the API
+  boundary; Google OAuth must not create new accounts (and stays disabled unless
+  production configuration is provided); the assessment draft is available only to
+  **explicitly authorised test accounts** enforced on the server. Hidden links and
+  `noindex` are not access control.
+- **Production runtime:** `NODE_ENV=production`; the closed review uses a
+  **separate default-off capability**, not the development-only assessment flags.
+  The synthetic fixture stays off in production. Astronomy items remain
+  **drafts**, accessible only to authorised reviewers; no item is declared
+  independently reviewed or publicly eligible.
+- **Frontend:** the EN/LT login/account/admin/assessment static shells are
+  published through the established CI/CD, with registration unavailable and
+  registration CTAs removed from the closed login flow; private routes stay
+  `noindex`, out of the sitemap and out of GA4/GTM. The existing public-only
+  release profile is preserved and extended with explicit closed-release
+  build/verification expectations rather than deleting exclusion checks globally.
+- **Operator provisioning:** the owner's account is created through a secure
+  operator workflow (not a bootstrap HTTP endpoint, not a development database
+  clone, and not reused development sessions).
+- **Sokoladas protection:** the shared infrastructure change is additive;
+  existing Sokoladas routing, certificates and databases are preserved, backed up
+  and rechecked after every shared change.
+- **Sitemap:** a standards-compliant Yoast-style `sitemap.xml` index with child
+  sitemaps is implemented for the static public site, preserving `/sitemap.xml`
+  as a valid entry point; this does not by itself prove or claim the cause of the
+  Search Console ingestion failure.
+- Date: 2026-10-12.
+- Status: decided. Authorises T-023 only; live installation remains blocked on the
+  privileged server access recorded in `docs/closed-review-deployment.md`.
+
 ## Open decisions
 
 > T-001 note (2026-09-09): the discovery baseline (`docs/measurement-model.md`,

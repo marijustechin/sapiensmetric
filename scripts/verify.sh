@@ -15,8 +15,8 @@
 #   3. The archived T-006..T-011 records contain their exact titles and final
 #      approved statuses; the archived T-006 record contains the required
 #      definition sections, the six exact browser routes, and the access-gate
-#      markers; the T-014..T-021 archives exist with their headings/statuses; and
-#      tasks/current.md declares T-022 active.
+#      markers; the T-014..T-022 archives exist with their headings/statuses; and
+#      tasks/current.md declares T-023 active.
 #   4. docs/decisions.md contains D-016 (heading, and section-scoped date /
 #      O-006 note / verification access gate / review-correction markers),
 #      D-017 (conventional registration), D-018 (Google OIDC), and D-019
@@ -398,10 +398,26 @@ else
   note_fail "T-021 archive does not contain the final approved status"
 fi
 
-if grep -qxF '# T-022 — Versioned astronomy draft bank, review eligibility, and local post-submission feedback (active)' tasks/current.md; then
+t022_archive='tasks/done/2026-10-09-versioned-astronomy-draft-bank.md'
+t022_heading='# T-022 — Versioned astronomy draft bank, review eligibility, and local post-submission feedback (archived)'
+t022_status='Transitioned by explicit owner authorization'
+
+if grep -qxF -- "$t022_heading" "$t022_archive"; then
   note_pass
 else
-  note_fail "tasks/current.md does not declare T-022 as the active task"
+  note_fail "T-022 archive does not contain the exact archived heading"
+fi
+
+if grep -qF -- "$t022_status" "$t022_archive"; then
+  note_pass
+else
+  note_fail "T-022 archive does not record the owner-authorised transition"
+fi
+
+if grep -qxF '# T-023 — Closed SapiensMetric production-review environment on the shared Oracle server (active)' tasks/current.md; then
+  note_pass
+else
+  note_fail "tasks/current.md does not declare T-023 as the active task"
 fi
 
 t007_sections=(
