@@ -26,7 +26,15 @@ services:
     user: '10001:10001'
     init: true
     restart: unless-stopped
-    networks: [edge, db, egress]
+    # The Compose service is `api`; the explicit `sapiensmetric-api` alias gives
+    # the proxy's `upstream` a stable, collision-free DNS name on the shared edge
+    # network (the Sokoladas service names must not be shadowed).
+    networks:
+      edge:
+        aliases:
+          - sapiensmetric-api
+      db: {}
+      egress: {}
     depends_on:
       db:
         condition: service_healthy

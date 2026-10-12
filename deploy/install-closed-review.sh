@@ -223,7 +223,11 @@ if [ "$DRY_RUN" -eq 0 ]; then
     [ "$code" = "200" ] && { ok=1; break; }
     sleep 3
   done
-  [ "$ok" = "1" ] || die "API not ready at https://$TLS_HOST/health/ready. Recovery: 'docker compose -p $PROJECT_NAME --project-directory $PROJECT_DIR logs api'; the proxy can be reverted with '$BACKUP_CONF'."
+  [ "$ok" = "1" ] || {
+    warn "upstream resolution check (best effort):"
+    docker exec "$PROXY" sh -c 'getent hosts sapiensmetric-api || nslookup sapiensmetric-api 127.0.0.11 || true' 2>&1 | sed 's/^/    /' || true
+    die "API not ready at https://$TLS_HOST/health/ready. If the upstream did not resolve, the api container must carry the 'sapiensmetric-api' network alias on the shared edge network (deploy/compose.yaml). Recovery: 'docker compose -p $PROJECT_NAME --project-directory $PROJECT_DIR logs api'; the proxy can be reverted with '$BACKUP_CONF'."
+  }
 fi
 log "API ready."
 

@@ -162,6 +162,17 @@ unobserved.
 - The privileged installer and the SapiensMetric backup job are repository
   implementations, **not yet executed live**; the first run is unverified until
   the owner performs it.
+- **First live run (owner, 2026-10-12) partially succeeded and exposed a real defect:**
+  the installer reached phase 2 and issued a valid `api.sapiensmetric.eu`
+  certificate (Sokoladas unaffected: apex/health 200), but `https://api.sapiensmetric.eu/`
+  returned **502** and the run stopped at API readiness, so the owner credential
+  was not created. Cause: the Compose service is named `api`, so its network alias
+  was `api`, not the `sapiensmetric-api` referenced by the proxy upstream
+  (unresolvable → 502). Fixed by giving the service an explicit
+  `sapiensmetric-api` alias on the shared edge network (`deploy/compose.yaml`);
+  the installer now also prints a best-effort upstream-resolution diagnosis.
+  Re-running the installer after re-staging is idempotent (DB/volume/secrets and
+  the certificate already exist).
 - The verified image was built and run locally (AMD64); the published ARM64
   digest was pulled and inspected. T-022 browser acceptance remains pending.
 
