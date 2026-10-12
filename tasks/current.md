@@ -207,6 +207,29 @@ unobserved.
 - The verified image was built and run locally (AMD64); the published ARM64
   digest was pulled and inspected. T-022 browser acceptance remains pending.
 
+## Ordered owner handoff (privileged; both authorised)
+
+1. **Backup check first** (must succeed before the frontend publication):
+   ```sh
+   cd /home/marijus/sapiensmetric-install/c60fa7d/backup
+   sudo bash sapiensmetric-backup-install.sh --enable-timer
+   sudo /usr/local/sbin/sapiensmetric-backup check-remote
+   sudo /usr/local/sbin/sapiensmetric-backup run
+   sudo /usr/local/sbin/sapiensmetric-restore-verify run
+   systemctl list-timers sapiensmetric-backup.timer
+   ```
+2. **Publish the closed frontend** (dispatch-only; the agent has no GitHub
+   credential — an unauthenticated dispatch returns 401): GitHub → repo
+   `marijustechin/sapiensmetric` → **Actions → Deploy closed review frontend →
+   Run workflow → confirm = `activate`** (or `gh workflow run deploy-closed.yml
+   -f confirm=activate`).
+3. **Owner acceptance:** sign in at `https://sapiensmetric.eu/en/auth/login/`
+   (or `/lt/`). There is **no in-app change-password**; the supported path is the
+   password-reset flow — sign out, use
+   `https://sapiensmetric.eu/en/auth/forgot-password/`, open the emailed link
+   `https://sapiensmetric.eu/<locale>/auth/reset-password#token=…`, and set a new
+   password. Owner sign-in is **not** claimed until the owner reports it.
+
 ## Boundaries
 
 - No public launch, no indexing of private routes, no exposure/retake policy, no
