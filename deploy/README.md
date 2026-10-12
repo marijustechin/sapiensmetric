@@ -10,120 +10,81 @@ Sokoladas-protection sequence.
 > (`.github/workflows/deploy-closed.yml`) until the API is up and the owner
 > access/eligibility are verified.
 
-## 0. Prerequisites
+## Quick path — the exact command the owner runs
 
-- API image published: `.github/workflows/api-image.yml` (linux/arm64) →
-  `ghcr.io/marijustechin/sapiensmetric-api@sha256:…`.
-- MySQL image: `mysql:8.0.46` pinned by digest (ARM64).
-- DNS: `api.sapiensmetric.eu A 79.76.117.246` (already verified).
-- Root access on the host (the scoped `sokoladas-deploy` entry point is NOT
-  used and must not be broadened).
-
-## 1. Stage the project (root, additive)
+From this repository on the owner's workstation (after preparing the host-only
+inputs below), one command stages the reviewed bundle to the host and runs the
+privileged installer through the owner's **existing sudo access**:
 
 ```sh
-# Host-only inputs (git-ignored; never committed).
-sudo install -d -m 0750 -o root -g root /opt/sapiensmetric-review
-sudo install -d -m 0700 -o root -g root /etc/sapiensmetric /etc/sapiensmetric/secrets
-
-# Copy compose.yaml + images.env + hostenv from the repository/reviewer machine:
-sudo cp deploy/compose.yaml /opt/sapiensmetric-review/compose.yaml
-sudo cp deploy/images.env  /opt/sapiensmetric-review/images.env
-sudo cp deploy/hostenv     /opt/sapiensmetric-review/hostenv
-sudo chmod 0600 /opt/sapiensmetric-review/images.env /opt/sapiensmetric-review/hostenv
+bash deploy/run-install.sh            # real install (prompts for your sudo password)
+bash deploy/run-install.sh --dry-run  # validate configuration only; changes nothing
 ```
 
-Provision secrets as in [`secrets/README.md`](secrets/README.md).
-
-## 2. Add the proxy routing to the Sokoladas template (additive, shared)
-
-The `api.sapiensmetric.eu` server blocks and the `sapiensmetric_api` upstream are
-already in the authoritative template
-`../sokoladas/sm-oracle-infra/deploy/proxy/nginx.conf`. Install them into the
-running Sokoladas release by a **template refresh** (an administrator operation):
+Prepare the host-only inputs once (all git-ignored, never printed):
 
 ```sh
-# On the host, as root, from the sm-oracle-infra checkout instance used for releases:
-# 1) update /opt/sokoladas-staging/template/proxy/nginx.conf to the reviewed copy
-# 2) validate the rendered config before reload
-docker run --rm -v /path/to/reviewed/nginx.conf:/etc/nginx/nginx.conf:ro \
-  -v sokoladas-staging_letsencrypt:/etc/letsencrypt:ro nginx:1.30.4-alpine nginx -t
+cp deploy/images.env.example deploy/images.env   # paste the CI @sha256: digests
+cp deploy/hostenv.example     deploy/hostenv     # non-secret host config
+# place the EXISTING authorised SapiensMetric SMTP password:
+install -m 0600 /path/to/existing/smtp_password deploy/smtp_password
 ```
 
-Do not restart the Sokoladas stack wholesale; reload only the proxy after a
-successful `nginx -t`.
-
-## 3. Issue the certificate (uses the existing certbot model)
+The installer is idempotent and never prints secrets. It writes the generated
+**owner initial credential** to
+`/etc/sapiensmetric/initial-credentials/owner-initial-password` (root `0400`);
+read it once and delete it:
 
 ```sh
-docker compose -p sokoladas-staging exec certbot \
-  certbot certonly --webroot -w /var/www/acme \
-  -d api.sapiensmetric.eu --non-interactive --agree-tos -m <contact-email>
+sudo cat /etc/sapiensmetric/initial-credentials/owner-initial-password
+sudo rm  /etc/sapiensmetric/initial-credentials/owner-initial-password
 ```
 
-The certificate lands in the existing `sokoladas-staging_letsencrypt` volume and
-is renewed by the existing loop. The `sokoladas.eu` certificate is untouched.
+The owner account is `m.smiginas@gmail.com` (override with `OWNER_EMAIL=`).
 
-## 4. Bring up the SapiensMetric project and migrate
+## What the installer does
+
+1. Validates the configuration (immutable `@sha256:` image pins, required host
+   variables, `CORS_ORIGIN == PUBLIC_APP_URL`, rendered `docker compose config`).
+2. Stages `compose.yaml`, `images.env`, `hostenv` to `/opt/sapiensmetric-review`.
+3. Generates secrets into root-only files (idempotent; the SMTP password is
+   installed from the file you provide, never echoed).
+4. Rolls out the proxy routing in **two phases**: an HTTP-ACME-only config
+   (`nginx -t` then reload), certificate issuance via the existing certbot
+   container, then the full config (`nginx -t` then reload). The running
+   `nginx.conf` is backed up to `/opt/sokoladas-staging/state/backups/` before any
+   change, and the Sokoladas release template is refreshed.
+5. Starts the SapiensMetric `db`, runs `migrate` (explicit), starts `api`, and
+   waits for `https://api.sapiensmetric.eu/health/ready` = `200`.
+6. Provisions the owner account (`--password-out`), then checks that
+   `POST /auth/register` returns `403`.
+7. Prints recovery/rollback commands.
+
+## Recovery
 
 ```sh
-cd /opt/sapiensmetric-review
-sudo docker compose --env-file images.env --env-file hostenv up -d db
-sudo docker compose --env-file images.env --env-file hostenv \
-  run --rm migrate                      # explicit migration; exit 0 required
-sudo docker compose --env-file images.env --env-file hostenv up -d api
+# Restore the Sokoladas proxy to its pre-install state:
+sudo cp -a /opt/sokoladas-staging/state/backups/nginx.conf.<stamp> \
+           /opt/sokoladas-staging/releases/<releaseId>/proxy/nginx.conf
+docker exec <proxy> nginx -t && docker exec <proxy> nginx -s reload
+
+# Stop the SapiensMetric project WITHOUT deleting data:
+docker compose -p sapiensmetric-review --project-directory /opt/sapiensmetric-review down
+
+# Roll back the API image only (the database schema is forward-only):
+#   edit /opt/sapiensmetric-review/images.env to the previous API_IMAGE digest, then
+docker compose -p sapiensmetric-review --project-directory /opt/sapiensmetric-review up -d --force-recreate api
 ```
 
-## 5. Provision the owner account (operator-only; no HTTP endpoint)
+## Manual (equivalent) steps
 
-```sh
-# Generates a strong password and prints it ONCE; it also marks the account
-# verified, role=admin and reviewEligible=true.
-sudo docker compose --env-file images.env --env-file hostenv \
-  run --rm provision --email owner@example.org --apply
-```
+The same operations, if you prefer to run them by hand, are described in
+`docs/closed-review-deployment.md` §4–§6; the installer implements exactly that
+sequence.
 
-Additional authorised reviewers:
+## Backups
 
-```sh
-sudo docker compose … run --rm provision --email reviewer@example.org --apply
-sudo docker compose … run --rm provision --email reviewer@example.org --grant-review --apply
-```
-
-## 6. Verify
-
-```sh
-curl -sS -o /dev/null -w '%{http_code}\n' https://api.sapiensmetric.eu/health
-curl -sS -o /dev/null -w '%{http_code}\n' https://api.sapiensmetric.eu/health/ready
-curl -sS -o /dev/null -w '%{http_code}\n' -X POST https://api.sapiensmetric.eu/auth/register \
-  -H 'content-type: application/json' -d '{"email":"x@example.org","password":"a-very-long-password"}'
-#   -> expect 403 REGISTRATION_DISABLED
-```
-
-Then verify the owner journey and, only afterwards, deploy the closed frontend
-profile.
-
-## 7. Backups and rollback
-
-- **Database:** logical dump with the project's MySQL version, encrypted and kept
-  off-host:
-  ```sh
-  sudo docker compose -p sapiensmetric-review exec -T db \
-    sh -c 'exec mysqldump --single-transaction -u"$MYSQL_USER" -p"$(cat /run/secrets/mysql_password)" "$MYSQL_DATABASE"' \
-    | openssl enc -aes-256-cbc -pbkdf2 -iter 200000 -salt -out sapiensmetric-$(date -u +%Y%m%dT%H%M%SZ).sql.enc
-  ```
-  Store it outside the web root and the repository, with a secure off-host copy.
-  **Long-term limitation:** a durable scheduled/off-host backup destination is not
-  yet configured for SapiensMetric (only this baseline procedure); record it as
-  follow-up in `sm-oracle-infra/docs/backups.md`.
-- **Application rollback:** redeploy the previous `API_IMAGE` digest and recreate
-  only the `api` container:
-  ```sh
-  # set API_IMAGE back to the previous digest in images.env, then:
-  sudo docker compose --env-file images.env --env-file hostenv up -d --force-recreate api
-  ```
-  Image rollback is **not** database rollback; migrations are forward-only. Use
-  the dump above plus a reviewed repair for schema changes.
-- **Sokoladas is never touched by this project.** After every shared
-  proxy/certificate/network change, re-check `sokoladas.eu` (apex `/`, `/api`,
-  `/health/ready`) and the certificate.
+See the backup/rollback section in `docs/closed-review-deployment.md` §7. The
+installer performs **no** database dump; take one with the documented command and
+keep it off-host. A durable scheduled off-host destination for SapiensMetric is
+still a follow-up.

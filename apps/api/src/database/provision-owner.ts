@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import { randomUUID } from 'node:crypto';
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { loadAppConfig } from '../config/env.js';
 import { createDataSource } from './data-source.js';
 import { User } from '../modules/users/user.entity.js';
@@ -161,11 +161,17 @@ async function run(): Promise<void> {
 
     console.log(`Owner account ready: ${email} (admin, verified, review-eligible).`);
     if (generated) {
-      console.log('');
-      console.log('Generated password (shown once — store it securely and delete this output):');
-      console.log(`  ${password}`);
-      console.log('');
-      console.log('Change it after first sign-in. Do not paste it into chat or tickets.');
+      if (args.passwordOut) {
+        // Write the generated credential to a 0600 file instead of printing it.
+        writeFileSync(args.passwordOut, `${password}\n`, { mode: 0o600 });
+        console.log(`Generated password written to ${args.passwordOut} (read once, then delete).`);
+      } else {
+        console.log('');
+        console.log('Generated password (shown once — store it securely and delete this output):');
+        console.log(`  ${password}`);
+        console.log('');
+        console.log('Change it after first sign-in. Do not paste it into chat or tickets.');
+      }
     }
   } finally {
     await dataSource.destroy();

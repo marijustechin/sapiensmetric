@@ -155,6 +155,9 @@ services:
       SMTP_PASSWORD_FILE: /run/secrets/smtp_password
       SMTP_FROM: ${SMTP_FROM:?set in hostenv}
     command: ['node', 'dist/database/provision-owner.js']
+    volumes:
+      # Host-only directory for a generated initial credential (never printed).
+      - /etc/sapiensmetric/initial-credentials:/run/sm-out
     secrets:
       - mysql_password
       - jwt_secret

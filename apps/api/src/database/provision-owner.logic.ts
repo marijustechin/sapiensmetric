@@ -11,6 +11,8 @@ export interface ProvisionArgs {
   email?: string;
   /** Read the password from stdin instead of generating a strong one. */
   passwordStdin: boolean;
+  /** Write a generated password to this file (0600) instead of printing it. */
+  passwordOut?: string;
   /** Only grant closed-review eligibility to an existing account. */
   grantReview: boolean;
   apply: boolean;
@@ -34,6 +36,8 @@ export function parseProvisionArgs(argv: string[]): ProvisionArgs {
       args.apply = true;
     } else if (arg === '--password-stdin') {
       args.passwordStdin = true;
+    } else if (arg === '--password-out') {
+      args.passwordOut = argv[++i];
     } else if (arg === '--grant-review') {
       args.grantReview = true;
     } else if (arg === '--help' || arg === '-h') {
@@ -58,6 +62,8 @@ export function usage(): string {
     '',
     '  --email <email>     required; the account to create or update',
     '  --password-stdin    read a password from stdin (default: generate a strong one)',
+    '  --password-out <f>  write a generated password to file <f> (0600) instead of',
+    '                      printing it (recommended for unattended installers)',
     '  --grant-review      only mark an existing account as a closed-review reviewer',
     '  --apply             make the change (without it this is a dry run)',
     '',

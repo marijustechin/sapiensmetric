@@ -21,6 +21,7 @@ describe('provision-owner argument parsing (T-023)', () => {
       grantReview: false,
       apply: true,
       help: false,
+      passwordOut: undefined,
     });
   });
 
@@ -28,6 +29,18 @@ describe('provision-owner argument parsing (T-023)', () => {
     const args = parseProvisionArgs(['--email', 'a@b.co', '--grant-review', '--apply']);
     expect(args.grantReview).toBe(true);
     expect(args.apply).toBe(true);
+    expect(args.passwordStdin).toBe(false);
+  });
+
+  it('parses --password-out for unattended installers', () => {
+    const args = parseProvisionArgs([
+      '--email',
+      'owner@example.org',
+      '--password-out',
+      '/run/sm-out/owner-initial-password',
+      '--apply',
+    ]);
+    expect(args.passwordOut).toBe('/run/sm-out/owner-initial-password');
     expect(args.passwordStdin).toBe(false);
   });
 

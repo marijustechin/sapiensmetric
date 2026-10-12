@@ -1,6 +1,7 @@
 # Host-only deployment inputs (never commit).
 images.env
 hostenv
+smtp_password
 *.local
 deploy-*.log
 secrets/*

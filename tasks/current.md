@@ -104,7 +104,15 @@
 - **Deployment package**: `deploy/` (Compose project `sapiensmetric-review`,
   MySQL 8.0.46, secrets templates, runbook, backup/rollback) and the
   `api.sapiensmetric.eu` proxy/certificate additions in the authoritative
-  `sm-oracle-infra/deploy/proxy/nginx.conf`.
+  `sm-oracle-infra/deploy/proxy/nginx.conf` (with markers for a safe two-phase
+  certificate rollout).
+- **Reviewed privileged installer** `deploy/install-closed-review.sh` (idempotent,
+  validates configuration, two-phase proxy/certificate rollout with `nginx -t`
+  before every reload and a proxy-config backup, explicit migration, owner
+  provisioning with `--password-out`, Sokoladas recheck, printed recovery) and the
+  one-command wrapper `deploy/run-install.sh` (uses the owner's existing sudo
+  access; no passwordless sudo/Docker added). Owner email confirmed:
+  `m.smiginas@gmail.com`.
 
 ## Verification
 
