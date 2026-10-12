@@ -14,6 +14,8 @@
 #   docker buildx build --platform linux/arm64,linux/amd64 -f apps/api/Dockerfile .
 
 FROM node:24-bookworm-slim AS build
+# Non-interactive pnpm (avoids ERR_PNPM_ABORTED_REMOVE_MODULES_DIR_NO_TTY on prune).
+ENV CI=true
 WORKDIR /app
 RUN npm install --global pnpm@11.26.0
 

@@ -100,7 +100,10 @@ Repository implementation is complete (verified by `pnpm verify`):
 
 - **Production Dockerfile** `apps/api/Dockerfile` (multi-stage, non-root UID
   10001, ARM64; emits `linux/arm64`) plus `.github/workflows/api-image.yml`
-  publishing the image to GHCR by digest.
+  publishing the image to GHCR by digest. Built and run locally (health, DB
+  readiness, `POST /auth/register` → 403, non-root UID, dev-flag-in-production
+  refusal, provisioning CLI present); the first CI run failed only on `pnpm prune`
+  needing a TTY and is fixed by `ENV CI=true`.
 - **Closed-review capability** `ASSESSMENT_REVIEW_ENABLED` (default off,
   production-capable) with **server-enforced** `users.reviewEligible`
   (migration `1781440000006`); unauthorised accounts get `403
