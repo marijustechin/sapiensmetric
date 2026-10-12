@@ -10,37 +10,38 @@ Sokoladas-protection sequence.
 > (`.github/workflows/deploy-closed.yml`) until the API is up and the owner
 > access/eligibility are verified.
 
-## Quick path — the exact command the owner runs
+## Quick path — the exact commands the owner runs
 
-From this repository on the owner's workstation (after preparing the host-only
-inputs below), one command stages the reviewed bundle to the host and runs the
-privileged installer through the owner's **existing sudo access**:
-
-```sh
-bash deploy/run-install.sh            # real install (prompts for your sudo password)
-bash deploy/run-install.sh --dry-run  # validate configuration only; changes nothing
-```
-
-Prepare the host-only inputs once (all git-ignored, never printed):
+The reviewed bundle has been staged on the host (non-privileged SSH) under
+`/home/marijus/sapiensmetric-install/<source-sha>/`. The owner runs, from their
+workstation:
 
 ```sh
-cp deploy/images.env.example deploy/images.env   # paste the CI @sha256: digests
-cp deploy/hostenv.example     deploy/hostenv     # non-secret host config
-# place the EXISTING authorised SapiensMetric SMTP password:
-install -m 0600 /path/to/existing/smtp_password deploy/smtp_password
+ssh -i ~/.ssh/id_ed25519_oracle marijus@79.76.117.246
 ```
 
-The installer is idempotent and never prints secrets. It writes the generated
-**owner initial credential** to
-`/etc/sapiensmetric/initial-credentials/owner-initial-password` (root `0400`);
-read it once and delete it:
+Then, on the host:
+
+```sh
+cd /home/marijus/sapiensmetric-install/<source-sha>
+sudo SMTP_PASSWORD_SOURCE_FILE="$PWD/smtp_password" \
+  bash install-closed-review.sh "$PWD" --dry-run
+sudo SMTP_PASSWORD_SOURCE_FILE="$PWD/smtp_password" \
+  bash install-closed-review.sh "$PWD"
+```
+
+(Replace `<source-sha>` with the directory name shown by `ls`.) The installer is
+idempotent and never prints secrets; it removes the staged `smtp_password` after a
+successful install. After signing in, read and delete the initial credential:
 
 ```sh
 sudo cat /etc/sapiensmetric/initial-credentials/owner-initial-password
 sudo rm  /etc/sapiensmetric/initial-credentials/owner-initial-password
 ```
 
-The owner account is `m.smiginas@gmail.com` (override with `OWNER_EMAIL=`).
+Alternatively, prepare `deploy/images.env`, `deploy/hostenv` and
+`deploy/smtp_password` locally and run `bash deploy/run-install.sh` (same
+installer, staged over SSH; no passwordless sudo/Docker added).
 
 ## What the installer does
 

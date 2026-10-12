@@ -10,16 +10,24 @@
 #     `nginx -t` before every reload;
 #   * generates secrets directly into root-only files (never printed);
 #   * provisions the owner account writing a generated initial credential to a
-#     root-only file instead of printing it.
+#     root-only file instead of printing it;
+#   * removes the staged SMTP secret after a successful install.
 #
-# Two-phase proxy rollout (the api HTTPS block needs the certificate first):
-#   1) render the config WITHOUT the api HTTPS block, `nginx -t`, reload;
-#   2) issue the certificate via the EXISTING certbot container/webroot;
-#   3) install the full config, `nginx -t`, reload; refresh the release template.
+# Deployment order (each step avoids depending on something not yet created):
+#   1) stage + validate + secrets;
+#   2) start db → migrate → api FIRST, so the `sapiensmetric-api` upstream
+#      resolves on the shared edge network before nginx is reloaded;
+#   3) proxy phase 1: HTTP-only (ACME + redirect) — no dependency on the new
+#      certificate; validate, reload;
+#   4) issue the certificate via the EXISTING certbot container/webroot;
+#   5) proxy phase 2: full config (adds the api HTTPS server) — validate, reload,
+#      refresh the release template;
+#   6) wait for API readiness over HTTPS, provision the owner, verify.
 #
 # Usage:
 #   sudo bash install-closed-review.sh <staging-dir> [--dry-run]
 #   <staging-dir> must contain: compose.yaml, images.env, hostenv, proxy/nginx.conf
+#   Optional: SMTP_PASSWORD_SOURCE_FILE=<path> (the existing authorised password).
 #
 # Recovery instructions are printed at the end; a proxy-config backup is written
 # under /opt/sokoladas-staging/state/backups/.
@@ -46,20 +54,30 @@ TLS_HOST=api.sapiensmetric.eu
 
 log()  { printf '  %s\n' "$*"; }
 step() { printf '\n==> %s\n' "$*"; }
+warn() { printf '  WARNING: %s\n' "$*" >&2; }
 die()  { printf '\nERROR: %s\n' "$*" >&2; exit 1; }
 run()  { if [ "$DRY_RUN" -eq 1 ]; then printf '  [dry-run] %s\n' "$*"; else "$@"; fi; }
+
+compose() {
+  docker compose --project-directory "$PROJECT_DIR" \
+    --env-file "$PROJECT_DIR/images.env" --env-file "$PROJECT_DIR/hostenv" \
+    -f "$PROJECT_DIR/compose.yaml" "$@"
+}
 
 # --------------------------------------------------------------------------
 step "Preconditions"
 [ "$(id -u)" -eq 0 ] || die "must run as root (use sudo)."
 command -v docker >/dev/null 2>&1 || die "docker is not available on the host."
 docker compose version >/dev/null 2>&1 || die "docker compose plugin is not available."
-[ "$(uname -m)" = "aarch64" ] || log "WARNING: host arch is $(uname -m), expected aarch64."
+[ "$(uname -m)" = "aarch64" ] || warn "host arch is $(uname -m), expected aarch64."
 for f in compose.yaml images.env hostenv proxy/nginx.conf; do
   [ -f "$STAGING/$f" ] || die "staging dir is missing $f"
 done
 log "staging: $STAGING"
 log "owner email: $OWNER_EMAIL"
+if [ "$DRY_RUN" -eq 0 ] && [ -f "$STAGING/SOURCE_COMMIT" ]; then
+  log "source commit: $(cat "$STAGING/SOURCE_COMMIT")"
+fi
 
 # --------------------------------------------------------------------------
 step "Validate configuration"
@@ -76,7 +94,7 @@ for v in MYSQL_DATABASE MYSQL_USER CORS_ORIGIN PUBLIC_APP_URL SMTP_HOST SMTP_POR
 done
 case "$SMTP_SECURE" in true|false) ;; *) die "SMTP_SECURE must be true or false" ;; esac
 [ "$CORS_ORIGIN" = "$PUBLIC_APP_URL" ] || die "CORS_ORIGIN and PUBLIC_APP_URL must be equal (they are validated as one origin)."
-[ "$SMTP_FROM" = "$EXPECTED_SMTP_FROM" ] || log "WARNING: SMTP_FROM is '$SMTP_FROM' (expected the existing sender '$EXPECTED_SMTP_FROM')."
+[ "$SMTP_FROM" = "$EXPECTED_SMTP_FROM" ] || warn "SMTP_FROM is '$SMTP_FROM' (expected the existing sender '$EXPECTED_SMTP_FROM')."
 log "configuration values are present and internally consistent."
 
 step "Stage the project files"
@@ -85,10 +103,7 @@ run install -m 0600 "$STAGING/compose.yaml" "$PROJECT_DIR/compose.yaml"
 run install -m 0600 "$STAGING/images.env" "$PROJECT_DIR/images.env"
 run install -m 0600 "$STAGING/hostenv" "$PROJECT_DIR/hostenv"
 if [ "$DRY_RUN" -eq 0 ]; then
-  docker compose --project-directory "$PROJECT_DIR" \
-    --env-file "$PROJECT_DIR/images.env" --env-file "$PROJECT_DIR/hostenv" \
-    -f "$PROJECT_DIR/compose.yaml" config -q \
-    || die "rendered compose configuration is invalid."
+  compose config -q || die "rendered compose configuration is invalid."
 fi
 log "compose configuration renders."
 
@@ -125,7 +140,22 @@ fi
 run install -d -m 0700 -o root -g root "$INITIAL_DIR"
 
 # --------------------------------------------------------------------------
-step "Proxy routing (two-phase, additive; Sokoladas preserved)"
+step "Start the SapiensMetric database and API (before touching nginx)"
+run compose up -d db
+if [ "$DRY_RUN" -eq 0 ]; then
+  healthy=0
+  for _ in $(seq 1 60); do
+    [ "$(compose ps db --format '{{.Health}}' 2>/dev/null)" = "healthy" ] && { healthy=1; break; }
+    sleep 2
+  done
+  [ "$healthy" = "1" ] || die "MySQL did not become healthy. Recovery: 'docker compose -p $PROJECT_NAME --project-directory $PROJECT_DIR logs db'."
+fi
+run compose run --rm migrate
+run compose up -d api
+log "database, migration and API containers are up."
+
+# --------------------------------------------------------------------------
+step "Proxy phase 1 — HTTP ACME + redirect (no certificate dependency)"
 PROXY=$(docker ps --filter "label=com.docker.compose.project=$SOKOLADAS_PROJECT" \
   --filter "label=com.docker.compose.service=proxy" --format '{{.Names}}' | head -1)
 CERTBOT=$(docker ps --filter "label=com.docker.compose.project=$SOKOLADAS_PROJECT" \
@@ -141,8 +171,6 @@ RELEASE=$(sed -n 's/.*"releaseId"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$
 RUNNING_CONF="$SOKOLADAS_ROOT/releases/$RELEASE/proxy/nginx.conf"
 TEMPLATE_CONF="$SOKOLADAS_ROOT/template/proxy/nginx.conf"
 [ -f "$RUNNING_CONF" ] || die "cannot find the running proxy config $RUNNING_CONF"
-log "running release: $RELEASE"
-
 BACKUP_DIR="$SOKOLADAS_ROOT/state/backups"
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 BACKUP_CONF="$BACKUP_DIR/nginx.conf.$STAMP"
@@ -154,59 +182,40 @@ http_only_conf() {
   awk '/# >>> sapiensmetric-review-https >>>/{skip=1} /# <<< sapiensmetric-review-https <<</{skip=0; next} !skip' \
     "$STAGING/proxy/nginx.conf"
 }
-
-# Phase 1: HTTP ACME + redirect only (validates without the api certificate).
 if [ "$DRY_RUN" -eq 0 ]; then
   http_only_conf > "$RUNNING_CONF"
-  docker exec "$PROXY" nginx -t || { cp -a "$BACKUP_CONF" "$RUNNING_CONF"; die "nginx -t failed on the HTTP-only phase; restored the backup."; }
+  docker exec "$PROXY" nginx -t || { cp -a "$BACKUP_CONF" "$RUNNING_CONF"; die "nginx -t failed on the HTTP-only phase; restored the backup and did not reload."; }
   docker exec "$PROXY" nginx -s reload
 fi
-log "phase 1 (HTTP ACME) applied."
+log "phase 1 applied (HTTP ACME reachable; the api HTTPS block is not yet present)."
 
-# Certificate issuance through the existing certbot container/webroot.
+# --------------------------------------------------------------------------
+step "Certificate issuance (existing certbot container/webroot)"
 if [ "$DRY_RUN" -eq 0 ]; then
   docker exec "$CERTBOT" certbot certonly --webroot -w /var/www/acme \
     -d "$TLS_HOST" --non-interactive --agree-tos -m "$OWNER_EMAIL" --keep-until-expiring \
-    || die "certificate issuance for $TLS_HOST failed (HTTP ACME reachable? DNS correct?)."
+    || die "certificate issuance for $TLS_HOST failed. Recovery: the proxy is still on the HTTP-only config ($BACKUP_CONF is the pre-install copy); check DNS (api.sapiensmetric.eu A 79.76.117.246), TCP 80 reachability and the ACME webroot, then re-run the installer."
   docker exec "$PROXY" test -f "/etc/letsencrypt/live/$TLS_HOST/fullchain.pem" \
     || die "certificate file not present after issuance."
 fi
 log "certificate for $TLS_HOST issued."
 
-# Phase 2: full config with the HTTPS server block.
+# --------------------------------------------------------------------------
+step "Proxy phase 2 — full config (adds the api HTTPS server)"
 if [ "$DRY_RUN" -eq 0 ]; then
   cp "$STAGING/proxy/nginx.conf" "$RUNNING_CONF"
   docker exec "$PROXY" nginx -t || { cp -a "$BACKUP_CONF" "$RUNNING_CONF"; docker exec "$PROXY" nginx -s reload || true; die "nginx -t failed on the full config; restored and reloaded the backup."; }
   docker exec "$PROXY" nginx -s reload
-  [ -f "$TEMPLATE_CONF" ] && { cp -a "$TEMPLATE_CONF" "$BACKUP_DIR/nginx.conf.$STAMP.template"; cp "$STAGING/proxy/nginx.conf" "$TEMPLATE_CONF"; log "release template refreshed."; }
+  if [ -f "$TEMPLATE_CONF" ]; then
+    cp -a "$TEMPLATE_CONF" "$BACKUP_DIR/nginx.conf.$STAMP.template"
+    cp "$STAGING/proxy/nginx.conf" "$TEMPLATE_CONF"
+    log "release template refreshed (survives a subsequent Sokoladas release)."
+  fi
 fi
-log "phase 2 (full config) applied."
-
-step "Sokoladas recheck"
-if [ "$DRY_RUN" -eq 0 ]; then
-  for url in https://sokoladas.eu/ https://sokoladas.eu/health/ready; do
-    code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "$url" || echo 000)
-    log "$code  $url"
-  done
-  log "certificate: $(echo | openssl s_client -connect sokoladas.eu:443 -servername sokoladas.eu 2>/dev/null | openssl x509 -noout -subject 2>/dev/null || echo 'sokoladas.eu')"
-fi
+log "phase 2 applied."
 
 # --------------------------------------------------------------------------
-step "Database and API"
-compose() {
-  docker compose --project-directory "$PROJECT_DIR" \
-    --env-file "$PROJECT_DIR/images.env" --env-file "$PROJECT_DIR/hostenv" \
-    -f "$PROJECT_DIR/compose.yaml" "$@"
-}
-run compose up -d db
-if [ "$DRY_RUN" -eq 0 ]; then
-  for _ in $(seq 1 60); do
-    compose ps db --format '{{.Health}}' | grep -qx healthy && break
-    sleep 2
-  done
-fi
-run compose run --rm migrate
-run compose up -d api
+step "Wait for API readiness over HTTPS"
 if [ "$DRY_RUN" -eq 0 ]; then
   ok=0
   for _ in $(seq 1 60); do
@@ -214,9 +223,9 @@ if [ "$DRY_RUN" -eq 0 ]; then
     [ "$code" = "200" ] && { ok=1; break; }
     sleep 3
   done
-  [ "$ok" = "1" ] || die "API did not become ready at https://$TLS_HOST/health/ready."
+  [ "$ok" = "1" ] || die "API not ready at https://$TLS_HOST/health/ready. Recovery: 'docker compose -p $PROJECT_NAME --project-directory $PROJECT_DIR logs api'; the proxy can be reverted with '$BACKUP_CONF'."
 fi
-log "API is up and ready."
+log "API ready."
 
 # --------------------------------------------------------------------------
 step "Provision the owner account (credential never printed)"
@@ -226,7 +235,7 @@ if [ "$DRY_RUN" -eq 0 ]; then
   chmod 0400 "$INITIAL_DIR/owner-initial-password"
   chown 0:0 "$INITIAL_DIR/owner-initial-password"
 fi
-log "owner account provisioned; initial credential at $INITIAL_DIR/owner-initial-password"
+log "owner account provisioned."
 
 # --------------------------------------------------------------------------
 step "Verify closed-access enforcement"
@@ -234,9 +243,21 @@ if [ "$DRY_RUN" -eq 0 ]; then
   reg=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 -X POST "https://$TLS_HOST/auth/register" \
     -H 'content-type: application/json' -d '{"email":"probe@example.org","password":"a-very-long-probe-password"}')
   log "POST /auth/register -> $reg (expected 403)"
-  [ "$reg" = "403" ] || log "WARNING: registration did not return 403; check REGISTRATION_ENABLED."
-  cap=$(curl -s --max-time 20 "https://$TLS_HOST/auth/capabilities" || true)
-  log "GET /auth/capabilities -> $cap"
+  [ "$reg" = "403" ] || warn "registration did not return 403; check REGISTRATION_ENABLED."
+  log "GET /auth/capabilities -> $(curl -s --max-time 20 "https://$TLS_HOST/auth/capabilities" || true)"
+fi
+
+step "Sokoladas recheck"
+if [ "$DRY_RUN" -eq 0 ]; then
+  for url in https://sokoladas.eu/ https://sokoladas.eu/health/ready; do
+    log "$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "$url" || echo 000)  $url"
+  done
+fi
+
+# --------------------------------------------------------------------------
+step "Cleanup"
+if [ "$DRY_RUN" -eq 0 ]; then
+  rm -f "$STAGING/smtp_password" && log "removed the staged SMTP secret file"
 fi
 
 # --------------------------------------------------------------------------
@@ -245,22 +266,26 @@ cat <<EOF
 
   Owner account:        $OWNER_EMAIL (admin, verified, review-eligible)
   Initial credential:   $INITIAL_DIR/owner-initial-password (root 0400)
-                        read it once, then delete it:  sudo rm $INITIAL_DIR/owner-initial-password
   Secrets:              $SECRETS_DIR (root 0700; api files 10001:10001 0400)
 
-  Recovery — Sokoladas proxy (before any project change):
-    sudo cp -a $BACKUP_CONF $RUNNING_CONF
-    docker exec $PROXY nginx -t && docker exec $PROXY nginx -s reload
+  Recovery by failure point:
+    * after HTTP bootstrap / before the certificate:
+        sudo cp -a $BACKUP_CONF $RUNNING_CONF
+        docker exec $PROXY nginx -t && docker exec $PROXY nginx -s reload
+    * certificate issuance:
+        the proxy stays on the HTTP-only config; fix DNS/TCP 80 and re-run.
+    * migration:
+        fix and re-run the migrate step; re-running this installer is idempotent
+        (existing secrets are kept; migrations are forward-only).
+    * API startup:
+        docker compose -p $PROJECT_NAME --project-directory $PROJECT_DIR logs api
+    * stop the project WITHOUT deleting data:
+        docker compose -p $PROJECT_NAME --project-directory $PROJECT_DIR down
+    * roll back the API image only:
+        set the previous API_IMAGE digest in $PROJECT_DIR/images.env, then
+        docker compose -p $PROJECT_NAME --project-directory $PROJECT_DIR up -d --force-recreate api
 
-  Stop the SapiensMetric project WITHOUT deleting data:
-    docker compose -p $PROJECT_NAME --project-directory $PROJECT_DIR down
-
-  Roll back the API image only (database is forward-only):
-    edit $PROJECT_DIR/images.env to the previous API_IMAGE digest, then
-    docker compose -p $PROJECT_NAME --project-directory $PROJECT_DIR up -d --force-recreate api
-
-  Re-run this installer any time: it is idempotent (existing secrets are kept).
-
-  Next (owner): sign in as $OWNER_EMAIL, change the password, then activate the
-  closed frontend profile (.github/workflows/deploy-closed.yml, confirm=activate).
+  Next (owner): read and delete the initial credential, sign in, change the
+  password, then activate the closed frontend profile
+  (.github/workflows/deploy-closed.yml, confirm=activate) once authorised.
 EOF

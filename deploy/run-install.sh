@@ -42,8 +42,8 @@ cp "$DEPLOY_DIR/compose.yaml" "$WORK/compose.yaml"
 cp "$DEPLOY_DIR/images.env" "$WORK/images.env"
 cp "$DEPLOY_DIR/hostenv" "$WORK/hostenv"
 cp "$NGINX_CONF" "$WORK/proxy/nginx.conf"
-# The SMTP password is staged separately (kept out of the tar if empty).
-echo "Staging bundle from $REPO_DIR -> $HOST:$REMOTE_DIR"
+git -C "$REPO_DIR" rev-parse HEAD > "$WORK/SOURCE_COMMIT"
+echo "Staging bundle (source $(cat "$WORK/SOURCE_COMMIT")) from $REPO_DIR -> $HOST:$REMOTE_DIR"
 
 tar -C "$WORK" -czf "$WORK/bundle.tgz" .
 ssh "$HOST" "rm -rf '$REMOTE_DIR' && mkdir -p '$REMOTE_DIR'"
@@ -62,3 +62,9 @@ ssh -t "$HOST" "
   sudo SMTP_PASSWORD_SOURCE_FILE='$REMOTE_DIR/smtp_password' \
     bash '$REMOTE_DIR/staging/install-closed-review.sh' '$REMOTE_DIR/staging' $REMOTE_ARGS
 "
+
+# Clean up the staged temporary material on success.
+if [ "$DRY_RUN" != "--dry-run" ]; then
+  ssh "$HOST" "rm -rf '$REMOTE_DIR'"
+  echo "Removed the remote staging directory ($REMOTE_DIR)."
+fi

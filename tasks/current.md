@@ -107,12 +107,22 @@
   `sm-oracle-infra/deploy/proxy/nginx.conf` (with markers for a safe two-phase
   certificate rollout).
 - **Reviewed privileged installer** `deploy/install-closed-review.sh` (idempotent,
-  validates configuration, two-phase proxy/certificate rollout with `nginx -t`
+  validates configuration, starts the database/API **before** touching nginx so the
+  new upstream resolves, then a two-phase proxy/certificate rollout with `nginx -t`
   before every reload and a proxy-config backup, explicit migration, owner
-  provisioning with `--password-out`, Sokoladas recheck, printed recovery) and the
-  one-command wrapper `deploy/run-install.sh` (uses the owner's existing sudo
-  access; no passwordless sudo/Docker added). Owner email confirmed:
-  `m.smiginas@gmail.com`.
+  provisioning with `--password-out`, Sokoladas recheck, removes the staged SMTP
+  secret, and prints recovery by failure point) and the one-command wrapper
+  `deploy/run-install.sh` (uses the owner's existing sudo access; no passwordless
+  sudo/Docker added). Owner email confirmed: `m.smiginas@gmail.com`.
+- **Verified production image + digests:** API `ghcr.io/marijustechin/sapiensmetric-api@sha256:d78b0e717f1901bea5e21c90670d3fe5df3843b03c26dcb16decf3a85aa0dd2e`
+  (`linux/arm64`, source `8ff8e3e`; **public package — no registry credential
+  required**, confirmed by an unauthenticated pull); MySQL
+  `mysql:8.0.46@sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b`.
+- **Separate SapiensMetric backup job** (sm-oracle-infra `backup/sapiensmetric-backup.sh`,
+  systemd timer, `../sokoladas/sm-oracle-infra/docs/sapiensmetric-backups.md`): MySQL dump + config to the
+  existing rclone `crypt` remote under `sapiensmetric-backups/sets`, with a MySQL
+  restore procedure. It does not reuse the Sokoladas PostgreSQL backup and does
+  not alter the Sokoladas sets.
 
 ## Verification
 
@@ -128,9 +138,32 @@
 Repository implementation is complete and verified locally; the **live install**
 still requires **root** on `79.76.117.246` (see `docs/closed-review-deployment.md`
 §2/§9): `marijus` has no passwordless sudo/Docker and `deploy` is scoped to
-`sokoladas-deploy` only. Also needed: the production secret **values** (generated
-with secure tooling into `/etc/sapiensmetric/secrets/`), the **owner account
-email**, and a secure off-host destination for SapiensMetric backups.
+`sokoladas-deploy` only. The owner holds administrative access; the remaining
+step is the owner running the reviewed installer (`deploy/run-install.sh`) through
+their existing sudo. The installer generates the MySQL/JWT secrets itself and
+provisions the confirmed owner account (`m.smiginas@gmail.com`); only the existing
+authorised SMTP password is supplied (from a git-ignored file, never printed).
+Backups: a separate SapiensMetric job now exists (sm-oracle-infra
+`backup/sapiensmetric-backup.sh`); the first scheduled run/restore test is still
+unobserved.
+
+## Limitations (observed)
+
+- **The reworked sitemap is not yet live (observed 2026-10-12).** Frontend CI runs
+  #12 (`992ce2f`), #13 (`2b140a4`) and #14 (`8ff8e3e`) each reported `success`, but
+  their uploads were **skipped by the stale-release guard** — each run's
+  deployment-record commit advanced `main` past that run's source commit, so the
+  deploy job found `origin/main != github.sha` and skipped the PUT (a record was
+  still written, which is why `success` alone is misleading). Production still
+  serves the previous `<urlset>` (`last-modified 2026-10-09`) and
+  `/page-sitemap.xml` / `/article-sitemap.xml` return 404. Publication needs a
+  non-stale deployment: `workflow_dispatch` (mode `deploy`) on **Deploy public
+  frontend**, or a fresh tip push whose guard runs before any record commit.
+- The privileged installer and the SapiensMetric backup job are repository
+  implementations, **not yet executed live**; the first run is unverified until
+  the owner performs it.
+- The verified image was built and run locally (AMD64); the published ARM64
+  digest was pulled and inspected. T-022 browser acceptance remains pending.
 
 ## Boundaries
 
