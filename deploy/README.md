@@ -63,6 +63,10 @@ installer, staged over SSH; no passwordless sudo/Docker added).
 
 ## Recovery
 
+The `/opt/sapiensmetric-review` directory is `root:root 0750`, so a non-root user
+cannot `cd` into it. Always use absolute paths / `--project-directory` (never a
+plain `cd`):
+
 ```sh
 # Restore the Sokoladas proxy to its pre-install state:
 sudo cp -a /opt/sokoladas-staging/state/backups/nginx.conf.<stamp> \

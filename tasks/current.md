@@ -132,6 +132,28 @@
   certs), proving the additive routing is syntactically valid.
 - The closed-release artifact builds and its verification passes (private shells
   present and noindex; sitemap excludes private routes and the root redirect).
+- **Live production review environment (owner-executed, 2026-10-12/13), observed
+  2026-10-13:**
+  - `https://api.sapiensmetric.eu/health` → `200 {"status":"ok"}`;
+    `…/health/ready` → `200 {"status":"ok"}` (DB reachable).
+  - `…/auth/capabilities` → `{"google":false,"registration":false}`;
+    `POST /auth/register` → **403** (registration disabled at the boundary);
+    `GET /auth/google/status` → `{"available":false}`.
+  - `http://api.sapiensmetric.eu/health` → **308** to HTTPS; certificate
+    `subject=CN=api.sapiensmetric.eu`, valid to **2027-01-10** (Let's Encrypt).
+  - Public sitemap: `/sitemap.xml` is the `<sitemapindex>`; `/page-sitemap.xml`
+    and `/article-sitemap.xml` → **200** (14 + 6 = 20 public URLs; no private
+    routes, no root redirect).
+  - **Sokoladas unaffected:** `https://sokoladas.eu/` → 200,
+    `/health/ready` → 200; the release template was refreshed and the proxy
+    config backed up.
+  - The owner account `m.smiginas@gmail.com` was provisioned via the operator
+    workflow (owner-reported); the generated credential is written to a
+    root-only file and was not printed. Independent sign-in acceptance is
+    **pending the owner**.
+  - Two real defects were found and fixed during the live run: the missing
+    `sapiensmetric-api` network alias (502) and the `provision` service using
+    `command` instead of `entrypoint` (`node: bad option: --email`).
 
 ## Blocker (exact missing input — live install only)
 
