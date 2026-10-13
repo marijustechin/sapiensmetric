@@ -154,10 +154,22 @@
   - Two real defects were found and fixed during the live run: the missing
     `sapiensmetric-api` network alias (502) and the `provision` service using
     `command` instead of `entrypoint` (`node: bad option: --email`).
-  - **Owner-confirmed on production (2026-10-13):** the owner completed the
-    production **password reset** (forgot-password → emailed
-    `…/auth/reset-password#token=…` → new password) and **signed in**
-    successfully. **Logout and the assessment journey remain unconfirmed.**
+  - **Owner-confirmed on production (owner's nine-step report, 2026-10-13):**
+    password reset and sign-in; the assessment journey (**start → save → resume →
+    submit → results**); **logout returning to home**; protected access requiring
+    login; and **reopening the saved result**. This corrects the earlier note that
+    logout and the assessment journey were unconfirmed.
+  - **Awaiting owner visual confirmation:** the corrected production drawer
+    (Home / Account / Assessment / Admin / Logout).
+  - **Tracked, unresolved (must not be marked complete):**
+    1. disappearing start control;
+    2. Lithuanian after re-authentication;
+    3. review wording;
+    4. pre-submission hint.
+  - **API release note:** the role-bearing `/auth/me` change is in API source
+    `5709f99` (image `sha256:4668103f…`); the **running** API image is still
+    `sha256:d78b0e71…` (source `8ff8e3e`), which returns only `{id,email}` — so
+    production Admin visibility requires the scoped API update (see Blocker).
   - **Authenticated drawer fixed (T-023):** `/auth/me` now returns the
     API-confirmed `role`; the drawer shows Home/Account/Assessment/Logout, adds
     **Admin** only for `role === 'admin'`, hides guest-only and recovery entries,
@@ -190,6 +202,20 @@ authorised SMTP password is supplied (from a git-ignored file, never printed).
 Backups: a separate SapiensMetric job now exists (sm-oracle-infra
 `backup/sapiensmetric-backup.sh`); the first scheduled run/restore test is still
 unobserved.
+
+**API release roll-out (blocking production Admin visibility).** The running API
+container is still the originally-pinned image
+`ghcr.io/marijustechin/sapiensmetric-api@sha256:d78b0e71…` (source `8ff8e3e`),
+whose `/auth/me` returns `{id,email}` only. The role-bearing `/auth/me` is in
+image `sha256:4668103f…` (source `5709f99`). Updating the running API needs
+privileged Docker (pull + migrate + `up -d api`), which the current session does
+not have: the scoped sudoers rule and wrappers were **revoked** (`sudo -n` →
+interactive authentication), and the previously-installed wrappers did not
+include an API update. A bounded scoped operation now exists
+(`sapiensmetric-maint-api-update`, staged at
+`/home/marijus/sapiensmetric-install/maintenance-86c4edc/`); after the owner
+re-runs that bootstrap, the agent can complete and verify the API update without
+exposing any credential.
 
 ## Limitations (observed)
 
