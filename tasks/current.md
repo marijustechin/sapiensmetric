@@ -209,15 +209,18 @@ unobserved.
 
 ## Ordered owner handoff (privileged; both authorised)
 
-1. **Backup check first** (must succeed before the frontend publication):
+1. **One-time maintenance bootstrap** (installs the corrected backup/restore
+   scripts, the SELECT-only MySQL backup account, the systemd timer, and a
+   narrowly scoped passwordless sudo rule for the agent — fixed wrappers only):
    ```sh
-   cd /home/marijus/sapiensmetric-install/c60fa7d/backup
-   sudo bash sapiensmetric-backup-install.sh --enable-timer
-   sudo /usr/local/sbin/sapiensmetric-backup check-remote
-   sudo /usr/local/sbin/sapiensmetric-backup run
-   sudo /usr/local/sbin/sapiensmetric-restore-verify run
-   systemctl list-timers sapiensmetric-backup.timer
+   cd /home/marijus/sapiensmetric-install/c60fa7d/maintenance
+   sudo bash bootstrap-sapiensmetric-maintenance.sh
    ```
+   The agent then runs, without a password:
+   `sudo -n /usr/local/sbin/sapiensmetric-maint-check`, `…-maint-status`,
+   `…-maint-backup`, `…-maint-restore-verify`.
+   Revocation: `sudo rm -f /etc/sudoers.d/sapiensmetric-maintenance` +
+   remove the `/usr/local/sbin/sapiensmetric-maint-*` wrappers.
 2. **Publish the closed frontend** (dispatch-only; the agent has no GitHub
    credential — an unauthenticated dispatch returns 401): GitHub → repo
    `marijustechin/sapiensmetric` → **Actions → Deploy closed review frontend →
