@@ -11,6 +11,15 @@ name: Deploy closed review frontend
 #
 # It reuses the same WebDAV deploy tool and baseline protection as the public
 # release, but validates the closed profile instead of the public-only one.
+#
+# CRITICAL: the deploy tool defaults to `dist/public-site`; every `baseline` and
+# `apply` invocation here MUST pass `--artifact dist/closed-site` explicitly, or
+# `apply` fails looking for the public artifact. The baseline and apply use the
+# same artifact directory, artifactId, operationId and destination.
+#
+# The deploy is ADDITIVE (WebDAV overwrite/add; never mirror/delete), so later
+# automatic public deployments do NOT remove these private shells, and the public
+# workflow's verify (default `--app-routes auto`) tolerates the active profile.
 on:
   workflow_dispatch:
     inputs:
@@ -60,6 +69,15 @@ jobs:
           path: dist/closed-site
           retention-days: 30
           if-no-files-found: error
+      - name: Validate the closed artifact before any remote call (fail early)
+        run: |
+          set -euo pipefail
+          test -f dist/closed-site/index.html || { echo "::error::dist/closed-site/index.html missing"; exit 1; }
+          for marker in en/auth/login/index.html lt/auth/login/index.html en/account/index.html lt/assessment/index.html; do
+            test -f "dist/closed-site/$marker" || { echo "::error::dist/closed-site is not the closed profile (missing $marker)"; exit 1; }
+          done
+          test -f dist/closed-site/sitemap.xml || { echo "::error::dist/closed-site/sitemap.xml missing"; exit 1; }
+          echo "closed artifact validated: $(find dist/closed-site -type f | wc -l) files"
       - name: Capture the pre-deployment baseline (read-only)
         id: prepare
         env:
@@ -103,22 +121,14 @@ jobs:
         run: |
           set -euo pipefail
           node scripts/deploy-webdav.mjs apply --confirm --ci \
+            --artifact dist/closed-site \
             --remote-base "$WEBDAV_URL" \
             --operation "${{ steps.prepare.outputs.operation }}"
       - name: Verify the closed review surfaces on production
         run: |
           set -euo pipefail
-          base="$PUBLIC_SITE_URL"
-          check() { code=$(curl -s -o /dev/null -w '%{http_code}' "$1"); echo "$code $1"; test "$code" = "200"; }
-          # Public pages must still work.
-          check "$base/en/"
-          check "$base/lt/"
-          # Private shells must now be directly reachable.
-          check "$base/en/auth/login/"
-          check "$base/en/account/"
-          check "$base/en/assessment/"
-          # And they must be noindex.
-          curl -s "$base/en/auth/login/" | grep -qiE '<meta[^>]+name="robots"[^>]+noindex'
+          # Public pages 200 + private shells 200 AND noindex (app-routes=200).
+          node scripts/deploy-webdav.mjs verify --site "$PUBLIC_SITE_URL" --app-routes 200
       - name: Summary
         run: |
           echo "Closed review profile deployed (operation ${{ steps.prepare.outputs.operation }}, artifact ${{ steps.prepare.outputs.artifact_id }})." >> "$GITHUB_STEP_SUMMARY"

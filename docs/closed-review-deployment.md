@@ -138,6 +138,20 @@ Repository implementation is complete (verified by `pnpm verify`):
   exclusion checks intact.
 - **Release ordering:** verify API readiness and closed-access enforcement
   **before** publishing the shells that expose the private routes.
+- **Corrected invocation (T-023 fix):** the closed workflow must pass
+  `--artifact dist/closed-site` to **both** `baseline` and `apply`; the deploy
+  tool defaults to `dist/public-site`, and `apply` recomputes the artifact
+  identity from the directory (it does not trust the baseline's path). An early
+  step validates the closed artifact (index + private-shell markers) before any
+  remote call, and production verification uses `verify --app-routes 200`.
+- **Profile preservation on later main pushes:** the WebDAV deploy tool is
+  **additive** — it only overwrites/adds and never mirrors or deletes — so a
+  subsequent automatic **public** deployment leaves the closed private shells in
+  place (their hashed `_next` chunks remain too). The public workflow's
+  production verify uses the default `--app-routes auto`, which accepts either
+  404 (public-only) or 200-with-`noindex` (closed active), so it neither fails
+  nor silently reverts the profile. The public **artifact** exclusion is still
+  enforced by `verify-public-release.sh`.
 
 ## 7. Yoast-style sitemap plan
 

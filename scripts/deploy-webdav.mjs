@@ -109,7 +109,7 @@ export function parseEnvFile(text) {
 }
 
 export function parseArgs(argv) {
-  const args = { command: null, env: ENV_DEFAULT, artifact: ARTIFACT_DEFAULT, site: SITE_DEFAULT, confirm: false, remoteBase: null, operation: null, ci: false };
+  const args = { command: null, env: ENV_DEFAULT, artifact: ARTIFACT_DEFAULT, site: SITE_DEFAULT, confirm: false, remoteBase: null, operation: null, ci: false, appRoutes: 'auto' };
   const positional = [];
   for (let i = 0; i < argv.length; i += 1) {
     const a = argv[i];
@@ -118,11 +118,15 @@ export function parseArgs(argv) {
     else if (a === '--site') args.site = argv[++i];
     else if (a === '--remote-base') args.remoteBase = argv[++i];
     else if (a === '--operation' || a === '--baseline') args.operation = argv[++i];
+    else if (a === '--app-routes') args.appRoutes = argv[++i];
     else if (a === '--confirm') args.confirm = true;
     else if (a === '--ci') args.ci = true;
     else positional.push(a);
   }
   args.command = positional[0] ?? null;
+  if (!['404', '200', 'auto'].includes(args.appRoutes)) {
+    throw new Error(`--app-routes must be one of 404|200|auto (got ${args.appRoutes}).`);
+  }
   return args;
 }
 
@@ -540,8 +544,16 @@ async function commandRollback(args) {
 
 async function commandVerify(args) {
   const site = (args.site ?? SITE_DEFAULT).replace(/\/?$/, '/');
+  const mode = args.appRoutes ?? 'auto';
   const ok200 = ['', 'en/', 'lt/', 'en/assessment-guide/', 'lt/understanding-results/', 'en/about/', 'lt/contact/', 'en/privacy/', 'robots.txt', 'sitemap.xml'];
-  const expect404 = ['en/auth/login/', 'lt/account/', 'en/admin/', 'en/assessment/', 'lt/assessment/'];
+  // The private application routes are excluded from the PUBLIC release artifact.
+  // Once the CLOSED profile is activated (additively) they are served on
+  // production. `--app-routes` selects the expectation:
+  //   404   = public-only (strict)
+  //   200   = closed profile active (must also be noindex)
+  //   auto  = either; a served route MUST be noindex (default, so subsequent
+  //           public pushes do not fail after a closed activation)
+  const appRoutes = ['en/auth/login/', 'lt/account/', 'en/admin/', 'en/assessment/', 'lt/assessment/'];
   let failures = 0;
   for (const path of ok200) {
     let status = 0;
@@ -549,11 +561,21 @@ async function commandVerify(args) {
     if (status !== 200) failures += 1;
     console.log(`${status === 200 ? 'ok  ' : 'FAIL'} /${path} -> ${status}`);
   }
-  for (const path of expect404) {
+  for (const path of appRoutes) {
     let status = 0;
-    try { status = (await fetch(`${site}${path}`, { redirect: 'manual' })).status; } catch {}
-    if (status !== 404) failures += 1;
-    console.log(`${status === 404 ? 'ok  ' : 'FAIL'} /${path} -> ${status} (expect 404)`);
+    let body = '';
+    try {
+      const res = await fetch(`${site}${path}`, { redirect: 'manual' });
+      status = res.status;
+      if (status === 200) body = await res.text();
+    } catch {}
+    const noindex = /<meta[^>]+name=["']robots["'][^>]+noindex/i.test(body) || /noindex/i.test(body);
+    let ok;
+    if (mode === '404') ok = status === 404;
+    else if (mode === '200') ok = status === 200 && noindex;
+    else ok = status === 404 || (status === 200 && noindex); // auto
+    if (!ok) failures += 1;
+    console.log(`${ok ? 'ok  ' : 'FAIL'} /${path} -> ${status} (app-routes=${mode}${status === 200 ? `, noindex=${noindex}` : ''})`);
   }
   console.log(`\nverify: ${failures === 0 ? 'all ok' : `${failures} failed`}`);
   if (failures > 0) process.exitCode = 1;
@@ -568,7 +590,7 @@ async function main() {
   else if (args.command === 'rollback') await commandRollback(args);
   else if (args.command === 'verify') await commandVerify(args);
   else {
-    console.log('Usage: node scripts/deploy-webdav.mjs <check|plan|baseline|apply|rollback|verify> [--env .env.deploy.local] [--ci] [--artifact dist/public-site] [--remote-base URL] [--site URL] [--operation <id>] [--confirm]');
+    console.log('Usage: node scripts/deploy-webdav.mjs <check|plan|baseline|apply|rollback|verify> [--env .env.deploy.local] [--ci] [--artifact dist/public-site] [--remote-base URL] [--site URL] [--operation <id>] [--confirm] [--app-routes 404|200|auto]');
     process.exitCode = 1;
   }
 }

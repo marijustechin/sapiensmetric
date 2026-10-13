@@ -181,6 +181,16 @@ unobserved.
 
 ## Limitations (observed)
 
+- **Closed workflow fixed (2026-10-13):** run `38352341584` failed at
+  “Upload the exact verified closed artifact” because `deploy-webdav.mjs apply`
+  defaulted to `dist/public-site` while only `dist/closed-site` was built. Fixed
+  by passing `--artifact dist/closed-site` to **both** `baseline` and `apply`,
+  adding an early closed-artifact validation step before the remote baseline
+  call, using `verify --app-routes 200` for closed production checks, and a
+  regression test (`scripts/deploy-closed-workflow.test.mjs`). Public pushes no
+  longer revert the profile (additive deploy; public verify uses `--app-routes
+  auto`).
+
 - **The reworked sitemap is not yet live (observed 2026-10-12).** Frontend CI runs
   #12 (`992ce2f`), #13 (`2b140a4`) and #14 (`8ff8e3e`) each reported `success`, but
   their uploads were **skipped by the stale-release guard** — each run's
