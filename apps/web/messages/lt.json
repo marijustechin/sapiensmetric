@@ -75,7 +75,10 @@
   },
   "Assessment": {
     "title": "Vertinimas (kūrimo režimas)",
-    "pageIntro": "Vietinė kūrimo peržiūra. Toliau esantys moduliai skirti tik vietinei peržiūrai; jų turinys neperžiūrėtas ir netinkamas publikavimui.",
+    "pageIntro": "Uždara peržiūros aplinka. Toliau esantys peržiūros moduliai skirti tik įgaliotiems peržiūros vykdytojams; jų turinys neperžiūrėtas ir netinkamas publikavimui.",
+    "modulesLoading": "Įkeliami peržiūros moduliai…",
+    "modulesError": "Nepavyko įkelti šiai paskyrai prieinamų peržiūros modulių.",
+    "preSubmitHint": "Jūsų atsakymai siunčiami į „SapiensMetric“ programos API ir išsaugomi paskyroje; jie niekada nesiunčiami reklamai ar analitikai. Atsiliepimas rodomas tik pateikus.",
     "noModules": "Šiai paskyrai nėra prieinamų vertinimo modulių.",
     "syntheticBanner": "Sintetinis turinys, skirtas tik kūrimo testavimui. Tai nėra tikras vertinimas, jis nėra validuotas ir nėra publikuojamo produkto dalis. Nelaikykite rezultato reikšmingu.",
     "notAvailableSynthetic": "Sintetinio vertinimo turinys šioje aplinkoje išjungtas.",
@@ -150,10 +153,10 @@
       "skipped": "Praleistas"
     },
     "startAstronomy": "Pradėti astronomijos juodraštį (vietinei peržiūrai)",
-    "astronomyNote": "Astronomijos juodraščio modulis – tik vietinei peržiūrai; klausimai neperžiūrėti ir netinkami publikavimui.",
+    "astronomyNote": "Astronomijos juodraščio modulis – tik peržiūros aplinkai; klausimai neperžiūrėti ir netinkami publikavimui.",
     "loadingContent": "Įkeliamas turinys…",
     "feedbackTitle": "Atsiliepimas",
-    "feedbackDraftNote": "Juodraštinis atsiliepimas tik vietinei peržiūrai. Tai nėra validuotas rezultatas.",
+    "feedbackDraftNote": "Juodraštinis atsiliepimas peržiūros aplinkai. Tai nėra validuotas rezultatas.",
     "feedbackYourAnswer": "jūsų atsakymas",
     "feedbackUnavailable": "Šio klausimo paaiškinimo versija nebeprieinama.",
     "feedbackOutcome": {

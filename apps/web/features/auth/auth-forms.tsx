@@ -6,6 +6,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useState, type FormEvent } from 'react';
 import * as authApi from './auth-api';
 import { sanitizeReturnTo } from './auth-navigation';
+import { ensureLocalePrefix } from './auth-navigation';
 import type { AppLocale } from '../../shared/lib/locale-navigation';
 import {
   registerFeedback,
@@ -52,10 +53,13 @@ export function LoginForm() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     setReturnTo(
-      sanitizeReturnTo(
-        params.get('returnTo'),
-        window.location.origin,
-        `/${locale}/account`,
+      ensureLocalePrefix(
+        sanitizeReturnTo(
+          params.get('returnTo'),
+          window.location.origin,
+          `/${locale}/account`,
+        ),
+        locale,
       ),
     );
     if (params.get('googleError')) {

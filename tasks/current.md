@@ -161,11 +161,29 @@
     logout and the assessment journey were unconfirmed.
   - **Awaiting owner visual confirmation:** the corrected production drawer
     (Home / Account / Assessment / Admin / Logout).
-  - **Tracked, unresolved (must not be marked complete):**
-    1. disappearing start control;
-    2. Lithuanian after re-authentication;
-    3. review wording;
-    4. pre-submission hint.
+  - **Acceptance corrections resolved (T-023):**
+    1. *Disappearing start control* — the assessment screen now has an explicit
+       capabilities lifecycle (`loading` / `error` + Retry / `ready`), so the
+       start control never renders as an empty area; a failed availability call
+       is retryable instead of silently hiding the control.
+    2. *Lithuanian after re-authentication* — `ensureLocalePrefix` guarantees the
+       post-sign-in destination keeps the active locale; a locale-less `returnTo`
+       can no longer fall back to the default locale.
+    3. *Review wording* — the assessment banner and astronomy/feedback notes now
+       say "closed review environment … unreviewed, not publication-ready"
+       instead of "local development / local review only" (accurate on the
+       production closed profile).
+    4. *Pre-submission hint* — a hint next to Save/Submit states that answers are
+       sent to the SapiensMetric application API and saved to the account (never
+       advertising/analytics) and that feedback appears only after submission.
+  - **Checker correction:** the credential-safe role check failed on production
+    with ENOENT because the verification container did not mount the credential
+    directory (the `provision` container writes `/run/sm-out/rolecheck-pw`, but the
+    role-check container only mounted the checker). Fixed by mounting
+    `/etc/sapiensmetric/initial-credentials:/run/sm-out:ro` and adding a
+    checker-only scoped wrapper (`sapiensmetric-maint-api-role-check`). Proven
+    locally in a container with the same mount. Revocation no longer disables the
+    backup timer.
   - **API release note:** the role-bearing `/auth/me` change is in API source
     `5709f99` (image `sha256:4668103f…`); the **running** API image is still
     `sha256:d78b0e71…` (source `8ff8e3e`), which returns only `{id,email}` — so

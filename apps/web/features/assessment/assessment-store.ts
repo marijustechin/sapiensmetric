@@ -71,6 +71,8 @@ export interface RunnerState {
   startErrorModule: 'synthetic' | 'astronomy' | null;
   /** T-023 module availability for this account; null until loaded. */
   capabilities: AssessmentCapabilities | null;
+  /** Explicit availability lifecycle so the start control never vanishes silently. */
+  capabilitiesStatus: 'loading' | 'ready' | 'error';
 }
 
 export type SubmitOutcome =
@@ -135,6 +137,7 @@ export function initialRunnerState(): RunnerState {
     startError: null,
     startErrorModule: null,
     capabilities: null,
+    capabilitiesStatus: 'loading',
   };
 }
 
@@ -500,17 +503,26 @@ export function createAssessmentStore(
   }
 
   async function loadCapabilities(): Promise<void> {
-    if (!api.capabilities) return;
+    if (!api.capabilities) {
+      // No capability surface (e.g. a test double): keep the modules unavailable
+      // but resolve the lifecycle so the UI does not stay in a loading state.
+      patch({ capabilitiesStatus: 'ready', capabilities: null });
+      return;
+    }
     const token = getAccessToken();
-    if (!token) return;
+    if (!token) {
+      patch({ capabilitiesStatus: 'error', capabilities: null });
+      return;
+    }
+    patch({ capabilitiesStatus: 'loading' });
     const outcome = await api.capabilities(token);
-    // Fail closed on any non-success outcome: expose no module.
-    patch({
-      capabilities:
-        outcome.kind === 'success'
-          ? outcome.data
-          : { synthetic: false, astronomyDraft: false },
-    });
+    // Fail closed on any non-success outcome, but expose an ERROR state so the
+    // start control is retryable rather than silently disappearing.
+    patch(
+      outcome.kind === 'success'
+        ? { capabilities: outcome.data, capabilitiesStatus: 'ready' }
+        : { capabilities: null, capabilitiesStatus: 'error' },
+    );
   }
 
   return {

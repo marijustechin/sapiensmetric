@@ -56,3 +56,24 @@ export function loginHref(locale: Locale, returnTo?: string): string {
   }
   return `${base}?returnTo=${encodeURIComponent(returnTo)}`;
 }
+
+/**
+ * Guarantee a locale prefix on a same-origin path (T-023 acceptance correction:
+ * "Lithuanian after re-authentication"). If `path` already targets any supported
+ * locale it is returned unchanged; otherwise the active locale is prefixed, so a
+ * locale-less `returnTo` can never silently fall back to the default locale after
+ * sign-in or re-authentication.
+ */
+export function ensureLocalePrefix(
+  path: string,
+  locale: Locale,
+  locales: readonly string[] = ['lt', 'en'],
+): string {
+  const withSlash = path.startsWith('/') ? path : `/${path}`;
+  for (const code of locales) {
+    if (withSlash === `/${code}` || withSlash.startsWith(`/${code}/`)) {
+      return withSlash;
+    }
+  }
+  return `/${locale}${withSlash}`;
+}

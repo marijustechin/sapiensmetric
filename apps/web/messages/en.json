@@ -75,7 +75,10 @@
   },
   "Assessment": {
     "title": "Assessment (development)",
-    "pageIntro": "Local development view. The modules below are for local review only; their content is unreviewed and not publication-ready.",
+    "pageIntro": "Closed review environment. The review modules below are for authorised reviewers only; their content is unreviewed and not publication-ready.",
+    "modulesLoading": "Loading review modules…",
+    "modulesError": "Could not load the review modules for this account.",
+    "preSubmitHint": "Your answers are sent to the SapiensMetric application API and saved to your account; they are never sent to advertising or analytics. Feedback appears only after you submit.",
     "noModules": "No assessment modules are available for this account.",
     "syntheticBanner": "Synthetic content for development testing only. This is not a real assessment, it is not validated, and it is not part of the published product. Do not treat the outcome as meaningful.",
     "notAvailableSynthetic": "Synthetic assessment content is disabled in this environment.",
@@ -150,10 +153,10 @@
       "skipped": "Skipped"
     },
     "startAstronomy": "Start astronomy draft (local review)",
-    "astronomyNote": "Astronomy draft module — local review only; items are unreviewed and not publication-ready.",
+    "astronomyNote": "Astronomy draft module — review environment only; items are unreviewed and not publication-ready.",
     "loadingContent": "Loading content…",
     "feedbackTitle": "Feedback",
-    "feedbackDraftNote": "Draft feedback for local review only. This is not a validated result.",
+    "feedbackDraftNote": "Draft feedback for the review environment. This is not a validated result.",
     "feedbackYourAnswer": "your answer",
     "feedbackUnavailable": "This item's explanation version is no longer available.",
     "feedbackOutcome": {

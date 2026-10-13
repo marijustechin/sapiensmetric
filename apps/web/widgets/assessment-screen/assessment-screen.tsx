@@ -275,43 +275,62 @@ export function AssessmentScreen() {
       ) : null}
 
       <div className="flex flex-col gap-3">
-        {state.capabilities?.synthetic ? (
-          <div className="flex flex-col gap-2 rounded border border-gray-300 p-3">
-            <div>
-              <button
-                type="button"
-                onClick={() => void onStart()}
-                disabled={state.startStatus === 'starting'}
-                className="min-h-[44px] border border-gray-700 bg-gray-800 px-3 py-1 text-white disabled:opacity-40"
-              >
-                {state.startStatus === 'starting' ? t('starting') : t('start')}
-              </button>
-            </div>
-            <p className="text-xs text-gray-600">{t('syntheticBanner')}</p>
-          </div>
-        ) : null}
-        {state.capabilities?.astronomyDraft ? (
-          <div className="flex flex-col gap-2 rounded border border-gray-300 p-3">
-            <div>
-              <button
-                type="button"
-                onClick={() => void onStartAstronomy()}
-                disabled={state.startStatus === 'starting'}
-                className="min-h-[44px] border border-gray-500 px-3 py-1 disabled:opacity-40"
-              >
-                {t('startAstronomy')}
-              </button>
-            </div>
-            <p className="text-xs text-gray-600">{t('astronomyNote')}</p>
-          </div>
-        ) : null}
-        {state.capabilities &&
-        !state.capabilities.synthetic &&
-        !state.capabilities.astronomyDraft ? (
-          <p className="text-sm text-gray-600" role="note">
-            {t('noModules')}
+        {state.capabilitiesStatus === 'loading' ? (
+          <p role="status" className="text-sm text-gray-600">
+            {t('modulesLoading')}
           </p>
-        ) : null}
+        ) : state.capabilitiesStatus === 'error' ? (
+          <div className="flex flex-col gap-2">
+            <p role="alert" className="text-sm text-red-700">
+              {t('modulesError')}
+            </p>
+            <button
+              type="button"
+              onClick={() => void store.loadCapabilities()}
+              className="self-start min-h-[44px] border border-gray-500 px-3 text-sm"
+            >
+              {t('retry')}
+            </button>
+          </div>
+        ) : (
+          <>
+            {state.capabilities?.synthetic ? (
+              <div className="flex flex-col gap-2 rounded border border-gray-300 p-3">
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => void onStart()}
+                    disabled={state.startStatus === 'starting'}
+                    className="min-h-[44px] border border-gray-700 bg-gray-800 px-3 py-1 text-white disabled:opacity-40"
+                  >
+                    {state.startStatus === 'starting' ? t('starting') : t('start')}
+                  </button>
+                </div>
+                <p className="text-xs text-gray-600">{t('syntheticBanner')}</p>
+              </div>
+            ) : null}
+            {state.capabilities?.astronomyDraft ? (
+              <div className="flex flex-col gap-2 rounded border border-gray-300 p-3">
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => void onStartAstronomy()}
+                    disabled={state.startStatus === 'starting'}
+                    className="min-h-[44px] border border-gray-500 px-3 py-1 disabled:opacity-40"
+                  >
+                    {t('startAstronomy')}
+                  </button>
+                </div>
+                <p className="text-xs text-gray-600">{t('astronomyNote')}</p>
+              </div>
+            ) : null}
+            {!state.capabilities?.synthetic && !state.capabilities?.astronomyDraft ? (
+              <p className="text-sm text-gray-600" role="note">
+                {t('noModules')}
+              </p>
+            ) : null}
+          </>
+        )}
       </div>
 
       {attemptId ? (

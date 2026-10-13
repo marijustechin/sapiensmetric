@@ -157,6 +157,10 @@ export function AssessmentRunner({
           ) : null}
         </div>
 
+        <p className="text-xs text-gray-600" role="note">
+          {t('preSubmitHint')}
+        </p>
+
         {state.saveStatus === 'error' ? (
           <p role="alert" className="text-sm text-red-700">
             {state.saveError === 'unauthorized'
