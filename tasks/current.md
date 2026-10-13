@@ -154,6 +154,16 @@
   - Two real defects were found and fixed during the live run: the missing
     `sapiensmetric-api` network alias (502) and the `provision` service using
     `command` instead of `entrypoint` (`node: bad option: --email`).
+- **Backup exercised via the scoped maintenance access (owner-executed,
+  2026-10-13):** the SELECT-only `sapiensmetric_backup` account dumped
+  `sapiensmetric_review` and the set **`2026-10-13T052942Z`** was uploaded and
+  verified on the shared `crypt:` remote at `sapiensmetric-backups/sets`; the
+  isolated `--network none` MySQL 8.0.46 restore **passed** the count comparison
+  (evidence `/opt/sapiensmetric-review/backup/restore-evidence/2026-10-13T052942Z-2026-10-13T053249Z`).
+  `sapiensmetric-maint-status` reported `OK backup 2026-10-13T052942Z uploaded and
+  verified`. The scoped sudoers rule and wrappers were then **revoked** and the
+  timer **disabled** by the owner, so no scheduled backup currently runs and the
+  agent has no privileged path.
 
 ## Blocker (exact missing input — live install only)
 
