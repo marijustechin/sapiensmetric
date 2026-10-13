@@ -133,3 +133,40 @@ jobs:
         run: |
           echo "Closed review profile deployed (operation ${{ steps.prepare.outputs.operation }}, artifact ${{ steps.prepare.outputs.artifact_id }})." >> "$GITHUB_STEP_SUMMARY"
           echo "Rollback: restore the encrypted 'deploy-baseline-closed' artifact and run 'node scripts/deploy-webdav.mjs rollback --confirm --operation ${{ steps.prepare.outputs.operation }}'." >> "$GITHUB_STEP_SUMMARY"
+
+  # Activation: after a SUCCESSFUL guarded closed deployment, commit the explicit
+  # active production profile so the AUTOMATIC workflow builds/deploys/verifies the
+  # COMPLETE closed artifact from each subsequent main push's source revision.
+  # This is not continue-on-error: if activation cannot persist, the run fails.
+  activate-profile:
+    name: Activate the closed production profile
+    needs: deploy-closed
+    if: needs.deploy-closed.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Commit the active production profile = closed
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          for attempt in 1 2 3 4 5; do
+            git fetch origin main
+            git checkout -B activate-profile origin/main
+            printf 'closed\n' > deploy/production-profile
+            git add deploy/production-profile
+            if git diff --cached --quiet; then
+              echo "::notice::the closed production profile is already active"
+              exit 0
+            fi
+            git commit -m "chore(deploy): activate the closed production profile [skip ci]"
+            if git push origin HEAD:main; then
+              echo "::notice::closed production profile activated; later main pushes deploy the closed artifact"
+              exit 0
+            fi
+            sleep 3
+          done
+          echo "::error::could not commit deploy/production-profile; activation did not persist (the automatic workflow would keep building the public profile)"
+          exit 1

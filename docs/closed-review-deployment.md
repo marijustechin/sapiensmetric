@@ -144,14 +144,23 @@ Repository implementation is complete (verified by `pnpm verify`):
   identity from the directory (it does not trust the baseline's path). An early
   step validates the closed artifact (index + private-shell markers) before any
   remote call, and production verification uses `verify --app-routes 200`.
-- **Profile preservation on later main pushes:** the WebDAV deploy tool is
-  **additive** — it only overwrites/adds and never mirrors or deletes — so a
-  subsequent automatic **public** deployment leaves the closed private shells in
-  place (their hashed `_next` chunks remain too). The public workflow's
-  production verify uses the default `--app-routes auto`, which accepts either
-  404 (public-only) or 200-with-`noindex` (closed active), so it neither fails
-  nor silently reverts the profile. The public **artifact** exclusion is still
-  enforced by `verify-public-release.sh`.
+- **Explicit active production profile (T-023 correction):**
+  `deploy/production-profile` holds one word — `public` or `closed` — read by
+  **both** workflows via `scripts/production-profile.mjs` (fail-closed on any
+  other value). While `closed` is active, the automatic workflow builds, deploys
+  and verifies the **complete closed artifact from the pushed revision**
+  (`--artifact dist/closed-site`, `verify --app-routes 200`); while `public`, it
+  deploys and **strictly** verifies the public-only artifact (`--app-routes 404`).
+  Retained private shells are never treated as a current deployment.
+- **Guarded activation:** `deploy-closed.yml` keeps its `confirm == 'activate'`
+  guard and, only after a successful closed deployment, commits
+  `deploy/production-profile = closed` (with `[skip ci]`; it fails if activation
+  cannot persist). The public-only build (`build:public`/`verify:public-release`)
+  and its strict exclusion checks remain available for the `public` profile;
+  reverting is a reviewed commit that sets the file back to `public`.
+- **Additive deploy:** the WebDAV tool only overwrites/adds and never
+  mirrors/deletes, so switching profiles never destroys the other profile's
+  files.
 
 ## 7. Yoast-style sitemap plan
 

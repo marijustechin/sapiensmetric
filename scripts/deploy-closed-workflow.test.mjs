@@ -42,16 +42,13 @@ test('the closed workflow verifies production with app-routes=200', () => {
   assert.match(closedWorkflow, /deploy-webdav\.mjs verify --site "\$PUBLIC_SITE_URL" --app-routes 200/);
 });
 
-test('the public workflow keeps deploying the public artifact (no closed artifact)', () => {
+test('the public workflow deploys the artifact selected by the ACTIVE profile', () => {
   assert.doesNotMatch(publicWorkflow, /dist\/closed-site/);
-  // Any deploy-webdav invocation must not point at the closed artifact.
-  const deployWebdavLines = publicWorkflow
-    .split('\n')
-    .filter((line) => line.includes('deploy-webdav.mjs'));
-  for (const line of deployWebdavLines) {
-    assert.doesNotMatch(line, /dist\/closed-site/);
-  }
-  assert.match(publicWorkflow, /deploy-webdav\.mjs baseline[\s\S]*?--artifact dist\/public-site/);
+  assert.match(publicWorkflow, /scripts\/production-profile\.mjs/);
+  // No hardcoded public artifact: the profile decides.
+  assert.doesNotMatch(publicWorkflow, /--artifact dist\/public-site/);
+  assert.match(publicWorkflow, /--artifact \$\{\{ needs\.classify\.outputs\.artifact \}\}/);
+  assert.match(publicWorkflow, /--app-routes \$\{\{ needs\.classify\.outputs\.app_routes \}\}/);
 });
 
 test('--app-routes accepts only 404|200|auto', () => {

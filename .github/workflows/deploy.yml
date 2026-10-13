@@ -55,10 +55,16 @@ jobs:
     if: github.event_name == 'push' || inputs.mode == 'deploy'
     outputs:
       deploy: ${{ steps.classify.outputs.deploy }}
+      profile: ${{ steps.profile.outputs.profile }}
+      artifact: ${{ steps.profile.outputs.artifact }}
+      app_routes: ${{ steps.profile.outputs.app_routes }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0
+      - name: Determine the active production profile
+        id: profile
+        run: node scripts/production-profile.mjs >> "$GITHUB_OUTPUT"
       - name: Decide whether to deploy
         id: classify
         run: |
@@ -100,17 +106,17 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Verify (builds apps/web/out and dist/public-site once)
         run: pnpm verify
-      - name: Upload the verified public artifact (exact bytes for deployment)
+      - name: Upload the verified ${{ needs.classify.outputs.profile }} artifact (exact bytes for deployment)
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: public-site
-          path: dist/public-site
+          name: site
+          path: ${{ needs.classify.outputs.artifact }}
           retention-days: 30
           if-no-files-found: error
 
   baseline:
     name: Capture and persist pre-deployment baseline
-    needs: verify
+    needs: [classify, verify]
     environment: production
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -124,11 +130,11 @@ jobs:
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '24'
-      - name: Download the verified public artifact
+      - name: Download the verified ${{ needs.classify.outputs.profile }} artifact
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
-          name: public-site
-          path: dist/public-site
+          name: site
+          path: ${{ needs.classify.outputs.artifact }}
       - name: Capture baseline (read-only; no production writes)
         id: prepare
         env:
@@ -138,7 +144,7 @@ jobs:
           set -euo pipefail
           node scripts/deploy-webdav.mjs baseline --ci \
             --remote-base "$WEBDAV_URL" \
-            --artifact dist/public-site | tee baseline.log
+            --artifact ${{ needs.classify.outputs.artifact }} | tee baseline.log
           OP=$(grep -E '^OPERATION=' baseline.log | cut -d= -f2)
           AID=$(grep -E '^ARTIFACT_ID=' baseline.log | cut -d= -f2)
           test -n "$OP" || { echo "no operation id produced"; exit 1; }
@@ -181,7 +187,7 @@ jobs:
   # supplementary deployment-record commit in the `record` job.
   deploy:
     name: Upload and verify production
-    needs: [verify, baseline]
+    needs: [classify, verify, baseline]
     environment: production
     runs-on: ubuntu-latest
     timeout-minutes: 40
@@ -192,11 +198,11 @@ jobs:
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '24'
-      - name: Download the verified public artifact
+      - name: Download the verified ${{ needs.classify.outputs.profile }} artifact
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
-          name: public-site
-          path: dist/public-site
+          name: site
+          path: ${{ needs.classify.outputs.artifact }}
       - name: Download the persisted baseline (proves persistence before overwrite)
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
@@ -256,15 +262,16 @@ jobs:
         run: |
           set -euo pipefail
           node scripts/deploy-webdav.mjs apply --confirm --ci \
+            --artifact ${{ needs.classify.outputs.artifact }} \
             --remote-base "$WEBDAV_URL" \
             --operation "${{ needs.baseline.outputs.operation }}"
       - name: Verify production (routes, deep links, robots, sitemap, exclusions)
         if: steps.guard.outputs.skipped != 'true'
-        run: node scripts/deploy-webdav.mjs verify --site "$PUBLIC_SITE_URL"
+        run: node scripts/deploy-webdav.mjs verify --site "$PUBLIC_SITE_URL" --app-routes ${{ needs.classify.outputs.app_routes }}
 
   record:
     name: Record deployment
-    needs: [baseline, deploy]
+    needs: [classify, baseline, deploy]
     if: needs.deploy.result == 'success'
     runs-on: ubuntu-latest
     permissions:
@@ -288,12 +295,14 @@ jobs:
           - Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           - Artifact id (content): \`${ARTIFACT_ID}\`
           - Operation id: \`${OPERATION}\`
+          - Production profile: \`${{ needs.classify.outputs.profile }}\`
+          - Artifact directory: \`${{ needs.classify.outputs.artifact }}\`
           - Destination: \`${{ env.WEBDAV_URL }}\`
           - Public site: \`${{ env.PUBLIC_SITE_URL }}\`
           - Encrypted baseline artifact: \`deploy-baseline\` (retention 90 days, run ${{ github.run_id }})
           - Rollback: retrieve the encrypted baseline, decrypt with the owner-held
             recovery key, then \`pnpm deploy:rollback -- --operation ${OPERATION} --confirm\`
-          - Post-deploy verification: \`node scripts/deploy-webdav.mjs verify --site ${PUBLIC_SITE_URL}\` (see the run log)
+          - Post-deploy verification: \`node scripts/deploy-webdav.mjs verify --site ${PUBLIC_SITE_URL} --app-routes ${{ needs.classify.outputs.app_routes }}\` (see the run log)
           EOF
           cat "$FILE" >> "$GITHUB_STEP_SUMMARY"
       - name: Commit the record (non-fatal; skipped from CI re-trigger)

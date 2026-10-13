@@ -187,9 +187,16 @@ unobserved.
   by passing `--artifact dist/closed-site` to **both** `baseline` and `apply`,
   adding an early closed-artifact validation step before the remote baseline
   call, using `verify --app-routes 200` for closed production checks, and a
-  regression test (`scripts/deploy-closed-workflow.test.mjs`). Public pushes no
-  longer revert the profile (additive deploy; public verify uses `--app-routes
-  auto`).
+  regression test (`scripts/deploy-closed-workflow.test.mjs`).
+- **Explicit active production profile (2026-10-13):** `deploy/production-profile`
+  (`public`|`closed`) is read by both workflows via
+  `scripts/production-profile.mjs`. With `closed` active, the automatic workflow
+  builds/deploys/verifies the complete closed artifact from each main push
+  (`--artifact dist/closed-site`, `verify --app-routes 200`); with `public`, the
+  public-only artifact is deployed and strictly verified (`--app-routes 404`).
+  Activation stays guarded (`deploy-closed.yml`, `confirm=activate`) and is
+  committed only after a successful closed deployment. Covered by
+  `scripts/production-profile.test.mjs`.
 
 - **The reworked sitemap is not yet live (observed 2026-10-12).** Frontend CI runs
   #12 (`992ce2f`), #13 (`2b140a4`) and #14 (`8ff8e3e`) each reported `success`, but
