@@ -126,7 +126,9 @@ export function logout(): Promise<FetchOutcome<void>> {
 
 export function me(
   accessToken: string,
-): Promise<FetchOutcome<{ id: string; email: string }>> {
+): Promise<
+  FetchOutcome<{ id: string; email: string; role: 'user' | 'editor' | 'admin' }>
+> {
   return request('/auth/me', { method: 'GET', accessToken });
 }
 

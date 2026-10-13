@@ -121,8 +121,14 @@ class InMemoryUserStore implements UserStore {
     return Promise.resolve(user);
   }
 
-  markVerified(id: string): void {
+  setRole(id: string, role: UserRecord['role']): void {
     const user = this.map.get(id);
+    if (user) {
+      user.role = role;
+    }
+  }
+
+  markVerified(id: string): void {    const user = this.map.get(id);
     if (user) {
       user.emailVerifiedAt = new Date();
     }
@@ -449,7 +455,32 @@ describe('AuthController (Docker-free HTTP)', () => {
       headers: { authorization: `Bearer ${accessToken}` },
     });
     expect(res.statusCode).toBe(200);
-    expect(res.json()).toEqual({ id: expect.any(String), email });
+    expect(res.json()).toEqual({ id: expect.any(String), email, role: 'user' });
+  });
+
+  it('reports the API-confirmed role from /auth/me, not the email', async () => {
+    const login = await instance().inject({
+      method: 'POST',
+      url: '/auth/login',
+      payload: { email, password },
+    });
+    const accessToken = login.json().accessToken;
+    const before = await instance().inject({
+      method: 'GET',
+      url: '/auth/me',
+      headers: { authorization: `Bearer ${accessToken}` },
+    });
+    expect(before.json().role).toBe('user');
+
+    const stored = await userStore.findByEmail(email);
+    userStore.setRole(stored!.id, 'admin');
+
+    const after = await instance().inject({
+      method: 'GET',
+      url: '/auth/me',
+      headers: { authorization: `Bearer ${accessToken}` },
+    });
+    expect(after.json().role).toBe('admin');
   });
 
   it('rejects a token whose sub does not match the session user', async () => {

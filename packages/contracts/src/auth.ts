@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { userRoleSchema } from './admin';
 
 const emailSchema = z.string().email().max(320);
 
@@ -61,6 +62,10 @@ export type LoginResponse = z.infer<typeof loginResponseSchema>;
 export const meResponseSchema = z.object({
   id: z.string().uuid(),
   email: z.string().email(),
+  // API-confirmed authorisation: the server re-reads the account role per
+  // request (no role claim in the access token), so the client can show
+  // role-gated navigation without trusting anything the client stored.
+  role: userRoleSchema,
 });
 
 export type MeResponse = z.infer<typeof meResponseSchema>;

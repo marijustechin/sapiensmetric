@@ -5,7 +5,7 @@ import {
   Logger,
   UnauthorizedException,
 } from '@nestjs/common';
-import type { Locale } from '@sapiensmetric/contracts';
+import type { Locale, UserRole } from '@sapiensmetric/contracts';
 import { APP_CONFIG, AppConfig, REFRESH_COOKIE_NAME } from '../../config/env.js';
 import { PASSWORD_SERVICE, PasswordService } from './password.service.js';
 import { SESSION_STORE, SessionStore } from './sessions/session-store.js';
@@ -228,12 +228,14 @@ export class AuthService {
     await this.sessions.revokeAllByToken(tokenHash, 'logout');
   }
 
-  async me(userId: string): Promise<{ id: string; email: string } | null> {
+  async me(
+    userId: string,
+  ): Promise<{ id: string; email: string; role: UserRole } | null> {
     const user = await this.users.findById(userId);
     if (!user || !user.emailVerifiedAt || user.status !== 'active') {
       return null;
     }
-    return { id: user.id, email: user.email };
+    return { id: user.id, email: user.email, role: user.role };
   }
 
   // --- T-006: email verification and password reset -----------------------

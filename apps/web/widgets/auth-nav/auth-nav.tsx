@@ -4,6 +4,8 @@ import { useRef, useState } from 'react';
 import { Link, usePathname, useRouter } from '../../shared/i18n/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useAuth } from '../../features/auth/auth-provider';
+import { useAuthCapabilities } from '../../features/auth/use-auth-capabilities';
+import { buildAuthNavItems } from '../../features/auth/auth-nav-items';
 import { signOutToHome } from '../../features/auth/sign-out';
 import { BrandMark } from '../../shared/ui/brand-mark';
 import { Drawer } from '../../shared/ui/drawer';
@@ -28,6 +30,7 @@ export function AuthNav() {
   const pathname = usePathname();
   const router = useRouter();
   const { status, user, logout } = useAuth();
+  const capabilities = useAuthCapabilities();
   const other = otherLocale(locale);
 
   const [menuOpen, setMenuOpen] = useState(false);
@@ -53,15 +56,16 @@ export function AuthNav() {
 
   const closeMenu = () => setMenuOpen(false);
 
-  const links: { href: string; label: string }[] = [
-    { href: '/', label: t('home') },
-    { href: '/auth/login', label: t('login') },
-    { href: '/auth/register', label: t('register') },
-    { href: '/auth/verify-email', label: t('verify') },
-    { href: '/auth/forgot-password', label: t('forgot') },
-    { href: '/account', label: t('account') },
-    { href: '/assessment', label: t('assessment') },
-  ];
+  // Role-appropriate destinations. Admin appears only for an account whose role
+  // the API confirmed via `/auth/me`; registration appears only when the API says
+  // it is enabled. Recovery entries (verify email, forgot password) are not menu
+  // items — they live in their authentication flows.
+  const authenticated = status === 'authenticated' && user !== null;
+  const links = buildAuthNavItems({
+    authenticated,
+    isAdmin: authenticated && user?.role === 'admin',
+    registrationEnabled: capabilities?.registration === true,
+  });
 
   return (
     <header className="border-b border-gray-200">
@@ -144,7 +148,7 @@ export function AuthNav() {
               onClick={closeMenu}
               className="flex min-h-[44px] items-center rounded px-3 text-base text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              {link.label}
+              {t(link.labelKey)}
             </Link>
           ))}
         </nav>

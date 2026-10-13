@@ -14,4 +14,6 @@ export type Locale = AppLocale;
 export interface AuthUser {
   id: string;
   email: string;
+  /** API-confirmed account role (from `/auth/me`); no client-side role claim. */
+  role: 'user' | 'editor' | 'admin';
 }

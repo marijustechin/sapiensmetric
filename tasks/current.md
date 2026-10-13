@@ -154,6 +154,18 @@
   - Two real defects were found and fixed during the live run: the missing
     `sapiensmetric-api` network alias (502) and the `provision` service using
     `command` instead of `entrypoint` (`node: bad option: --email`).
+  - **Owner-confirmed on production (2026-10-13):** the owner completed the
+    production **password reset** (forgot-password → emailed
+    `…/auth/reset-password#token=…` → new password) and **signed in**
+    successfully. **Logout and the assessment journey remain unconfirmed.**
+  - **Authenticated drawer fixed (T-023):** `/auth/me` now returns the
+    API-confirmed `role`; the drawer shows Home/Account/Assessment/Logout, adds
+    **Admin** only for `role === 'admin'`, hides guest-only and recovery entries,
+    and offers Register only when the API reports registration enabled. Rendered
+    evidence (headless Chromium, registration disabled): guest → Home, Sign in;
+    user → Home, Account, Assessment + Sign out; admin → … + Admin. Unit +
+    contract coverage added (`auth-nav-items.test.ts`, `meResponseSchema` role,
+    `/auth/me` role test).
 - **Backup exercised via the scoped maintenance access (owner-executed,
   2026-10-13):** the SELECT-only `sapiensmetric_backup` account dumped
   `sapiensmetric_review` and the set **`2026-10-13T052942Z`** was uploaded and

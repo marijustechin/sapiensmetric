@@ -68,13 +68,27 @@ describe('auth contracts', () => {
     });
   });
 
-  it('accepts a me response', () => {
+  it('accepts a me response and requires the API-confirmed role', () => {
     expect(
       meResponseSchema.parse({
         id: '00000000-0000-4000-8000-000000000000',
         email: 'person@example.test',
+        role: 'user',
       }),
-    ).toMatchObject({ email: 'person@example.test' });
+    ).toMatchObject({ email: 'person@example.test', role: 'user' });
+    expect(() =>
+      meResponseSchema.parse({
+        id: '00000000-0000-4000-8000-000000000000',
+        email: 'person@example.test',
+      }),
+    ).toThrow();
+    expect(
+      meResponseSchema.parse({
+        id: '00000000-0000-4000-8000-000000000000',
+        email: 'admin@example.test',
+        role: 'admin',
+      }).role,
+    ).toBe('admin');
   });
 });
 
